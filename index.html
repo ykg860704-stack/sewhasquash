@@ -20,16 +20,17 @@
         .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
         .lady-badge { background: #fff0f6; color: #d63384; padding: 1px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px; border: 1px solid #ffdeeb; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; }
+        .input-group { display: flex; flex-direction: column; gap: 12px; }
         .row-group { display: flex; gap: 8px; }
-        select, input, button { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; outline: none; }
+        select, input, button { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; outline: none; appearance: none; background-color: white; }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ccc' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: calc(100% - 15px) center; }
+        .label-text { font-size: 12px; font-weight: 700; margin-bottom: -8px; margin-left: 5px; }
         .btn-reg { background: #2d3748; color: white; border: none; font-weight: 700; }
-        .btn-battle { background: #e53e3e; color: white; border: none; font-weight: 700; cursor: pointer; }
+        .btn-battle { background: #e53e3e; color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 5px; }
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; }
         .log-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f7fafc; font-size: 14px; }
         .date-info { font-size: 10px; color: #a0aec0; margin-top: 2px; }
-        .helper-text { font-size: 11px; color: #718096; margin-top: -5px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -49,17 +50,20 @@
     </div>
 </div>
 
-<div class="section" style="background: #fff5f5;">
+<div class="section" style="background: #fff5f5; border: 1px solid #feb2b2;">
     <h2>⚔️ 결과 기록</h2>
-    <p class="helper-text">💡 승자를 먼저 선택하면 도전 가능한 상대만 나타납니다.</p>
     <div class="input-group">
+        <div class="label-text" style="color: #e53e3e;">🏆 승리한 선수 (도전자)</div>
         <select id="winnerSelect" onchange="filterOpponents()">
-            <option value="">승자 선택</option>
+            <option value="">선수 선택</option>
         </select>
+
+        <div class="label-text" style="color: #4a5568;">💀 패배한 선수 (방어자)</div>
         <select id="loserSelect">
-            <option value="">패자(상대) 선택</option>
+            <option value="">승자를 먼저 선택하세요</option>
         </select>
-        <input id="scoreInput" placeholder="점수 입력 (예: 11:9)">
+
+        <input id="scoreInput" placeholder="경기 점수 (예: 11:9)">
         <button class="btn-battle" onclick="battleRecord()">경기 결과 저장</button>
     </div>
 </div>
@@ -71,7 +75,7 @@
 <div id="modalOverlay" onclick="if(event.target===this) closeModal()">
     <div class="modal-content">
         <div id="modalBody"></div>
-        <button onclick="closeModal()" style="width:100%; margin-top:20px; padding:12px; border-radius:12px; border:none; background:#edf2f7; font-weight:700;">닫기</button>
+        <button onclick="closeModal()" style="width:100%; margin-top:20px; padding:15px; border-radius:12px; border:none; background:#edf2f7; font-weight:700;">닫기</button>
     </div>
 </div>
 
@@ -111,44 +115,46 @@
 
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
-        let winOpts = "<option value=''>승자 선택</option>";
+        let winOpts = "<option value=''>승리한 선수 선택</option>";
         snap.forEach(d => {
             const p = {id: d.id, ...d.data()};
             if(p.status === "approved") {
                 players.push(p);
-                winOpts += `<option value="${p.id}">${p.name} (${p.timeGroup}/${p.league})</option>`;
+                winOpts += `<option value="${p.id}">${p.name} (${p.timeGroup}/${p.league}/${p.groupRank}위)</option>`;
             }
         });
         document.getElementById("winnerSelect").innerHTML = winOpts;
         renderUI();
     });
 
-    // 핵심 로직: 승자에 맞춰 패자 목록 필터링
     window.filterOpponents = () => {
         const wId = document.getElementById("winnerSelect").value;
         const loserDropdown = document.getElementById("loserSelect");
         
         if(!wId) {
-            loserDropdown.innerHTML = "<option value=''>패자(상대) 선택</option>";
+            loserDropdown.innerHTML = "<option value=''>승자를 먼저 선택하세요</option>";
             return;
         }
 
         const win = players.find(p => p.id === wId);
         
-        // 같은 타임, 같은 그룹 선수 중 '승자'가 아닌 사람만 필터링
+        // 1. 같은 타임, 같은 그룹 선수만 필터링 (본인 제외)
         const targets = players.filter(p => 
             p.id !== win.id && 
             p.timeGroup === win.timeGroup && 
             p.league === win.league
         );
 
-        let opts = "<option value=''>패자(상대) 선택</option>";
-        targets.forEach(p => {
-            // 승자가 하위 랭커라면 상위 랭커만 도전 가능하게 표시 (순위 교체 발생)
-            // 승자가 상위 랭커라면 하위 랭커만 방어전 대상으로 표시 (순위 유지)
-            const type = Number(win.groupRank) > Number(p.groupRank) ? "[순위교체 도전]" : "[순위방어]";
-            opts += `<option value="${p.id}">${p.groupRank}위: ${p.name} ${type}</option>`;
-        });
+        let opts = "<option value=''>패배한 상대 선택</option>";
+        if(targets.length === 0) {
+            opts = "<option value=''>겨룰 수 있는 상대가 없습니다</option>";
+        } else {
+            targets.forEach(p => {
+                // 상위 랭커를 이겼는지 여부에 따라 태그 표시
+                const typeTag = Number(win.groupRank) > Number(p.groupRank) ? "[🔥 순위교체]" : "[🛡️ 순위방어]";
+                opts += `<option value="${p.id}">${p.name} (${p.groupRank}위) ${typeTag}</option>`;
+            });
+        }
         loserDropdown.innerHTML = opts;
     };
 
@@ -171,28 +177,26 @@
         let updateWin = { recentGames: winGames, lastGameDate: nowIso };
         let updateLos = { recentGames: losGames, lastGameDate: nowIso };
 
-        // 순위 교체 로직: 승자가 하위 랭커(숫자가 큼)일 때만 교체
         if (Number(win.groupRank) > Number(los.groupRank)) {
             updateWin.groupRank = Number(los.groupRank);
             updateLos.groupRank = Number(win.groupRank);
-            alert(`축하합니다! ${win.name}님이 ${los.groupRank}위로 올라섰습니다.`);
+            alert(`순위 교체 성공! ${win.name}님이 ${los.groupRank}위가 되었습니다.`);
         } else {
-            alert(`방어 성공! ${win.name}님이 순위를 유지합니다.`);
+            alert(`순위 방어 성공! 전적만 기록되었습니다.`);
         }
 
         await updateDoc(doc(db, "ranking", win.id), updateWin);
         await updateDoc(doc(db, "ranking", los.id), updateLos);
         
-        // 입력창 초기화
         document.getElementById("winnerSelect").value = "";
-        document.getElementById("loserSelect").innerHTML = "<option value=''>패자 선택</option>";
+        document.getElementById("loserSelect").innerHTML = "<option value=''>승자를 먼저 선택하세요</option>";
         document.getElementById("scoreInput").value = "";
     };
 
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        let html = `<h3 style="margin-top:0;">${p.name} 전적</h3>`;
-        if(!p.recentGames || p.recentGames.length === 0) html += "<p style='color:#999;'>최근 경기 기록이 없습니다.</p>";
+        let html = `<h3 style="margin-top:0;">${p.name} 최근 전적</h3>`;
+        if(!p.recentGames || p.recentGames.length === 0) html += "<p style='color:#999;'>기록이 없습니다.</p>";
         else p.recentGames.forEach(g => {
             html += `<div class="log-item"><span>${g.dt}</span> <strong>vs ${g.opp} (${g.res})</strong> <span style="color:#666">${g.sc || ''}</span></div>`;
         });
@@ -205,8 +209,8 @@
     function renderUI() {
         const filter = (t, l) => players.filter(p => p.timeGroup === t && p.league === l);
         document.getElementById("totalARank").innerHTML = buildTable(filter("오후", "챔피언"));
-        document.getElementById("morningRank").innerHTML = `<h4>A그룹</h4>${buildTable(filter("오전", "챔피언"))} <h4>B그룹</h4>${buildTable(filter("오전", "챌린저"))}`;
-        document.getElementById("afternoonRank").innerHTML = `<h4>A그룹</h4>${buildTable(filter("오후", "챔피언"))} <h4>B그룹</h4>${buildTable(filter("오후", "챌린저"))}`;
+        document.getElementById("morningRank").innerHTML = `<h4>🌅 오전 A그룹</h4>${buildTable(filter("오전", "챔피언"))} <h4>🌅 오전 B그룹</h4>${buildTable(filter("오전", "챌린저"))}`;
+        document.getElementById("afternoonRank").innerHTML = `<h4>🌇 오후 A그룹</h4>${buildTable(filter("오후", "챔피언"))} <h4>🌇 오후 B그룹</h4>${buildTable(filter("오후", "챌린저"))}`;
     }
 
     function buildTable(list) {
@@ -220,7 +224,7 @@
             (p.recentGames || []).forEach(g => recHtml += `<span class="record-tag ${g.res==='승'?'win':'loss'}">${g.res}</span>`);
             
             const diff = Math.floor((new Date() - new Date(p.lastGameDate)) / (1000*60*60*24));
-            const dateWarning = diff >= 7 ? `<div class="date-info" style="color:#e53e3e; font-weight:bold;">⚠️ 미경기 ${diff}일째</div>` : `<div class="date-info">최근 경기: ${diff === 0 ? '오늘' : diff + '일 전'}</div>`;
+            const dateWarning = diff >= 7 ? `<div class="date-info" style="color:#e53e3e; font-weight:bold;">⚠️ 미경기 ${diff}일째</div>` : `<div class="date-info">${diff === 0 ? '오늘 경기함' : diff + '일 전 경기'}</div>`;
 
             html += `<tr><td>${p.groupRank}위</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${ladyBadge}</a>${recHtml}</div>${dateWarning}</td><td>${p.gender}</td></tr>`;
         });
