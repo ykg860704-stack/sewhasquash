@@ -20,17 +20,13 @@
         .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
         .lady-badge { background: #fff0f6; color: #d63384; padding: 1px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px; border: 1px solid #ffdeeb; }
-        
-        /* 결과 기록 UI 개선 */
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         .label-text { font-size: 12px; font-weight: 700; margin-bottom: -8px; margin-left: 5px; }
         select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; outline: none; background-color: white; }
-        
         .winner-selector { display: flex; gap: 10px; margin-top: 5px; }
         .win-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; background: white; font-weight: 700; cursor: pointer; font-size: 13px; }
         .win-btn.active { border-color: #e53e3e; background: #fff5f5; color: #e53e3e; }
         .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; font-size: 16px; margin-top: 10px; cursor: pointer; }
-        
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; }
     </style>
@@ -38,19 +34,6 @@
 <body>
 
 <h1>🏆 세화 스쿼시</h1>
-
-<div class="section">
-    <h2 class="blue-h2">👤 신규 등록</h2>
-    <div class="input-group">
-        <input id="nameInput" placeholder="이름을 입력하세요">
-        <div style="display:flex; gap:8px;">
-            <select id="timeGroup"><option value="오후">오후</option><option value="오전">오전</option></select>
-            <select id="gender"><option value="남">남성</option><option value="여">여성</option></select>
-            <select id="league"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select>
-        </div>
-        <button style="width:100%; padding:14px; border-radius:12px; background:#2d3748; color:white; border:none; font-weight:700;" onclick="register()">신청 완료</button>
-    </div>
-</div>
 
 <div class="section" style="background: #fffcf0; border: 1px solid #feebc8;">
     <h2>⚔️ 경기 결과 기록</h2>
@@ -60,7 +43,7 @@
             <option value="">도전자 선택</option>
         </select>
 
-        <div class="label-text">👤 방어자 (상대)</div>
+        <div class="label-text">👤 방어자 (상대 - 상위 랭커만 표시)</div>
         <select id="defenderSelect">
             <option value="">도전자를 먼저 선택하세요</option>
         </select>
@@ -72,7 +55,7 @@
         </div>
 
         <div class="label-text">🔢 경기 점수</div>
-        <input id="scoreInput" placeholder="예: 11:9 또는 2:0">
+        <input id="scoreInput" placeholder="예: 11:9">
         
         <button class="btn-battle" onclick="battleRecord()">결과 저장하기</button>
     </div>
@@ -105,18 +88,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let players = [];
-    let selectedWinner = null; // 'challenger' 또는 'defender'
-
-    window.register = async () => {
-        const name = document.getElementById("nameInput").value.trim();
-        if(!name) return;
-        await addDoc(collection(db, "ranking"), { 
-            name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, 
-            league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], lastGameDate: new Date().toISOString()
-        });
-        alert("신청 완료!");
-        document.getElementById("nameInput").value = "";
-    };
+    let selectedWinner = null;
 
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
@@ -138,12 +110,23 @@
         if(!cId) { defenderDropdown.innerHTML = "<option value=''>도전자를 먼저 선택하세요</option>"; return; }
 
         const challenger = players.find(p => p.id === cId);
-        const targets = players.filter(p => p.id !== challenger.id && p.timeGroup === challenger.timeGroup && p.league === challenger.league);
+        
+        // 필터링: 같은 그룹 내에서 도전자보다 순위가 높은(숫자가 작은) 선수만 필터링
+        const targets = players.filter(p => 
+            p.id !== challenger.id && 
+            p.timeGroup === challenger.timeGroup && 
+            p.league === challenger.league &&
+            Number(p.groupRank) < Number(challenger.groupRank)
+        );
 
         let opts = "<option value=''>방어자 선택</option>";
-        targets.forEach(p => {
-            opts += `<option value="${p.id}">${p.name} (${p.timeGroup}/${p.league}/${p.groupRank}위)</option>`;
-        });
+        if(targets.length === 0) {
+            opts = "<option value=''>도전 가능한 상위 랭커가 없습니다</option>";
+        } else {
+            targets.forEach(p => {
+                opts += `<option value="${p.id}">${p.name} (${p.groupRank}위) [순위도전]</option>`;
+            });
+        }
         defenderDropdown.innerHTML = opts;
     };
 
@@ -158,15 +141,13 @@
         const dId = document.getElementById("defenderSelect").value;
         const score = document.getElementById("scoreInput").value.trim() || "기록없음";
         
-        if(!cId || !dId) return alert("도전자와 방어자를 선택해주세요.");
-        if(!selectedWinner) return alert("누가 이겼는지 선택해주세요.");
+        if(!cId || !dId || !selectedWinner) return alert("도전자, 방어자, 승리 여부를 모두 확인해주세요.");
 
         const challenger = players.find(p => p.id === cId);
         const defender = players.find(p => p.id === dId);
         const dateStr = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
         const nowIso = new Date().toISOString();
 
-        // 도전자/방어자의 승패 결과 설정
         const challengerRes = selectedWinner === 'challenger' ? '승' : '패';
         const defenderRes = selectedWinner === 'defender' ? '승' : '패';
 
@@ -176,19 +157,18 @@
         let updateC = { recentGames: cGames, lastGameDate: nowIso };
         let updateD = { recentGames: dGames, lastGameDate: nowIso };
 
-        // 순위 교체 로직: 도전자가 승리하고, 도전자 순위가 방어자보다 낮을(숫자가 클) 때만 교체
-        if (selectedWinner === 'challenger' && Number(challenger.groupRank) > Number(defender.groupRank)) {
+        // 도전자가 승리한 경우 무조건 순위 교체 (이미 필터링에서 상위 랭커만 선택했으므로)
+        if (selectedWinner === 'challenger') {
             updateC.groupRank = Number(defender.groupRank);
             updateD.groupRank = Number(challenger.groupRank);
-            alert("순위가 교체되었습니다!");
+            alert(`축하합니다! ${challenger.name}님이 ${defender.groupRank}위로 올라섰습니다.`);
         } else {
-            alert("전적이 기록되었습니다. (순위 변동 없음)");
+            alert(`방어 성공! ${defender.name}님이 순위를 지켰습니다.`);
         }
 
         await updateDoc(doc(db, "ranking", challenger.id), updateC);
         await updateDoc(doc(db, "ranking", defender.id), updateD);
         
-        // 초기화
         selectedWinner = null;
         document.querySelectorAll(".win-btn").forEach(b => b.classList.remove("active"));
         document.getElementById("challengerSelect").value = "";
@@ -198,7 +178,7 @@
 
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        let html = `<h3 style="margin-top:0;">${p.name} 최근 전적</h3>`;
+        let html = `<h3 style="margin:0 0 15px 0;">${p.name} 최근 전적</h3>`;
         if(!p.recentGames || p.recentGames.length === 0) html += "<p>기록 없음</p>";
         else p.recentGames.forEach(g => {
             html += `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;"><span>${g.dt}</span> <strong>vs ${g.opp} (${g.res})</strong> <span>${g.sc}</span></div>`;
@@ -226,11 +206,22 @@
             let recHtml = `<div style="display:flex; justify-content:center; gap:2px; margin-top:4px;">`;
             (p.recentGames || []).forEach(g => recHtml += `<span class="record-tag ${g.res==='승'?'win':'loss'}">${g.res}</span>`);
             const diff = Math.floor((new Date() - new Date(p.lastGameDate)) / (1000*60*60*24));
-            const dateInfo = diff >= 7 ? `<div style="font-size:10px; color:red; font-weight:bold;">⚠️ 미경기 ${diff}일째</div>` : `<div style="font-size:10px; color:#aaa;">${diff===0?'오늘 경기':diff+'일 전 경기'}</div>`;
+            const dateInfo = diff >= 7 ? `<div style="font-size:10px; color:red; font-weight:bold;">⚠️ 미경기 ${diff}일째</div>` : `<div style="font-size:10px; color:#aaa;">${diff===0?'오늘':diff+'일 전'}</div>`;
             html += `<tr><td>${p.groupRank}위</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${ladyBadge}</a>${recHtml}</div>${dateInfo}</td><td>${p.gender}</td></tr>`;
         });
         return html + "</tbody></table>";
     }
+
+    window.register = async () => {
+        const name = document.getElementById("nameInput").value.trim();
+        if(!name) return;
+        await addDoc(collection(db, "ranking"), { 
+            name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, 
+            league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], lastGameDate: new Date().toISOString()
+        });
+        alert("신청 완료! 관리자 승인을 기다려주세요.");
+        document.getElementById("nameInput").value = "";
+    };
 </script>
 </body>
 </html>
