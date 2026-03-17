@@ -6,6 +6,7 @@
     <title>세화 스쿼시 랭킹</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
+        /* 기존 스타일 유지 */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; line-height: 1.5; }
         h1 { text-align: center; color: #1a202c; margin: 30px 0; font-size: 1.8em; font-weight: 800; letter-spacing: -1px; }
@@ -21,6 +22,7 @@
         th { color: #a0aec0; font-weight: 600; font-size: 11px; }
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: block; }
         
+        .win-rate { font-size: 11px; color: #3182ce; font-weight: 600; margin-top: 2px; }
         .record-tag { font-size: 9px; padding: 2px 3px; border-radius: 3px; font-weight: 800; margin: 0 1px; min-width: 16px; display: inline-block; }
         .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
@@ -40,6 +42,7 @@
         
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        .share-box { background: #f0f7ff; border-radius: 12px; padding: 15px; margin-top: 15px; border: 1px solid #d0e4ff; display: none; }
     </style>
 </head>
 <body>
@@ -74,6 +77,11 @@
         <div class="label-text">🔢 경기 점수</div>
         <input id="scoreInput" placeholder="예: 11:9">
         <button class="btn-battle" onclick="battleRecord()">결과 저장 및 순위 반영</button>
+        
+        <div id="shareBox" class="share-box">
+            <p id="shareText" style="font-size: 13px; margin: 0; color: #2b6cb0; font-weight: 600;"></p>
+            <button onclick="copyShareText()" style="width:100%; margin-top:10px; padding:8px; border-radius:8px; border:none; background:#3182ce; color:white; font-weight:700; cursor:pointer;">결과 복사하기 (카톡 공유용)</button>
+        </div>
     </div>
 </div>
 
@@ -119,6 +127,13 @@
         renderUI();
     });
 
+    // 승률 계산 함수
+    function calculateWinRate(games) {
+        if (!games || games.length === 0) return "전적 없음";
+        const wins = games.filter(g => g.res === '승').length;
+        return `승률 ${Math.round((wins / games.length) * 100)}%`;
+    }
+
     window.register = async () => {
         const name = document.getElementById("nameInput").value.trim();
         if(!name) return;
@@ -152,29 +167,64 @@
         const dId = document.getElementById("defenderSelect").value;
         const score = document.getElementById("scoreInput").value.trim() || "기록없음";
         if(!cId || !dId || !challengerResult) return alert("항목을 선택하세요.");
+        
         const challenger = players.find(p => p.id === cId);
         const defender = players.find(p => p.id === dId);
         const dateStr = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
         const nowIso = new Date().toISOString();
         const defenderResult = challengerResult === '승' ? '패' : '승';
 
-        // 최근 10경기 기록
         const cGames = [{res: challengerResult, opp: defender.name, dt: dateStr, sc: score}, ...(challenger.recentGames || [])].slice(0, 10);
         const dGames = [{res: defenderResult, opp: challenger.name, dt: dateStr, sc: score}, ...(defender.recentGames || [])].slice(0, 10);
 
         let updateC = { recentGames: cGames, lastGameDate: nowIso };
         let updateD = { recentGames: dGames, lastGameDate: nowIso };
 
+        let shareMsg = `[세화 스쿼시 결과]\n⚔️ ${challenger.name} vs ${defender.name}\n📢 결과: ${challenger.name} ${challengerResult}! (${score})`;
+
         if (challengerResult === '승') {
             updateC.groupRank = Number(defender.groupRank);
             updateD.groupRank = Number(challenger.groupRank);
+            shareMsg += `\n🏆 순위 변동: ${challenger.name}님이 ${defender.groupRank}위로 등극!`;
+        } else {
+            shareMsg += `\n🛡️ 방어 성공: 순위 변동 없음`;
         }
 
         await updateDoc(doc(db, "ranking", challenger.id), updateC);
         await updateDoc(doc(db, "ranking", defender.id), updateD);
-        alert("저장 완료!");
-        location.reload(); 
+        
+        // 공유 박스 노출
+        document.getElementById("shareText").innerText = shareMsg.replace(/\n/g, ' ');
+        document.getElementById("shareBox").style.display = "block";
+        
+        alert("경기 결과가 저장되었습니다! 아래 복사 버튼을 이용해 결과를 공유해보세요.");
     };
+
+    window.copyShareText = () => {
+        const text = document.getElementById("shareText").innerText;
+        navigator.clipboard.writeText(text).then(() => alert("메시지가 복사되었습니다. 카톡방에 붙여넣으세요!"));
+    };
+
+    function renderUI() {
+        const filter = (t, l) => players.filter(p => p.timeGroup === t && p.league === l);
+        document.getElementById("totalARank").innerHTML = buildTable(filter("오후", "챔피언"));
+        document.getElementById("morningRank").innerHTML = `<h4>오전 A그룹</h4>${buildTable(filter("오전", "챔피언"))} <h4>오전 B그룹</h4>${buildTable(filter("오전", "챌린저"))}`;
+        document.getElementById("afternoonRank").innerHTML = `<h4>오후 A그룹</h4>${buildTable(filter("오후", "챔피언"))} <h4>오후 B그룹</h4>${buildTable(filter("오후", "챌린저"))}`;
+    }
+
+    function buildTable(list) {
+        if(!list.length) return "<p style='text-align:center; padding:15px; color:#cbd5e0;'>데이터가 없습니다.</p>";
+        list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+        let html = `<table><thead><tr><th>순위</th><th>이름 / 최근 10전</th><th>성별</th></tr></thead><tbody>`;
+        list.forEach(p => {
+            const ladyBadge = p.gender === "여" ? `<span class="lady-badge">여</span>` : "";
+            const winRate = calculateWinRate(p.recentGames);
+            let recHtml = `<div style="display:flex; justify-content:center; gap:1px; margin-top:5px; flex-wrap: wrap;">`;
+            (p.recentGames || []).forEach(g => recHtml += `<span class="record-tag ${g.res==='승'?'win':'loss'}">${g.res}</span>`);
+            html += `<tr><td>${p.groupRank}위</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${ladyBadge}</a><div class="win-rate">${winRate}</div>${recHtml}</div></td><td>${p.gender}</td></tr>`;
+        });
+        return html + "</tbody></table>";
+    }
 
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
@@ -190,29 +240,6 @@
     };
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
-
-    function renderUI() {
-        // 내부 로직은 다시 '챔피언', '챌린저'로 복구
-        const filter = (t, l) => players.filter(p => p.timeGroup === t && p.league === l);
-        document.getElementById("totalARank").innerHTML = buildTable(filter("오후", "챔피언"));
-        document.getElementById("morningRank").innerHTML = `<h4>오전 A그룹</h4>${buildTable(filter("오전", "챔피언"))} <h4>오전 B그룹</h4>${buildTable(filter("오전", "챌린저"))}`;
-        document.getElementById("afternoonRank").innerHTML = `<h4>오후 A그룹</h4>${buildTable(filter("오후", "챔피언"))} <h4>오후 B그룹</h4>${buildTable(filter("오후", "챌린저"))}`;
-    }
-
-    function buildTable(list) {
-        if(!list.length) return "<p style='text-align:center; padding:15px; color:#cbd5e0;'>데이터가 없습니다.</p>";
-        list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-        const ladies = list.filter(p => p.gender === "여");
-        let html = `<table><thead><tr><th>순위</th><th>이름 / 최근 10전</th><th>성별</th></tr></thead><tbody>`;
-        list.forEach(p => {
-            const ladyBadge = p.gender === "여" ? `<span class="lady-badge">여 ${ladies.findIndex(l => l.id === p.id) + 1}위</span>` : "";
-            let recHtml = `<div style="display:flex; justify-content:center; gap:1px; margin-top:5px; flex-wrap: wrap;">`;
-            (p.recentGames || []).forEach(g => recHtml += `<span class="record-tag ${g.res==='승'?'win':'loss'}">${g.res}</span>`);
-            const diff = Math.floor((new Date() - new Date(p.lastGameDate)) / (1000*60*60*24));
-            html += `<tr><td>${p.groupRank}위</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${ladyBadge}</a>${recHtml}</div></td><td>${p.gender}</td></tr>`;
-        });
-        return html + "</tbody></table>";
-    }
 </script>
 </body>
 </html>
