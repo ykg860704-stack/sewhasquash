@@ -19,8 +19,6 @@
         .section { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
         h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.15em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
         .blue-h2 { border-left-color: #3182ce; }
-        h4 { margin: 25px 0 10px 0; font-size: 1.05em; color: #2d3748; font-weight: 800; display: flex; align-items: center; }
-        h4::before { content: '🎾'; margin-right: 8px; }
 
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
@@ -183,7 +181,6 @@
     };
 
     function drawChart(history) {
-        // 999(초기값) 제외 필터링 또는 보정
         const filteredHistory = history.map(v => v === 999 ? null : v);
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
@@ -219,22 +216,42 @@
         document.getElementById("afternoonRank").innerHTML = `<h4>오후 A</h4>${buildTable(filter("오후", "챔피언"))} <h4>오후 B</h4>${buildTable(filter("오후", "챌린저"))}`;
     }
 
-    // [중요] 성별 표시(여) 로직 복구 완료!
+    // [최종] 전체 순위와 여성 순위를 동시에 표시하는 테이블 생성 함수
     function buildTable(list) {
         if(!list.length) return "<p style='text-align:center; padding:15px; color:#ccc;'>데이터 없음</p>";
+        
+        // 전체 순위 기준으로 정렬
         list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+        
+        let femaleCount = 0; // 여성 내부 순위 카운터
         let html = `<table><thead><tr><th>순위</th><th>이름/기록</th><th>성별</th></tr></thead><tbody>`;
+        
         list.forEach(p => {
             const isDormant = (p.lastGameDate && Math.floor((new Date() - new Date(p.lastGameDate)) / (1000*60*60*24)) >= 14);
             const wins = (p.recentGames || []).filter(g => g.res === '승').length;
             const rate = p.recentGames?.length ? Math.round((wins/p.recentGames.length)*100) : 0;
+            
             let recHtml = `<div style="display:flex; justify-content:center; gap:1px; margin-top:3px;">`;
             (p.recentGames || []).forEach(g => recHtml += `<span class="record-tag ${g.res==='승'?'win':'loss'}">${g.res}</span>`);
-            
-            // 여성일 경우 이름 옆에 (여) 태그 추가
-            const genderTag = p.gender === '여' ? '<span style="color:#d63384; font-size:11px; margin-left:4px; font-weight:bold;">(여)</span>' : '';
+            recHtml += `</div>`;
 
-            html += `<tr><td>${p.groupRank}위</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${genderTag}</a><div class="win-rate">승률 ${rate}%</div>${recHtml}</div>${isDormant?'<div class="dormant-tag">⚠️ 14일 미경기</div>':''}</td><td>${p.gender}</td></tr>`;
+            // 여성 순위 계산 로직
+            let nameExtra = "";
+            if (p.gender === '여') {
+                femaleCount++;
+                nameExtra = `<span style="color:#d63384; font-size:11px; margin-left:4px; font-weight:bold;">(여 ${femaleCount}위)</span>`;
+            }
+
+            html += `<tr>
+                <td>${p.groupRank}위</td>
+                <td>
+                    <a class="name-link" onclick="showLog('${p.id}')">${p.name}${nameExtra}</a>
+                    <div class="win-rate">승률 ${rate}%</div>
+                    ${recHtml}
+                    ${isDormant?'<div class="dormant-tag">⚠️ 14일 미경기</div>':''}
+                </td>
+                <td>${p.gender}</td>
+            </tr>`;
         });
         return html + "</tbody></table>";
     }
