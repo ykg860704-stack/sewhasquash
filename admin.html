@@ -2,39 +2,41 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>세화 관리자 센터</title>
+    <title>세화 관리자 센터 - 전적 관리 포함</title>
     <style>
         body { font-family: 'Pretendard', sans-serif; padding: 20px; background: #f8f9fa; display:none; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 14px; }
+        th { background: #f1f3f5; color: #495057; }
         .btn-ok { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-        .btn-sync { background: #6f42c1; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.1em; }
+        .btn-edit { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
         .btn-no { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .btn-sync { background: #6f42c1; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.1em; margin-bottom: 10px; }
+        .edit-input { width: 95%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 13px; }
+        
+        /* 전적 수정 스타일 */
+        .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: left; }
+        .log-edit-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0; font-size: 12px; }
+        .mini-del { background: #ff4d4f; color: white; border: none; font-size: 10px; padding: 2px 5px; border-radius: 3px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>🛠️ 명단 및 전적 관리 시스템</h1>
+    <h1>🛠️ 세화 관리자 시스템 (전적 관리)</h1>
     
     <div class="card">
-        <button class="btn-sync" onclick="syncData()">🔄 전체 데이터 인덱스 강제 동기화</button>
-        <p style="color:red; text-align:center; margin-top:10px;">* 인덱스에 모든 선수(1~100위)가 다 나오게 하려면 이 버튼을 누르세요.</p>
+        <button class="btn-sync" onclick="syncData()">🔄 전체 데이터 순위 강제 정렬</button>
     </div>
 
     <div class="card">
-        <h2>⏳ 승인 대기</h2>
-        <div id="pendingList"></div>
-    </div>
-
-    <div class="card">
-        <h2>✅ 활동 선수 명단 (100위까지 관리)</h2>
+        <h2 style="color: #2c3e50;">✅ 활동 선수 명단 (전적/정보 수정)</h2>
         <div id="activeList"></div>
     </div>
 
 <script type="module">
     const ADMIN_PW = "1234";
-    if(prompt("비밀번호") !== ADMIN_PW) { window.location.href="index.html"; } else { document.body.style.display="block"; }
+    if(prompt("관리자 비밀번호") !== ADMIN_PW) { window.location.href="index.html"; } else { document.body.style.display="block"; }
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -52,46 +54,87 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let players = [];
+    let editingRecords = []; // 수정 중인 임시 전적 저장
 
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
-        let pList = "<table><tr><th>이름</th><th>소속</th><th>액션</th></tr>";
-        let aList = "<table><tr><th>순위</th><th>이름</th><th>전적수</th><th>관리</th></tr>";
+        let aList = "<table><tr><th>순위</th><th>이름</th><th>타임</th><th>그룹</th><th>성별</th><th>관리</th></tr>";
         players = [];
         snap.forEach(d => {
             const p = {id: d.id, ...d.data()};
             players.push(p);
-            if(p.status === "pending") {
-                pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td><button class="btn-ok" onclick="approve('${p.id}')">승인</button></td></tr>`;
-            } else {
-                const gameCount = p.recentGames ? p.recentGames.length : 0;
-                aList += `<tr><td>${p.groupRank}위</td><td>${p.name}</td><td>${gameCount}개</td>
-                    <td><button class="btn-no" onclick="remove('${p.id}')">제명</button></td></tr>`;
+            if(p.status === "approved") {
+                aList += `<tr id="row-${p.id}">
+                    <td>${p.groupRank}위</td><td><strong>${p.name}</strong></td><td>${p.timeGroup}</td><td>${p.league}</td><td>${p.gender}</td>
+                    <td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button> <button class="btn-no" onclick="remove('${p.id}')">제명</button></td></tr>`;
             }
         });
-        document.getElementById("pendingList").innerHTML = pList + "</table>";
         document.getElementById("activeList").innerHTML = aList + "</table>";
     });
 
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        editingRecords = [...(p.recentGames || [])];
+        const row = document.getElementById(`row-${id}`);
+        
+        // 전적 리스트 HTML 생성
+        let recordListHtml = `<div class="record-edit-box"><strong>최근 전적 관리:</strong>`;
+        if(editingRecords.length === 0) recordListHtml += `<p style="font-size:11px; color:#999;">기록 없음</p>`;
+        editingRecords.forEach((g, idx) => {
+            recordListHtml += `<div class="log-edit-item">
+                <span>[${g.dt}] vs ${g.opp} (${g.res})</span>
+                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">삭제</button>
+            </div>`;
+        });
+        recordListHtml += `<button style="width:100%; margin-top:5px; font-size:11px;" onclick="clearLog('${id}')">⚠️ 전체 전적 초기화</button></div>`;
+
+        row.innerHTML = `
+            <td colspan="5">
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <input id="e-rank-${id}" class="edit-input" style="width:50px;" type="number" value="${p.groupRank}">
+                    <input id="e-name-${id}" class="edit-input" type="text" value="${p.name}">
+                    <select id="e-time-${id}" class="edit-input"><option value="오전" ${p.timeGroup==='오전'?'selected':''}>오전</option><option value="오후" ${p.timeGroup==='오후'?'selected':''}>오후</option></select>
+                    <select id="e-league-${id}" class="edit-input"><option value="챔피언" ${p.league==='챔피언'?'selected':''}>A그룹</option><option value="챌린저" ${p.league==='챌린저'?'selected':''}>B그룹</option></select>
+                </div>
+                ${recordListHtml}
+            </td>
+            <td><button class="btn-ok" onclick="saveEdit('${id}')">저장</button><br><button class="btn-no" style="margin-top:5px;" onclick="location.reload()">취소</button></td>
+        `;
+    };
+
+    window.removeLog = (idx, id) => {
+        editingRecords.splice(idx, 1);
+        alert("해당 전적을 삭제했습니다. [저장]을 눌러야 최종 반영됩니다.");
+    };
+
+    window.clearLog = (id) => {
+        if(confirm("이 선수의 모든 전적을 지울까요?")) {
+            editingRecords = [];
+            alert("전적이 비워졌습니다. [저장]을 눌러주세요.");
+        }
+    };
+
+    window.saveEdit = async (id) => {
+        const updates = {
+            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
+            name: document.getElementById(`e-name-${id}`).value,
+            timeGroup: document.getElementById(`e-time-${id}`).value,
+            league: document.getElementById(`e-league-${id}`).value,
+            recentGames: editingRecords // 수정된 전적 반영
+        };
+        await updateDoc(doc(db, "ranking", id), updates);
+        alert("정보 및 전적이 성공적으로 저장되었습니다!");
+    };
+
     window.syncData = async () => {
-        if(!confirm("모든 선수 정보를 초기화 정렬하시겠습니까?")) return;
         const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
         for (const [t, l] of groups) {
-            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l)
-                                   .sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-            for(let i=0; i<members.length; i++) {
-                await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1, status: "approved" });
-            }
+            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l).sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+            for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
         }
-        alert("모든 선수가 인덱스에 나타나도록 동기화되었습니다!");
+        alert("순위 정렬 완료!");
     };
 
-    window.approve = async (id) => {
-        const p = players.find(x => x.id === id);
-        const last = players.filter(x => x.status === 'approved' && x.timeGroup === p.timeGroup && x.league === p.league).length;
-        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: last + 1, recentGames: [] });
-    };
-
-    window.remove = async (id) => { if(confirm("삭제하시겠습니까?")) await deleteDoc(doc(db, "ranking", id)); };
+    window.remove = async (id) => { if(confirm("제명하시겠습니까?")) await deleteDoc(doc(db, "ranking", id)); };
 </script>
 </body>
 </html>
