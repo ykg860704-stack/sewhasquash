@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>세화 관리자 센터</title>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; padding: 20px; background: #f8f9fa; display:none; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        .btn-ok { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .btn-sync { background: #6f42c1; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.1em; }
+        .btn-no { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>🛠️ 명단 및 전적 관리 시스템</h1>
+    
+    <div class="card">
+        <button class="btn-sync" onclick="syncData()">🔄 전체 데이터 인덱스 강제 동기화</button>
+        <p style="color:red; text-align:center; margin-top:10px;">* 인덱스에 모든 선수(1~100위)가 다 나오게 하려면 이 버튼을 누르세요.</p>
+    </div>
+
+    <div class="card">
+        <h2>⏳ 승인 대기</h2>
+        <div id="pendingList"></div>
+    </div>
+
+    <div class="card">
+        <h2>✅ 활동 선수 명단 (100위까지 관리)</h2>
+        <div id="activeList"></div>
+    </div>
+
+<script type="module">
+    const ADMIN_PW = "1234";
+    if(prompt("비밀번호") !== ADMIN_PW) { window.location.href="index.html"; } else { document.body.style.display="block"; }
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
+        authDomain: "sehwa-squash-ranking-system.firebaseapp.com",
+        projectId: "sehwa-squash-ranking-system",
+        storageBucket: "sehwa-squash-ranking-system.firebasestorage.app",
+        messagingSenderId: "75716030773",
+        appId: "1:75716030773:web:59f609a633fdac9ac45c7c",
+        measurementId: "G-0PWD04XL8K"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let players = [];
+
+    onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
+        let pList = "<table><tr><th>이름</th><th>소속</th><th>액션</th></tr>";
+        let aList = "<table><tr><th>순위</th><th>이름</th><th>전적수</th><th>관리</th></tr>";
+        players = [];
+        snap.forEach(d => {
+            const p = {id: d.id, ...d.data()};
+            players.push(p);
+            if(p.status === "pending") {
+                pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td><button class="btn-ok" onclick="approve('${p.id}')">승인</button></td></tr>`;
+            } else {
+                const gameCount = p.recentGames ? p.recentGames.length : 0;
+                aList += `<tr><td>${p.groupRank}위</td><td>${p.name}</td><td>${gameCount}개</td>
+                    <td><button class="btn-no" onclick="remove('${p.id}')">제명</button></td></tr>`;
+            }
+        });
+        document.getElementById("pendingList").innerHTML = pList + "</table>";
+        document.getElementById("activeList").innerHTML = aList + "</table>";
+    });
+
+    window.syncData = async () => {
+        if(!confirm("모든 선수 정보를 초기화 정렬하시겠습니까?")) return;
+        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
+        for (const [t, l] of groups) {
+            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l)
+                                   .sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+            for(let i=0; i<members.length; i++) {
+                await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1, status: "approved" });
+            }
+        }
+        alert("모든 선수가 인덱스에 나타나도록 동기화되었습니다!");
+    };
+
+    window.approve = async (id) => {
+        const p = players.find(x => x.id === id);
+        const last = players.filter(x => x.status === 'approved' && x.timeGroup === p.timeGroup && x.league === p.league).length;
+        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: last + 1, recentGames: [] });
+    };
+
+    window.remove = async (id) => { if(confirm("삭제하시겠습니까?")) await deleteDoc(doc(db, "ranking", id)); };
+</script>
+</body>
+</html>
