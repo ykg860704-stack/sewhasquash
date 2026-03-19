@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>세화 스쿼시 랭킹 시스템</title>
+    <title id="pageTitle">로딩 중...</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -19,6 +19,7 @@
         .section { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
         h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.15em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
         .blue-h2 { border-left-color: #3182ce; }
+        h4 { margin: 25px 0 10px 0; font-size: 1.05em; color: #2d3748; font-weight: 800; display: flex; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
@@ -27,25 +28,26 @@
         .record-tag { font-size: 9px; padding: 2px 3px; border-radius: 3px; font-weight: 800; margin: 0 1px; min-width: 16px; display: inline-block; }
         .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
-        .dormant-tag { color: #e53e3e; font-size: 10px; font-weight: 800; margin-top: 2px; }
         
+        /* 화살표 스타일 */
+        .up { color: #e53e3e; font-weight: bold; margin-left: 3px; }
+        .down { color: #38a169; font-weight: bold; margin-left: 3px; }
+        .stay { color: #cbd5e0; margin-left: 3px; }
+
         .input-group { display: flex; flex-direction: column; gap: 12px; }
-        select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; outline: none; background: white; }
-        .res-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-weight: 700; cursor: pointer; color: #718096; }
-        .res-btn.active-win { border-color: #3182ce; background: #ebf8ff; color: #3182ce; }
-        .res-btn.active-loss { border-color: #e53e3e; background: #fff5f5; color: #e53e3e; }
+        select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; background: white; }
         .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; font-size: 16px; cursor: pointer; }
-        
-        .share-box { background: #f0f7ff; border-radius: 12px; padding: 15px; margin-top: 15px; border: 1px solid #d0e4ff; display: none; }
-        
+        .res-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; cursor: pointer; }
+        .res-btn.active-win { border-color: #3182ce; background: #ebf8ff; color: #3182ce; font-weight: bold; }
+        .res-btn.active-loss { border-color: #e53e3e; background: #fff5f5; color: #e53e3e; font-weight: bold; }
+
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
-        .chart-box { height: 200px; margin: 15px 0; }
     </style>
 </head>
 <body>
 
-<h1>🏆 세화 스쿼시 랭킹</h1>
+<h1 id="mainTitle">🏆 랭킹 시스템</h1>
 
 <div class="mvp-container">
     <div class="mvp-card"><div class="mvp-label">🔥 이달의 다승왕</div><div id="topWinner" class="mvp-name">-</div></div>
@@ -65,7 +67,7 @@
     </div>
 </div>
 
-<div class="section" style="background: #fffcf0; border: 1px solid #feebc8;">
+<div class="section" style="background: #fffcf0;">
     <h2>⚔️ 경기 결과 기록</h2>
     <div class="input-group">
         <select id="challengerSelect" onchange="filterOpponents()"><option value="">도전자 선택</option></select>
@@ -75,29 +77,23 @@
             <button id="resLoss" class="res-btn" onclick="setResult('패')">도전자 패</button>
         </div>
         <input id="scoreInput" placeholder="점수 입력 (예: 11:9)">
-        <button class="btn-battle" onclick="battleRecord()">결과 저장 및 순위 반영</button>
-        <div id="shareBox" class="share-box">
-            <p id="shareText" style="font-size: 13px; color: #2b6cb0; font-weight: 600; white-space: pre-wrap; margin:0 0 10px 0;"></p>
-            <button onclick="copyShareText()" style="width:100%; padding:12px; border:none; background:#3182ce; color:white; border-radius:8px; font-weight:700; cursor:pointer;">결과 복사 (카톡 공유)</button>
-        </div>
+        <button class="btn-battle" onclick="battleRecord()">결과 저장</button>
     </div>
 </div>
 
-<div class="section"><h2 class="blue-h2">🥇 통합 랭킹 (오후 A)</h2><div id="totalARank"></div></div>
-<div class="section"><h2>🌅 오전 타임 랭킹</h2><div id="morningRank"></div></div>
-<div class="section"><h2>🌇 오후 타임 랭킹</h2><div id="afternoonRank"></div></div>
+<div class="section"><h2 class="blue-h2">🥇 현재 랭킹 현황</h2><div id="rankContainer"></div></div>
 
 <div id="modalOverlay" onclick="if(event.target===this) closeModal()">
     <div class="modal-content">
         <div id="modalBody"></div>
-        <div class="chart-box"><canvas id="rankChart"></canvas></div>
-        <button onclick="closeModal()" style="width:100%; margin-top:10px; padding:15px; border-radius:12px; border:none; background:#edf2f7; font-weight:700;">닫기</button>
+        <div style="height:200px; margin-top:15px;"><canvas id="rankChart"></canvas></div>
+        <button onclick="closeModal()" style="width:100%; margin-top:20px; padding:15px; border-radius:12px; border:none; background:#edf2f7; font-weight:700;">닫기</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -110,21 +106,34 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // 1. URL 파라미터로 센터 구분
+    const urlParams = new URLSearchParams(window.location.search);
+    const centerId = urlParams.get('center') || 'sehwa'; // 없으면 기본 세화
+    const centerNames = { 'sehwa': '세화 스쿼시', 'daechi': '대치 국어 학원' };
+    document.getElementById("pageTitle").innerText = centerNames[centerId] || '통합 랭킹';
+    document.getElementById("mainTitle").innerText = `🏆 ${centerNames[centerId] || '랭킹 시스템'}`;
+
     let players = [], challengerResult = null, myChart = null;
 
-    onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
-        players = []; snap.forEach(d => {
-            const p = {id: d.id, ...d.data()};
-            if(p.status === "approved") players.push(p);
+    // 2. 해당 센터 데이터만 실시간 수신
+    const q = query(collection(db, "ranking"), where("centerId", "==", centerId), orderBy("groupRank", "asc"));
+    onSnapshot(q, (snap) => {
+        players = [];
+        snap.forEach(d => {
+            const data = d.data();
+            if(data.status === "approved") players.push({id: d.id, ...data});
         });
-        updateMVP(); renderUI(); updateChallengerList();
+        renderUI();
+        updateMVP();
+        updateChallengerList();
     });
 
     window.register = async () => {
         const name = document.getElementById("nameInput").value.trim();
         if(!name) return alert("이름을 입력하세요.");
         await addDoc(collection(db, "ranking"), { 
-            name, timeGroup: document.getElementById("timeGroup").value, 
+            centerId, name, timeGroup: document.getElementById("timeGroup").value, 
             gender: document.getElementById("gender").value, 
             league: document.getElementById("league").value, 
             groupRank: 999, status: "pending", 
@@ -149,20 +158,13 @@
         const challenger = players.find(p => p.id === cId);
         const defender = players.find(p => p.id === dId);
         const dateStr = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
-        const nowIso = new Date().toISOString();
         
-        const cGames = [{res: challengerResult, opp: defender.name, dt: dateStr, sc: score}, ...(challenger.recentGames || [])].slice(0, 10);
-        const dGames = [{res: challengerResult==='승'?'패':'승', opp: challenger.name, dt: dateStr, sc: score}, ...(defender.recentGames || [])].slice(0, 10);
-
-        let updateC = { recentGames: cGames, lastGameDate: nowIso };
-        let updateD = { recentGames: dGames, lastGameDate: nowIso };
-
-        let shareMsg = `🏆 [세화 스쿼시 결과]\n━━━━━━━━━━━━━━\n🔥 도전자: ${challenger.name}\n🛡️ 방어자: ${defender.name}\n🎾 점수: ${score}\n📢 결과: ${challenger.name} ${challengerResult}!`;
+        let updateC = { recentGames: [{res: challengerResult, opp: defender.name, dt: dateStr, sc: score}, ...(challenger.recentGames || [])].slice(0, 10), lastGameDate: new Date().toISOString() };
+        let updateD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: challenger.name, dt: dateStr, sc: score}, ...(defender.recentGames || [])].slice(0, 10), lastGameDate: new Date().toISOString() };
 
         if (challengerResult === '승') {
             const oldCRank = challenger.groupRank, oldDRank = defender.groupRank;
             updateC.groupRank = Number(oldDRank); updateD.groupRank = Number(oldCRank);
-            shareMsg += `\n✨ 순위변동: ${oldCRank}위 ➔ ${oldDRank}위`;
         }
 
         updateC.rankHistory = [...(challenger.rankHistory || []), updateC.groupRank || challenger.groupRank].slice(-10);
@@ -170,107 +172,85 @@
 
         await updateDoc(doc(db, "ranking", challenger.id), updateC);
         await updateDoc(doc(db, "ranking", defender.id), updateD);
-        
-        document.getElementById("shareText").innerText = shareMsg;
-        document.getElementById("shareBox").style.display = "block";
         alert("기록 완료!");
     };
 
-    window.copyShareText = () => {
-        navigator.clipboard.writeText(document.getElementById("shareText").innerText).then(() => alert("복사되었습니다!"));
-    };
-
-    function drawChart(history) {
-        const filteredHistory = history.map(v => v === 999 ? null : v);
-        const ctx = document.getElementById('rankChart').getContext('2d');
-        if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: history.map((_, i) => `${i+1}회`),
-                datasets: [{ data: filteredHistory, borderColor: '#3182ce', tension: 0.3, fill: false, borderWidth: 3, spanGaps: true }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { reverse: true, ticks: { stepSize: 1, precision: 0 } } },
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
-
-    window.showLog = (id) => {
-        const p = players.find(x => x.id === id);
-        let html = `<h3>${p.name} 최근 기록</h3>`;
-        (p.recentGames || []).forEach(g => html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px;"><span>${g.dt}</span> <strong>vs ${g.opp} (${g.res})</strong> <span>${g.sc}</span></div>`);
-        document.getElementById("modalBody").innerHTML = html || "기록이 없습니다.";
-        document.getElementById("modalOverlay").style.display = "flex";
-        setTimeout(() => drawChart(p.rankHistory || [p.groupRank]), 100);
-    };
-
-    window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
-
     function renderUI() {
-        const filter = (t, l) => players.filter(p => p.timeGroup === t && p.league === l);
-        document.getElementById("totalARank").innerHTML = buildTable(filter("오후", "챔피언"));
-        document.getElementById("morningRank").innerHTML = `<h4>오전 A</h4>${buildTable(filter("오전", "챔피언"))} <h4>오전 B</h4>${buildTable(filter("오전", "챌린저"))}`;
-        document.getElementById("afternoonRank").innerHTML = `<h4>오후 A</h4>${buildTable(filter("오후", "챔피언"))} <h4>오후 B</h4>${buildTable(filter("오후", "챌린저"))}`;
+        const groups = [
+            {t: '오전', l: '챔피언', n: '🌅 오전 A'}, {t: '오전', l: '챌린저', n: '🌅 오전 B'},
+            {t: '오후', l: '챔피언', n: '🌇 오후 A'}, {t: '오후', l: '챌린저', n: '🌇 오후 B'}
+        ];
+        let fullHtml = "";
+        groups.forEach(g => {
+            const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
+            if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + buildTable(list);
+        });
+        document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
     }
 
-    // [최종] 전체 순위와 여성 순위를 동시에 표시하는 테이블 생성 함수
     function buildTable(list) {
-        if(!list.length) return "<p style='text-align:center; padding:15px; color:#ccc;'>데이터 없음</p>";
-        
-        // 전체 순위 기준으로 정렬
         list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-        
-        let femaleCount = 0; // 여성 내부 순위 카운터
-        let html = `<table><thead><tr><th>순위</th><th>이름/기록</th><th>성별</th></tr></thead><tbody>`;
+        let femaleCount = 0;
+        let html = `<table><thead><tr><th>순위</th><th>이름</th><th>성별</th></tr></thead><tbody>`;
         
         list.forEach(p => {
-            const isDormant = (p.lastGameDate && Math.floor((new Date() - new Date(p.lastGameDate)) / (1000*60*60*24)) >= 14);
-            const wins = (p.recentGames || []).filter(g => g.res === '승').length;
-            const rate = p.recentGames?.length ? Math.round((wins/p.recentGames.length)*100) : 0;
+            // 화살표 로직
+            let arrow = '<span class="stay">-</span>';
+            if (p.rankHistory && p.rankHistory.length >= 2) {
+                const curr = p.rankHistory[p.rankHistory.length-1];
+                const prev = p.rankHistory[p.rankHistory.length-2];
+                if (curr < prev) arrow = '<span class="up">▲</span>';
+                else if (curr > prev) arrow = '<span class="down">▼</span>';
+            }
             
-            let recHtml = `<div style="display:flex; justify-content:center; gap:1px; margin-top:3px;">`;
-            (p.recentGames || []).forEach(g => recHtml += `<span class="record-tag ${g.res==='승'?'win':'loss'}">${g.res}</span>`);
-            recHtml += `</div>`;
-
-            // 여성 순위 계산 로직
             let nameExtra = "";
             if (p.gender === '여') {
                 femaleCount++;
                 nameExtra = `<span style="color:#d63384; font-size:11px; margin-left:4px; font-weight:bold;">(여 ${femaleCount}위)</span>`;
             }
-
+            
             html += `<tr>
-                <td>${p.groupRank}위</td>
-                <td>
-                    <a class="name-link" onclick="showLog('${p.id}')">${p.name}${nameExtra}</a>
-                    <div class="win-rate">승률 ${rate}%</div>
-                    ${recHtml}
-                    ${isDormant?'<div class="dormant-tag">⚠️ 14일 미경기</div>':''}
-                </td>
+                <td>${p.groupRank}위${arrow}</td>
+                <td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${nameExtra}</a></td>
                 <td>${p.gender}</td>
             </tr>`;
         });
         return html + "</tbody></table>";
     }
 
+    window.showLog = (id) => {
+        const p = players.find(x => x.id === id);
+        let html = `<h3>${p.name} 최근 기록</h3>`;
+        (p.recentGames || []).forEach(g => html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px;"><span>${g.dt}</span> <strong>vs ${g.opp} (${g.res})</strong> <span>${g.sc}</span></div>`);
+        document.getElementById("modalBody").innerHTML = html || "기록 없음";
+        document.getElementById("modalOverlay").style.display = "flex";
+        
+        const ctx = document.getElementById('rankChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: p.rankHistory.map((_, i) => `${i+1}회`),
+                datasets: [{ data: p.rankHistory.map(v => v===999?null:v), borderColor: '#3182ce', spanGaps: true }]
+            },
+            options: { scales: { y: { reverse: true } }, plugins: { legend: { display: false } } }
+        });
+    };
+
+    window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
     window.filterOpponents = () => {
-        const cId = document.getElementById("challengerSelect").value; if(!cId) return;
-        const c = players.find(p => p.id === cId);
+        const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
+        if(!c) return;
         const targets = players.filter(p => p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
         let opts = "<option value=''>방어자 선택</option>";
         targets.forEach(p => opts += `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`);
         document.getElementById("defenderSelect").innerHTML = opts;
     };
-
     function updateChallengerList() {
         let opts = "<option value=''>도전자 선택</option>";
-        players.filter(p => Number(p.groupRank) > 1).forEach(p => opts += `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`);
+        players.filter(p => p.groupRank > 1).forEach(p => opts += `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`);
         document.getElementById("challengerSelect").innerHTML = opts;
     }
-
     function updateMVP() {
         let mW = 0, tW = "-", mG = 0, tP = "-";
         players.forEach(p => {
