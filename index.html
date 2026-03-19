@@ -27,15 +27,13 @@
         .up { color: #e53e3e; font-weight: bold; margin-left: 3px; }
         .down { color: #38a169; font-weight: bold; margin-left: 3px; }
         
-        /* 센터 대항전 (최하단 배치) */
         .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-top: 30px; margin-bottom: 40px; }
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .my-center { color: #f6ad55; font-weight: 800; }
 
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; }
-        .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; font-size: 16px; cursor: pointer; }
-        
+        .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; cursor: pointer; }
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
     </style>
@@ -100,7 +98,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -129,15 +127,14 @@
 
     async function updateCenterRanking() {
         const centerScores = [];
+        const allSnap = await getDocs(collection(db, "ranking"));
+        const allData = allSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
         for (const [id, name] of Object.entries(centerNames)) {
-            const q = query(collection(db, "ranking"), where("centerId", "==", id), where("status", "==", "approved"));
-            const snap = await getDocs(q);
-            let score = 0;
-            if (!snap.empty) {
-                const data = snap.docs.map(d => d.data());
-                const totalWins = data.reduce((acc, p) => acc + (p.recentGames || []).filter(g => g.res === '승').length, 0);
-                score = (totalWins * 10) + (data.length * 5);
-            }
+            // centerId가 없으면 'sehwa'로 간주하여 점수 계산
+            const cData = allData.filter(p => (p.centerId === id || (!p.centerId && id === 'sehwa')) && p.status === 'approved');
+            const totalWins = cData.reduce((acc, p) => acc + (p.recentGames || []).filter(g => g.res === '승').length, 0);
+            const score = (totalWins * 10) + (cData.length * 5);
             centerScores.push({ id, name, score });
         }
         centerScores.sort((a,b) => b.score - a.score);
@@ -154,13 +151,17 @@
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
         updateCenterRanking();
 
-        // 랭킹 수신 로직 최적화 (status 필터링 제거하여 기존 데이터 손실 방지 후 클라이언트에서 거르기)
-        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenter), orderBy("groupRank", "asc"));
+        // 🌟 핵심: 모든 데이터를 일단 가져온 뒤, centerId 유무에 따라 필터링 (기존 데이터 연동 해결책)
+        const q = query(collection(db, "ranking"), orderBy("groupRank", "asc"));
         unsubscribe = onSnapshot(q, (snap) => {
             players = [];
             snap.forEach(d => {
                 const data = d.data();
-                if(data.status === "approved") {
+                // 1. centerId가 내가 찾는 센터와 같거나
+                // 2. centerId가 아예 없는데 내가 지금 'sehwa'를 보고 있을 때만 목록에 추가
+                const isMatch = (data.centerId === currentCenter) || (!data.centerId && currentCenter === 'sehwa');
+                
+                if(data.status === "approved" && isMatch) {
                     players.push({id: d.id, ...data});
                 }
             });
@@ -172,14 +173,13 @@
 
     window.register = async () => {
         const name = document.getElementById("nameInput").value.trim();
-        if(!name) return alert("이름 입력!");
+        if(!name) return;
         await addDoc(collection(db, "ranking"), { 
             centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, 
             gender: document.getElementById("gender").value, league: document.getElementById("league").value, 
-            groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] 
+            groupRank: 999, status: "pending", recentGames: [], rankHistory: [999], lastGameDate: new Date().toISOString()
         });
-        alert("신청 완료! 관리자 승인 대기 중.");
-        document.getElementById("nameInput").value = "";
+        alert("신청 완료!");
     };
 
     window.setResult = (res) => {
@@ -190,11 +190,11 @@
 
     window.battleRecord = async () => {
         const cId = document.getElementById("challengerSelect").value, dId = document.getElementById("defenderSelect").value;
-        if(!cId || !dId || !challengerResult) return alert("항목 선택 필수!");
+        if(!cId || !dId || !challengerResult) return alert("선택 필수!");
         const c = players.find(p => p.id === cId), d = players.find(p => p.id === dId);
         const dt = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
-        let uC = { recentGames: [{res: challengerResult, opp: d.name, dt, sc: document.getElementById("scoreInput").value}, ...(c.recentGames || [])].slice(0, 10) };
-        let uD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: c.name, dt, sc: document.getElementById("scoreInput").value}, ...(d.recentGames || [])].slice(0, 10) };
+        let uC = { recentGames: [{res: challengerResult, opp: d.name, dt, sc: document.getElementById("scoreInput").value}, ...(c.recentGames || [])].slice(0, 10), lastGameDate: new Date().toISOString(), centerId: currentCenter };
+        let uD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: c.name, dt, sc: document.getElementById("scoreInput").value}, ...(d.recentGames || [])].slice(0, 10), lastGameDate: new Date().toISOString(), centerId: currentCenter };
         if (challengerResult === '승') { const oC = c.groupRank, oD = d.groupRank; uC.groupRank = Number(oD); uD.groupRank = Number(oC); }
         uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
         uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
@@ -210,12 +210,12 @@
             if(list.length > 0) {
                 let html = `<h4>${g.n}</h4><table><thead><tr><th>순위</th><th>이름</th><th>성별</th></tr></thead><tbody>`;
                 list.forEach(p => {
-                    let arrow = '<span style="color:#ccc;">-</span>';
+                    let arrow = '-';
                     if (p.rankHistory?.length >= 2) {
                         const cur = p.rankHistory[p.rankHistory.length-1], pre = p.rankHistory[p.rankHistory.length-2];
                         if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
                     }
-                    html += `<tr><td>${p.groupRank}위${arrow}</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td><td>${p.gender}</td></tr>`;
+                    html += `<tr><td>${p.groupRank}위 ${arrow}</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td><td>${p.gender}</td></tr>`;
                 });
                 fullHtml += html + "</tbody></table>";
             }
