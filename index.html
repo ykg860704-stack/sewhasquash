@@ -19,11 +19,11 @@
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; }
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block; }
         
-        /* 전적 배지 디자인 개선 */
-        .recent-box { display: flex; gap: 3px; margin-top: 5px; justify-content: flex-start; }
-        .res-badge { width: 18px; height: 18px; line-height: 18px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-align: center; }
-        .win-bg { background-color: #e53e3e; } /* 승: 빨강 */
-        .loss-bg { background-color: #3182ce; } /* 패: 파랑 */
+        /* ✅ 1. 전적 아이콘 색상 옅게 조정 */
+        .recent-box { display: flex; gap: 4px; margin-top: 6px; justify-content: flex-start; }
+        .res-badge { width: 20px; height: 20px; line-height: 20px; border-radius: 5px; font-size: 10px; font-weight: 800; color: white; text-align: center; }
+        .win-bg { background-color: #feb2b2; } /* 옅은 빨강 */
+        .loss-bg { background-color: #90cdf4; } /* 옅은 파랑 */
         
         /* 순위 화살표 */
         .up { color: #e53e3e; font-size: 11px; margin-left: 3px; vertical-align: middle; }
@@ -82,8 +82,13 @@
     </div>
 </div>
 
+<div class="section" style="border: 2px solid #e74c3c;">
+    <h2>🏆 실시간 통합 랭킹</h2>
+    <div id="integratedRank"></div>
+</div>
+
 <div class="section">
-    <h2 class="blue-h2">🥇 현재 센터 랭킹</h2>
+    <h2 class="blue-h2">🥇 그룹별 랭킹</h2>
     <div id="rankContainer"></div>
 </div>
 
@@ -132,50 +137,60 @@
     });
 
     function renderUI() {
+        // ✅ 3. 그룹 명칭에서 챔피언/챌린저 제거
         const groups = [
-            {t:'오전', l:'챔피언', n:'🌅 오전 A (챔피언)'}, {t:'오전', l:'챌린저', n:'🌅 오전 B (챌린저)'},
-            {t:'오후', l:'챔피언', n:'🌇 오후 A (챔피언)'}, {t:'오후', l:'챌린저', n:'🌇 오후 B (챌린저)'}
+            {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'},
+            {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}
         ];
+
+        // 통합 순위 렌더링 (오후 A그룹)
+        const integratedData = players.filter(p => p.timeGroup === '오후' && p.league === '챔피언');
+        document.getElementById("integratedRank").innerHTML = renderTableHtml(integratedData);
+
+        // 일반 그룹 랭킹 렌더링
         let fullHtml = "";
         groups.forEach(g => {
             const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
             if(list.length > 0) {
-                const femaleOnly = list.filter(p => p.gender === '여');
-                let html = `<h4>${g.n}</h4><table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
-                list.forEach(p => {
-                    // 1. 순위 화살표 로직
-                    let arrow = '<span class="keep">-</span>';
-                    if (p.rankHistory && p.rankHistory.length >= 2) {
-                        const cur = p.rankHistory[p.rankHistory.length - 1];
-                        const pre = p.rankHistory[p.rankHistory.length - 2];
-                        if (cur < pre) arrow = '<span class="up">▲</span>'; 
-                        else if (cur > pre) arrow = '<span class="down">▼</span>';
-                    }
-
-                    // 2. 전적 배지 로직 (Win/Loss)
-                    const recentBadges = (p.recentGames || []).slice(0, 5).map(v => 
-                        `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`
-                    ).join('');
-
-                    // 3. 여성 순위 태그
-                    let femaleRankTag = "";
-                    if(p.gender === '여') {
-                        const fIdx = femaleOnly.findIndex(f => f.id === p.id) + 1;
-                        femaleRankTag = `<span class="female-tag">여성 ${fIdx}위</span>`;
-                    }
-
-                    html += `<tr>
-                        <td><strong>${p.groupRank}위</strong>${arrow}</td>
-                        <td style="text-align:left; padding-left:15px;">
-                            <a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${femaleRankTag}
-                            <div class="recent-box">${recentBadges || '<span style="color:#ccc; font-size:10px;">전적 없음</span>'}</div>
-                        </td>
-                    </tr>`;
-                });
-                fullHtml += html + "</table>";
+                fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list);
             }
         });
         document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
+    }
+
+    function renderTableHtml(list) {
+        list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+        const femaleOnly = list.filter(p => p.gender === '여');
+        
+        let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
+        list.forEach(p => {
+            let arrow = '<span class="keep">-</span>';
+            if (p.rankHistory && p.rankHistory.length >= 2) {
+                const cur = p.rankHistory[p.rankHistory.length - 1];
+                const pre = p.rankHistory[p.rankHistory.length - 2];
+                if (cur < pre) arrow = '<span class="up">▲</span>'; 
+                else if (cur > pre) arrow = '<span class="down">▼</span>';
+            }
+
+            const recentBadges = (p.recentGames || []).slice(0, 5).map(v => 
+                `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`
+            ).join('');
+
+            let femaleRankTag = "";
+            if(p.gender === '여') {
+                const fIdx = femaleOnly.findIndex(f => f.id === p.id) + 1;
+                femaleRankTag = `<span class="female-tag">여성 ${fIdx}위</span>`;
+            }
+
+            html += `<tr>
+                <td><strong>${p.groupRank}위</strong>${arrow}</td>
+                <td style="text-align:left; padding-left:15px;">
+                    <a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${femaleRankTag}
+                    <div class="recent-box">${recentBadges}</div>
+                </td>
+            </tr>`;
+        });
+        return html + "</table>";
     }
 
     async function updateCenterRanking() {
@@ -202,13 +217,13 @@
             gender: document.getElementById("gender").value, league: document.getElementById("league").value, 
             groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] 
         });
-        alert("신청 완료! 관리자 승인 후 표시됩니다.");
+        alert("신청 완료!");
         document.getElementById("nameInput").value = "";
     };
 
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 최근 상세 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
+        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 상세 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
         document.getElementById("modalOverlay").style.display = "flex";
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
