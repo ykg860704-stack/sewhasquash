@@ -3,33 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="adminTitle">세화 스쿼시 관리자</title>
+    <title>스쿼시 랭킹 어드민 - 센터 관리</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 20px; max-width: 600px; margin: auto; background-color: #f4f7f6; }
-        h1 { font-size: 1.5rem; color: #2d3748; margin-bottom: 20px; text-align: center; font-weight: 800; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #e2e8f0; }
-        .info { margin-bottom: 10px; font-size: 15px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 15px; }
-        .approve { background-color: #3182ce; color: white; }
-        .reject { background-color: #e53e3e; color: white; }
-        .center-badge { display: inline-block; padding: 4px 10px; background: #ebf8ff; border-radius: 6px; font-size: 12px; color: #2b6cb0; margin-bottom: 10px; font-weight: 700; }
+        body { padding: 20px; max-width: 800px; margin: auto; background-color: #f4f7f6; }
+        .login-section { text-align: center; margin-top: 100px; }
+        .admin-panel { display: none; }
+        h1 { color: #2d3748; margin-bottom: 30px; }
+        .card { background: white; padding: 20px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #edf2f7; text-align: center; font-size: 14px; }
+        th { background: #f8fafc; color: #4a5568; }
+        input, select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
+        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-approve { background: #48bb78; color: white; }
+        .btn-delete { background: #f56565; color: white; }
+        .btn-save { background: #4299e1; color: white; }
+        .status-pending { color: #ed8936; font-weight: 800; }
     </style>
 </head>
 <body>
 
-<h1 id="headerTitle">센터 관리자 승인</h1>
-<div id="centerDisplay" style="text-align:center; margin-bottom:20px; font-weight:bold; color:#718096; font-size: 14px;"></div>
+<div id="loginSection" class="login-section">
+    <h1>센터 관리자 접속</h1>
+    <input type="password" id="centerCodeInput" placeholder="센터 코드를 입력하세요" style="width:250px; padding:15px; font-size:16px;">
+    <button class="btn btn-save" onclick="checkCode()" style="padding:15px 30px;">접속하기</button>
+    <p id="loginError" style="color:red; margin-top:10px; display:none;">코드가 일치하지 않습니다.</p>
+</div>
 
-<div id="pendingList">
-    <p style="text-align:center; color:#a0aec0; padding: 50px 0;">대기 중인 회원을 불러오는 중...</p>
+<div id="adminPanel" class="admin-panel">
+    <h1 id="adminTitle">센터 관리 모드</h1>
+    
+    <div class="card">
+        <h2>⏳ 승인 대기 명단</h2>
+        <div id="pendingList">로딩 중...</div>
+    </div>
+
+    <div class="card">
+        <h2>👥 전체 회원 관리 및 순위 수정</h2>
+        <div id="memberList">로딩 중...</div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, where, onSnapshot, updateDoc, deleteDoc, doc, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, updateDoc, doc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -43,79 +62,89 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ★ 핵심 수정: 주소에 값이 없으면 'sehwa'를 기본값으로 설정
-    const urlParams = new URLSearchParams(window.location.search);
-    const centerId = urlParams.get('center') || 'sehwa'; 
-
-    const centerNames = { 'sehwa': '세화 스쿼시', 'daechi': '대치 국어 학원' };
-    document.getElementById("adminTitle").innerText = `${centerNames[centerId] || centerId} 관리자`;
-    document.getElementById("headerTitle").innerText = `${centerNames[centerId] || centerId} 승인 센터`;
-    document.getElementById("centerDisplay").innerText = `현재 접속 코드: ${centerId}`;
-    
-    // 해당 센터의 'pending' 상태인 사람만 실시간 감시
-    const q = query(
-        collection(db, "ranking"), 
-        where("centerId", "==", centerId), 
-        where("status", "==", "pending")
-    );
-
-    onSnapshot(q, (snap) => {
-        const listDiv = document.getElementById("pendingList");
-        if (snap.empty) {
-            listDiv.innerHTML = "<p style='text-align:center; color:#a0aec0; padding:60px;'>승인 대기 중인 회원이 없습니다. 😊</p>";
-            return;
-        }
-
-        let html = "";
-        snap.forEach(d => {
-            const p = d.data();
-            html += `
-                <div class="card">
-                    <div class="center-badge">${centerNames[centerId] || centerId}</div>
-                    <div class="info"><strong>이름:</strong> ${p.name}</div>
-                    <div class="info"><strong>구분:</strong> ${p.timeGroup} / ${p.league} / ${p.gender}</div>
-                    <div class="btn-group">
-                        <button class="approve" onclick="approvePlayer('${d.id}', '${p.timeGroup}', '${p.league}')">승인</button>
-                        <button class="reject" onclick="rejectPlayer('${d.id}')">거절</button>
-                    </div>
-                </div>
-            `;
-        });
-        listDiv.innerHTML = html;
-    });
-
-    window.approvePlayer = async (id, timeGroup, league) => {
-        if (!confirm("이 회원을 승인하시겠습니까?")) return;
-
-        // 해당 센터, 해당 그룹에서 가장 낮은 순위 찾기
-        const qRank = query(
-            collection(db, "ranking"),
-            where("centerId", "==", centerId),
-            where("timeGroup", "==", timeGroup),
-            where("league", "==", league),
-            where("status", "==", "approved"),
-            orderBy("groupRank", "desc"),
-            limit(1)
-        );
-
-        const snap = await getDocs(qRank);
-        let nextRank = 1;
-        if (!snap.empty) {
-            nextRank = Number(snap.docs[0].data().groupRank) + 1;
-        }
-
-        await updateDoc(doc(db, "ranking", id), {
-            status: "approved",
-            groupRank: nextRank,
-            rankHistory: [nextRank]
-        });
-        alert(`승인 완료! ${nextRank}위로 배정되었습니다.`);
+    // 센터 코드 매핑 테이블
+    const codeMap = {
+        'sewha123': { id: 'sehwa', name: '세화 스쿼시 어드민' },
+        'chan123': { id: 'chan', name: '찬 스쿼시 어드민' }
     };
 
-    window.rejectPlayer = async (id) => {
-        if (confirm("정말 거절(삭제)하시겠습니까?")) {
+    let currentCenterId = "";
+
+    window.checkCode = () => {
+        const code = document.getElementById("centerCodeInput").value;
+        if (codeMap[code]) {
+            currentCenterId = codeMap[code].id;
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("adminPanel").style.display = "block";
+            document.getElementById("adminTitle").innerText = `⚙️ ${codeMap[code].name}`;
+            loadAdminData();
+        } else {
+            document.getElementById("loginError").style.display = "block";
+        }
+    };
+
+    function loadAdminData() {
+        // 현재 접속한 센터의 데이터만 실시간 감시
+        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenterId));
+        
+        onSnapshot(q, (snap) => {
+            let pendingHtml = "<table><tr><th>이름</th><th>그룹</th><th>성별</th><th>관리</th></tr>";
+            let memberHtml = "<table><tr><th>이름</th><th>현재순위</th><th>그룹</th><th>수정</th><th>삭제</th></tr>";
+            
+            snap.forEach(d => {
+                const p = {id: d.id, ...d.data()};
+                const groupName = `${p.timeGroup} ${p.league === '챔피언' ? 'A' : 'B'}`;
+
+                if (p.status === "pending") {
+                    pendingHtml += `<tr>
+                        <td>${p.name}</td>
+                        <td>${groupName}</td>
+                        <td>${p.gender}</td>
+                        <td><button class="btn btn-approve" onclick="approveMember('${p.id}')">승인</button></td>
+                    </tr>`;
+                } else {
+                    memberHtml += `<tr>
+                        <td>${p.name}</td>
+                        <td><input type="number" id="rank-${p.id}" value="${p.groupRank}" style="width:50px;">위</td>
+                        <td>
+                            <select id="group-${p.id}">
+                                <option value="오전-챔피언" ${p.timeGroup==='오전'&&p.league==='챔피언'?'selected':''}>오전A</option>
+                                <option value="오전-챌린저" ${p.timeGroup==='오전'&&p.league==='챌린저'?'selected':''}>오전B</option>
+                                <option value="오후-챔피언" ${p.timeGroup==='오후'&&p.league==='챔피언'?'selected':''}>오후A</option>
+                                <option value="오후-챌린저" ${p.timeGroup==='오후'&&p.league==='챌린저'?'selected':''}>오후B</option>
+                            </select>
+                        </td>
+                        <td><button class="btn btn-save" onclick="updateMember('${p.id}')">저장</button></td>
+                        <td><button class="btn btn-delete" onclick="deleteMember('${p.id}')">삭제</button></td>
+                    </tr>`;
+                }
+            });
+
+            document.getElementById("pendingList").innerHTML = pendingHtml + "</table>";
+            document.getElementById("memberList").innerHTML = memberHtml + "</table>";
+        });
+    }
+
+    window.approveMember = async (id) => {
+        if(confirm("이 회원을 승인하시겠습니까?")) {
+            await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 50 }); // 기본 50위로 승인
+        }
+    };
+
+    window.updateMember = async (id) => {
+        const newRank = document.getElementById(`rank-${id}`).value;
+        const [time, league] = document.getElementById(`group-${id}`).value.split('-');
+        await updateDoc(doc(db, "ranking", id), { 
+            groupRank: Number(newRank), 
+            timeGroup: time, 
+            league: league 
+        });
+        alert("수정되었습니다.");
+    };
+
+    window.deleteMember = async (id) => {
+        if(confirm("정말 삭제하시겠습니까? 전적 데이터가 모두 사라집니다.")) {
             await deleteDoc(doc(db, "ranking", id));
-            alert("삭제되었습니다.");
         }
     };
 </script>
