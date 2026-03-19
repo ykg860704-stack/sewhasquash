@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="pageTitle">세화 스쿼시 랭킹</title>
+    <title id="pageTitle">랭킹 시스템</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; line-height: 1.5; }
-        h1 { text-align: center; color: #1a202c; margin: 20px 0; font-size: 1.8em; font-weight: 800; letter-spacing: -1px; }
+        
+        /* 센터 선택 바 스타일 */
+        .center-selector-bar { background: #fff; padding: 10px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0; }
+        .center-selector-bar label { font-size: 13px; font-weight: 700; color: #718096; white-space: nowrap; }
+        #centerSelectMain { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7; background: #f8f9fa; font-weight: 700; color: #2d3748; cursor: pointer; }
+
+        h1 { text-align: center; color: #1a202c; margin: 10px 0 20px 0; font-size: 1.6em; font-weight: 800; letter-spacing: -1px; }
         .mvp-container { display: flex; gap: 10px; margin-bottom: 20px; }
         .mvp-card { flex: 1; background: linear-gradient(135deg, #2d3748, #1a202c); color: white; padding: 15px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .mvp-label { font-size: 11px; opacity: 0.8; font-weight: 600; margin-bottom: 5px; }
@@ -21,7 +27,6 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: block; }
-        .win-rate { font-size: 11px; color: #3182ce; font-weight: 600; margin-top: 2px; }
         .record-tag { font-size: 9px; padding: 2px 3px; border-radius: 3px; font-weight: 800; margin: 0 1px; min-width: 16px; display: inline-block; }
         .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
@@ -39,7 +44,16 @@
 </head>
 <body>
 
-<h1 id="mainTitle">🏆 세화 스쿼시 랭킹</h1>
+<div class="center-selector-bar">
+    <label>📍 센터 선택</label>
+    <select id="centerSelectMain" onchange="changeCenter(this.value)">
+        <option value="sehwa">세화 스쿼시</option>
+        <option value="daechi">대치 국어 학원</option>
+        <option value="test">테스트 센터</option>
+    </select>
+</div>
+
+<h1 id="mainTitle">로딩 중...</h1>
 
 <div class="mvp-container">
     <div class="mvp-card"><div class="mvp-label">🔥 이달의 다승왕</div><div id="topWinner" class="mvp-name">-</div></div>
@@ -99,31 +113,48 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ★ 핵심 수정: 주소창에 아무것도 없으면 'sehwa'를 기본값으로 사용
-    const urlParams = new URLSearchParams(window.location.search);
-    const centerId = urlParams.get('center') || 'sehwa'; 
-    const centerNames = { 'sehwa': '세화 스쿼시', 'daechi': '대치 국어 학원' };
+    const centerNames = { 'sehwa': '세화 스쿼시', 'daechi': '대치 국어 학원', 'test': '테스트 센터' };
+    let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     
-    document.getElementById("pageTitle").innerText = `${centerNames[centerId] || '스쿼시'} 랭킹`;
-    document.getElementById("mainTitle").innerText = `🏆 ${centerNames[centerId] || '랭킹 시스템'}`;
+    // 드롭다운 초기값 설정
+    document.getElementById("centerSelectMain").value = currentCenter;
 
-    let players = [], challengerResult = null, myChart = null;
+    let players = [], challengerResult = null, myChart = null, unsubscribe = null;
 
-    const q = query(collection(db, "ranking"), where("centerId", "==", centerId), orderBy("groupRank", "asc"));
-    onSnapshot(q, (snap) => {
-        players = [];
-        snap.forEach(d => {
-            const data = d.data();
-            if(data.status === "approved") players.push({id: d.id, ...data});
+    // 센터 변경 함수 (전역 등록)
+    window.changeCenter = (newCenter) => {
+        // 주소창 변경 (새로고침 없이 데이터만 갈아끼우기)
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?center=' + newCenter;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+        currentCenter = newCenter;
+        initData();
+    };
+
+    function initData() {
+        if(unsubscribe) unsubscribe(); // 이전 실시간 감시 해제
+
+        document.getElementById("pageTitle").innerText = `${centerNames[currentCenter] || '스쿼시'} 랭킹`;
+        document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter] || '랭킹 시스템'}`;
+
+        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenter), orderBy("groupRank", "asc"));
+        unsubscribe = onSnapshot(q, (snap) => {
+            players = [];
+            snap.forEach(d => {
+                const data = d.data();
+                if(data.status === "approved") players.push({id: d.id, ...data});
+            });
+            renderUI(); updateMVP(); updateChallengerList();
         });
-        renderUI(); updateMVP(); updateChallengerList();
-    });
+    }
+
+    // 초기 실행
+    initData();
 
     window.register = async () => {
         const name = document.getElementById("nameInput").value.trim();
         if(!name) return alert("이름을 입력하세요.");
         await addDoc(collection(db, "ranking"), { 
-            centerId, name, timeGroup: document.getElementById("timeGroup").value, 
+            centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, 
             gender: document.getElementById("gender").value, 
             league: document.getElementById("league").value, 
             groupRank: 999, status: "pending", 
@@ -133,6 +164,7 @@
         document.getElementById("nameInput").value = "";
     };
 
+    // --- 이하 기존 경기 기록 및 UI 렌더링 로직 동일 ---
     window.setResult = (res) => {
         challengerResult = res;
         document.getElementById("resWin").className = res === '승' ? 'res-btn active-win' : 'res-btn';
@@ -144,38 +176,30 @@
         const dId = document.getElementById("defenderSelect").value;
         const score = document.getElementById("scoreInput").value.trim() || "0:0";
         if(!cId || !dId || !challengerResult) return alert("항목을 선택하세요.");
-        
         const challenger = players.find(p => p.id === cId);
         const defender = players.find(p => p.id === dId);
         const dateStr = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
-        
         let updateC = { recentGames: [{res: challengerResult, opp: defender.name, dt: dateStr, sc: score}, ...(challenger.recentGames || [])].slice(0, 10), lastGameDate: new Date().toISOString() };
         let updateD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: challenger.name, dt: dateStr, sc: score}, ...(defender.recentGames || [])].slice(0, 10), lastGameDate: new Date().toISOString() };
-
         if (challengerResult === '승') {
             const oldCRank = challenger.groupRank, oldDRank = defender.groupRank;
             updateC.groupRank = Number(oldDRank); updateD.groupRank = Number(oldCRank);
         }
-
         updateC.rankHistory = [...(challenger.rankHistory || []), updateC.groupRank || challenger.groupRank].slice(-10);
         updateD.rankHistory = [...(defender.rankHistory || []), updateD.groupRank || defender.groupRank].slice(-10);
-
         await updateDoc(doc(db, "ranking", challenger.id), updateC);
         await updateDoc(doc(db, "ranking", defender.id), updateD);
         alert("기록 완료!");
     };
 
     function renderUI() {
-        const groups = [
-            {t: '오전', l: '챔피언', n: '🌅 오전 A'}, {t: '오전', l: '챌린저', n: '🌅 오전 B'},
-            {t: '오후', l: '챔피언', n: '🌇 오후 A'}, {t: '오후', l: '챌린저', n: '🌇 오후 B'}
-        ];
+        const groups = [{t: '오전', l: '챔피언', n: '🌅 오전 A'}, {t: '오전', l: '챌린저', n: '🌅 오전 B'}, {t: '오후', l: '챔피언', n: '🌇 오후 A'}, {t: '오후', l: '챌린저', n: '🌇 오후 B'}];
         let fullHtml = "";
         groups.forEach(g => {
             const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
             if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + buildTable(list);
         });
-        document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
+        document.getElementById("rankContainer").innerHTML = fullHtml || "<p style='text-align:center; padding:40px; color:#a0aec0;'>등록된 회원이 없습니다.</p>";
     }
 
     function buildTable(list) {
