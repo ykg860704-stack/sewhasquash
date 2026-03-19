@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>스쿼시 통합 랭킹 시스템</title>
+    <title>스쿼시 실시간 랭킹 시스템</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; }
+        body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; line-height: 1.5; }
         .center-selector-bar { background: #fff; padding: 10px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0; }
         #centerSelectMain { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7; background: #f8f9fa; font-weight: 700; cursor: pointer; }
-        h1 { text-align: center; color: #1a202c; font-size: 1.6em; font-weight: 800; margin: 10px 0 20px 0; }
+        h1 { text-align: center; color: #1a202c; margin: 10px 0 20px 0; font-size: 1.6em; font-weight: 800; }
         .section { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
         h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.15em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
         .blue-h2 { border-left-color: #3182ce; }
-        h4 { margin: 20px 0 10px 0; color: #4a5568; font-size: 0.95em; display: flex; align-items: center; gap: 5px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
-        .recent-results { font-size: 11px; font-weight: 800; margin-right: 5px; letter-spacing: -1px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; }
+        .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: block; }
+        .recent-box { font-size: 11px; font-weight: 800; display: block; margin-top: 2px; letter-spacing: 1px; }
         .win { color: #e53e3e; } .loss { color: #3182ce; }
-        .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 15px; cursor: pointer; }
-        .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-top: 30px; margin-bottom: 40px; }
+        .female-tag { font-size: 11px; color: #ed64a6; font-weight: 800; margin-left: 4px; background: #fff5f7; padding: 2px 5px; border-radius: 4px; }
+        .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-bottom: 40px; }
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .my-center { color: #f6ad55; font-weight: 800; }
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; }
         .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; cursor: pointer; }
@@ -47,22 +46,35 @@
 <h1 id="mainTitle">로딩 중...</h1>
 
 <div class="section">
-    <h2 class="blue-h2">🥇 현재 센터 랭킹</h2>
-    <div id="rankContainer">데이터를 불러오는 중...</div>
+    <h2 class="blue-h2">👤 신규 회원 등록</h2>
+    <div class="input-group">
+        <input id="nameInput" placeholder="이름을 입력하세요">
+        <div style="display:flex; gap:8px;">
+            <select id="timeGroup"><option value="오후">오후</option><option value="오전">오전</option></select>
+            <select id="gender"><option value="남">남성</option><option value="여">여성</option></select>
+            <select id="league"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select>
+        </div>
+        <button class="btn-battle" onclick="register()">신청 완료</button>
+    </div>
 </div>
 
 <div class="section" style="background: #fffcf0;">
-    <h2>⚔️ 경기 기록</h2>
+    <h2>⚔️ 경기 결과 기록</h2>
     <div class="input-group">
         <select id="challengerSelect" onchange="filterOpponents()"><option value="">도전자 선택</option></select>
         <select id="defenderSelect"><option value="">방어자 선택</option></select>
         <div style="display:flex; gap:10px;">
-            <button id="resWin" style="flex:1; padding:12px; border:1px solid #ccc; border-radius:10px; background:white;" onclick="setResult('승')">도전자 승</button>
-            <button id="resLoss" style="flex:1; padding:12px; border:1px solid #ccc; border-radius:10px; background:white;" onclick="setResult('패')">도전자 패</button>
+            <button id="resWin" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('승')">도전자 승</button>
+            <button id="resLoss" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('패')">도전자 패</button>
         </div>
-        <input id="scoreInput" placeholder="점수 (예: 11:9)">
+        <input id="scoreInput" placeholder="점수 입력 (예: 11:9)">
         <button class="btn-battle" onclick="battleRecord()">결과 저장</button>
     </div>
+</div>
+
+<div class="section">
+    <h2 class="blue-h2">🥇 현재 센터 랭킹</h2>
+    <div id="rankContainer"></div>
 </div>
 
 <div class="inter-center-rank">
@@ -92,19 +104,20 @@
 
     const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '스쿼시 3', 'squash4': '스쿼시 4', 'squash5': '스쿼시 5' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
-    document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
+    document.getElementById("centerSelectMain").value = currentCenter;
 
     let players = [], challengerResult = null, myChart = null;
 
-    // 데이터 감시 및 렌더링
     const q = query(collection(db, "ranking"), orderBy("groupRank", "asc"));
     onSnapshot(q, (snap) => {
         players = [];
         snap.forEach(d => {
             const data = d.data();
-            const isMatch = (data.centerId === currentCenter) || (!data.centerId && currentCenter === 'sehwa');
-            if(data.status === "approved" && isMatch) players.push({id: d.id, ...data});
+            if(data.status === "approved" && (data.centerId === currentCenter || (!data.centerId && currentCenter === 'sehwa'))) {
+                players.push({id: d.id, ...data});
+            }
         });
+        document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
         renderUI(); updateCenterRanking(); updateChallengerList();
     });
 
@@ -113,52 +126,39 @@
             {t:'오전', l:'챔피언', n:'🌅 오전 A (챔피언)'}, {t:'오전', l:'챌린저', n:'🌅 오전 B (챌린저)'},
             {t:'오후', l:'챔피언', n:'🌇 오후 A (챔피언)'}, {t:'오후', l:'챌린저', n:'🌇 오후 B (챌린저)'}
         ];
-        
         let fullHtml = "";
         groups.forEach(g => {
-            // 남성 리스트
-            const maleList = players.filter(p => p.timeGroup === g.t && p.league === g.l && p.gender !== '여');
-            // 여성 리스트 (별도 표시용)
-            const femaleList = players.filter(p => p.timeGroup === g.t && p.league === g.l && p.gender === '여');
-            
-            if(maleList.length > 0 || femaleList.length > 0) {
-                fullHtml += `<h4>${g.n}</h4>`;
+            const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
+            if(list.length > 0) {
+                list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
                 
-                // 남성 테이블
-                if(maleList.length > 0) {
-                    fullHtml += renderTable(maleList);
-                }
+                // 🌟 여성 회원만 따로 추출해서 여성간의 순위 계산
+                const femaleOnly = list.filter(p => p.gender === '여');
                 
-                // 여성 테이블 (별도 섹션)
-                if(femaleList.length > 0) {
-                    fullHtml += `<div style="margin-top:10px; padding:10px; background:#fff5f5; border-radius:10px;">
-                                    <span style="font-size:12px; font-weight:800; color:#e53e3e;">👩 ${g.n} 여성 순위</span>
-                                    ${renderTable(femaleList)}
-                                 </div>`;
-                }
+                let html = `<h4>${g.n}</h4><table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
+                list.forEach(p => {
+                    // 전적 승승패패 생성 (최근 10개)
+                    const recent = (p.recentGames || []).slice(0,10).map(v => `<span class="${v.res==='승'?'win':'loss'}">${v.res}</span>`).join('');
+                    
+                    // 여성 순위 계산 (여성일 경우에만 표시)
+                    let femaleRankTag = "";
+                    if(p.gender === '여') {
+                        const fIdx = femaleOnly.findIndex(f => f.id === p.id) + 1;
+                        femaleRankTag = `<span class="female-tag">여성 ${fIdx}위</span>`;
+                    }
+
+                    html += `<tr>
+                        <td>${p.groupRank}위</td>
+                        <td style="text-align:left; padding-left:15px;">
+                            <a class="name-link" onclick="showLog('${p.id}')">${p.name} ${femaleRankTag}</a>
+                            <span class="recent-box">${recent || '<span style="color:#ccc">기록 없음</span>'}</span>
+                        </td>
+                    </tr>`;
+                });
+                fullHtml += html + "</table>";
             }
         });
         document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
-    }
-
-    function renderTable(list) {
-        list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-        let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 (최근 전적)</th></tr>`;
-        list.forEach(p => {
-            // 이름 앞 승패 표시 (최근 10개)
-            const recent = (p.recentGames || []).slice(0, 10).map(g => 
-                `<span class="${g.res === '승' ? 'win' : 'loss'}">${g.res}</span>`
-            ).join('');
-            
-            html += `<tr>
-                <td>${p.groupRank}위</td>
-                <td style="text-align:left; padding-left:15px;">
-                    <span class="recent-results">${recent}</span>
-                    <a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>
-                </td>
-            </tr>`;
-        });
-        return html + `</table>`;
     }
 
     async function updateCenterRanking() {
@@ -177,11 +177,21 @@
             </div>`).join('');
     }
 
+    window.register = async () => {
+        const name = document.getElementById("nameInput").value.trim();
+        if(!name) return;
+        await addDoc(collection(db, "ranking"), { 
+            centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, 
+            gender: document.getElementById("gender").value, league: document.getElementById("league").value, 
+            groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] 
+        });
+        alert("신청 완료! 관리자 승인 후 표시됩니다.");
+        document.getElementById("nameInput").value = "";
+    };
+
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        const games = p.recentGames || [];
-        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 상세 기록</h3>` + 
-            games.map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
+        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 최근 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
         document.getElementById("modalOverlay").style.display = "flex";
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
@@ -202,7 +212,7 @@
         uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
         uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
         await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD);
-        alert("저장 완료!");
+        alert("기록 완료!");
     };
 
     window.filterOpponents = () => {
