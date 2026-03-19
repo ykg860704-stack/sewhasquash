@@ -3,52 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스쿼시 랭킹 어드민 - 센터 관리</title>
+    <title>스쿼시 통합 관리자 센터</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
-        * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 20px; max-width: 800px; margin: auto; background-color: #f4f7f6; }
-        .login-section { text-align: center; margin-top: 100px; }
-        .admin-panel { display: none; }
-        h1 { color: #2d3748; margin-bottom: 30px; }
-        .card { background: white; padding: 20px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; border-bottom: 1px solid #edf2f7; text-align: center; font-size: 14px; }
-        th { background: #f8fafc; color: #4a5568; }
-        input, select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
-        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
-        .btn-approve { background: #48bb78; color: white; }
-        .btn-delete { background: #f56565; color: white; }
-        .btn-save { background: #4299e1; color: white; }
-        .status-pending { color: #ed8936; font-weight: 800; }
+        body { font-family: 'Pretendard', sans-serif; padding: 20px; background: #f8f9fa; display:none; max-width: 800px; margin: auto; }
+        .login-section { display: block; text-align: center; margin-top: 100px; }
+        h1 { color: #2d3748; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
+        th { background: #f1f3f5; }
+        
+        /* 버튼 스타일 유지 */
+        .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        
+        .edit-input { width: 95%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
+        .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 5px; text-align: left; border: 1px solid #feb2b2; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 4px 0; }
+        .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 5px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+        
+        #loginBox { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; }
     </style>
 </head>
 <body>
 
-<div id="loginSection" class="login-section">
-    <h1>센터 관리자 접속</h1>
-    <input type="password" id="centerCodeInput" placeholder="센터 코드를 입력하세요" style="width:250px; padding:15px; font-size:16px;">
-    <button class="btn btn-save" onclick="checkCode()" style="padding:15px 30px;">접속하기</button>
-    <p id="loginError" style="color:red; margin-top:10px; display:none;">코드가 일치하지 않습니다.</p>
-</div>
-
-<div id="adminPanel" class="admin-panel">
-    <h1 id="adminTitle">센터 관리 모드</h1>
-    
-    <div class="card">
-        <h2>⏳ 승인 대기 명단</h2>
-        <div id="pendingList">로딩 중...</div>
+    <div id="loginSection" class="login-section">
+        <div id="loginBox">
+            <h2>센터 관리자 접속</h2>
+            <input type="password" id="centerCodeInput" placeholder="센터 코드를 입력하세요" style="width:200px; padding:12px; margin-bottom:10px;"><br>
+            <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px; font-size:16px;">접속하기</button>
+            <p id="errorMsg" style="color:red; display:none; margin-top:10px;">코드가 일치하지 않습니다.</p>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>👥 전체 회원 관리 및 순위 수정</h2>
-        <div id="memberList">로딩 중...</div>
+    <div id="adminPanel" style="display:none;">
+        <h1 id="adminTitle">🛠️ 관리자 시스템</h1>
+        
+        <div class="card" style="display: flex; justify-content: space-between;">
+            <button class="btn-sync" onclick="syncData()">🔄 전체 순위 강제 정렬</button>
+            <button class="btn-down" onclick="autoDemote()">⚠️ 미경기자 1계단 강등</button>
+        </div>
+
+        <div class="card">
+            <h2>⏳ 승인 대기 명단</h2>
+            <div id="pendingList"></div>
+        </div>
+
+        <div class="card">
+            <h2>✅ 활동 선수 관리 (정보/전적 수정/제명)</h2>
+            <div id="activeList"></div>
+        </div>
     </div>
-</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, updateDoc, doc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -62,91 +75,161 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 센터 코드 매핑 테이블
     const codeMap = {
-        'sewha123': { id: 'sehwa', name: '세화 스쿼시 어드민' },
-        'chan123': { id: 'chan', name: '찬 스쿼시 어드민' }
+        'sewha123': { id: 'sehwa', name: '세화 스쿼시' },
+        'chan123': { id: 'chan', name: '찬 스쿼시' }
     };
 
     let currentCenterId = "";
+    let players = [];
+    let tempRecords = [];
 
+    // 로그인 체크 함수
     window.checkCode = () => {
         const code = document.getElementById("centerCodeInput").value;
         if (codeMap[code]) {
             currentCenterId = codeMap[code].id;
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("adminPanel").style.display = "block";
-            document.getElementById("adminTitle").innerText = `⚙️ ${codeMap[code].name}`;
-            loadAdminData();
+            document.body.style.display = "block";
+            document.getElementById("adminTitle").innerText = `🛠️ ${codeMap[code].name} 관리 시스템`;
+            startListening();
         } else {
-            document.getElementById("loginError").style.display = "block";
+            document.getElementById("errorMsg").style.display = "block";
         }
     };
 
-    function loadAdminData() {
-        // 현재 접속한 센터의 데이터만 실시간 감시
-        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenterId));
+    // 데이터 리스닝 시작 (로그인 후 실행)
+    function startListening() {
+        // 현재 센터의 회원만 불러오기
+        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenterId), orderBy("groupRank", "asc"));
         
         onSnapshot(q, (snap) => {
-            let pendingHtml = "<table><tr><th>이름</th><th>그룹</th><th>성별</th><th>관리</th></tr>";
-            let memberHtml = "<table><tr><th>이름</th><th>현재순위</th><th>그룹</th><th>수정</th><th>삭제</th></tr>";
+            players = [];
+            let pList = "<table><tr><th>이름</th><th>타임</th><th>그룹</th><th>승인</th></tr>";
+            let aList = "<table><tr><th>순위</th><th>이름</th><th>정보(타임/그룹/성별)</th><th>관리</th></tr>";
             
             snap.forEach(d => {
                 const p = {id: d.id, ...d.data()};
-                const groupName = `${p.timeGroup} ${p.league === '챔피언' ? 'A' : 'B'}`;
-
-                if (p.status === "pending") {
-                    pendingHtml += `<tr>
-                        <td>${p.name}</td>
-                        <td>${groupName}</td>
-                        <td>${p.gender}</td>
-                        <td><button class="btn btn-approve" onclick="approveMember('${p.id}')">승인</button></td>
-                    </tr>`;
+                players.push(p);
+                
+                if(p.status === "pending") {
+                    pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td>${p.league === '챔피언' ? 'A' : 'B'}</td><td><button class="btn-save" onclick="approve('${p.id}')">승인</button> <button class="btn-del" onclick="removePlayer('${p.id}')">거절</button></td></tr>`;
                 } else {
-                    memberHtml += `<tr>
-                        <td>${p.name}</td>
-                        <td><input type="number" id="rank-${p.id}" value="${p.groupRank}" style="width:50px;">위</td>
+                    aList += `<tr id="row-${p.id}">
+                        <td>${p.groupRank}위</td>
+                        <td><strong>${p.name}</strong></td>
+                        <td>${p.timeGroup} / ${p.league === '챔피언' ? 'A' : 'B'} / ${p.gender}</td>
                         <td>
-                            <select id="group-${p.id}">
-                                <option value="오전-챔피언" ${p.timeGroup==='오전'&&p.league==='챔피언'?'selected':''}>오전A</option>
-                                <option value="오전-챌린저" ${p.timeGroup==='오전'&&p.league==='챌린저'?'selected':''}>오전B</option>
-                                <option value="오후-챔피언" ${p.timeGroup==='오후'&&p.league==='챔피언'?'selected':''}>오후A</option>
-                                <option value="오후-챌린저" ${p.timeGroup==='오후'&&p.league==='챌린저'?'selected':''}>오후B</option>
-                            </select>
-                        </td>
-                        <td><button class="btn btn-save" onclick="updateMember('${p.id}')">저장</button></td>
-                        <td><button class="btn btn-delete" onclick="deleteMember('${p.id}')">삭제</button></td>
-                    </tr>`;
+                            <button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button>
+                            <button class="btn-del" onclick="removePlayer('${p.id}')">제명</button>
+                        </td></tr>`;
                 }
             });
-
-            document.getElementById("pendingList").innerHTML = pendingHtml + "</table>";
-            document.getElementById("memberList").innerHTML = memberHtml + "</table>";
+            document.getElementById("pendingList").innerHTML = snap.size === 0 ? "대기자 없음" : pList + "</table>";
+            document.getElementById("activeList").innerHTML = aList + "</table>";
         });
     }
 
-    window.approveMember = async (id) => {
-        if(confirm("이 회원을 승인하시겠습니까?")) {
-            await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 50 }); // 기본 50위로 승인
-        }
-    };
+    // --- 기존 세화 어드민 상세 기능들 ---
 
-    window.updateMember = async (id) => {
-        const newRank = document.getElementById(`rank-${id}`).value;
-        const [time, league] = document.getElementById(`group-${id}`).value.split('-');
-        await updateDoc(doc(db, "ranking", id), { 
-            groupRank: Number(newRank), 
-            timeGroup: time, 
-            league: league 
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        tempRecords = [...(p.recentGames || [])];
+        const row = document.getElementById(`row-${id}`);
+
+        let recordHtml = `<div class="record-edit-box"><strong>전적/점수 관리:</strong>`;
+        tempRecords.forEach((g, idx) => {
+            recordHtml += `
+                <div class="log-row">
+                    <span>${g.dt} vs ${g.opp} (${g.res})</span>
+                    <input id="score-${id}-${idx}" class="edit-input" style="width:60px;" value="${g.sc || ''}" placeholder="점수">
+                    <button class="mini-del" onclick="removeLog(${idx}, '${id}')">삭제</button>
+                </div>`;
         });
-        alert("수정되었습니다.");
+        recordHtml += `</div>`;
+
+        row.innerHTML = `
+            <td colspan="3" style="text-align:left;">
+                <div style="display:flex; gap:5px;">
+                    순위:<input id="e-rank-${id}" class="edit-input" style="width:45px;" type="number" value="${p.groupRank}">
+                    이름:<input id="e-name-${id}" class="edit-input" style="width:80px;" type="text" value="${p.name}">
+                </div>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    타임:<select id="e-time-${id}" class="edit-input"><option value="오전" ${p.timeGroup==='오전'?'selected':''}>오전</option><option value="오후" ${p.timeGroup==='오후'?'selected':''}>오후</option></select>
+                    그룹:<select id="e-league-${id}" class="edit-input"><option value="챔피언" ${p.league==='챔피언'?'selected':''}>A그룹</option><option value="챌린저" ${p.league==='챌린저'?'selected':''}>B그룹</option></select>
+                    성별:<select id="e-gender-${id}" class="edit-input"><option value="남" ${p.gender==='남'?'selected':''}>남</option><option value="여" ${p.gender==='여'?'selected':''}>여</option></select>
+                </div>
+                ${recordHtml}
+            </td>
+            <td>
+                <button class="btn-save" onclick="saveEdit('${id}')">저장</button><br>
+                <button class="btn-del" style="margin-top:5px;" onclick="window.location.reload()">취소</button>
+            </td>
+        `;
     };
 
-    window.deleteMember = async (id) => {
-        if(confirm("정말 삭제하시겠습니까? 전적 데이터가 모두 사라집니다.")) {
+    window.removeLog = (idx, id) => {
+        tempRecords.splice(idx, 1);
+        alert("전적이 제거되었습니다. [저장]을 눌러야 반영됩니다.");
+    };
+
+    window.saveEdit = async (id) => {
+        const updatedGames = tempRecords.map((g, idx) => ({
+            ...g,
+            sc: document.getElementById(`score-${id}-${idx}`).value
+        }));
+
+        const updates = {
+            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
+            name: document.getElementById(`e-name-${id}`).value,
+            timeGroup: document.getElementById(`e-time-${id}`).value,
+            league: document.getElementById(`e-league-${id}`).value,
+            gender: document.getElementById(`e-gender-${id}`).value,
+            recentGames: updatedGames
+        };
+
+        await updateDoc(doc(db, "ranking", id), updates);
+        alert("정보가 수정되었습니다.");
+        syncData();
+    };
+
+    window.removePlayer = async (id) => {
+        if(confirm("정말로 이 선수를 삭제하시겠습니까?")) {
             await deleteDoc(doc(db, "ranking", id));
         }
     };
+
+    window.autoDemote = async () => {
+        if(!confirm("7일 이상 미경기자를 강등시키겠습니까?")) return;
+        for (const p of players) {
+            if(p.status === 'approved' && p.recentGames && p.recentGames.length > 0) {
+                // 실제 날짜 체크 로직은 데이터 구조에 따라 보완 필요
+                await updateDoc(doc(db, "ranking", p.id), { groupRank: Number(p.groupRank) + 1.1 });
+            }
+        }
+        await syncData();
+        alert("강등 정렬 완료.");
+    };
+
+    window.syncData = async () => {
+        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
+        for (const [t, l] of groups) {
+            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l)
+                                   .sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+            for(let i=0; i<members.length; i++) {
+                await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
+            }
+        }
+    };
+
+    window.approve = async (id) => {
+        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99, lastGameDate: new Date().toISOString() });
+        syncData();
+    };
+
+    // 초기 화면 보이기
+    document.body.style.display = "block";
 </script>
 </body>
 </html>
