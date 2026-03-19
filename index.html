@@ -21,19 +21,22 @@
         h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.15em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
         .blue-h2 { border-left-color: #3182ce; }
         
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
+        th { color: #718096; font-weight: 600; font-size: 12px; }
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: block; }
         .up { color: #e53e3e; font-weight: bold; margin-left: 3px; }
         .down { color: #38a169; font-weight: bold; margin-left: 3px; }
         
+        /* 하단 센터 대항전 */
         .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-top: 30px; margin-bottom: 40px; }
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .my-center { color: #f6ad55; font-weight: 800; }
 
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; }
-        .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; cursor: pointer; }
+        .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; font-size: 16px; cursor: pointer; }
+        
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
     </style>
@@ -131,7 +134,6 @@
         const allData = allSnap.docs.map(d => ({id: d.id, ...d.data()}));
 
         for (const [id, name] of Object.entries(centerNames)) {
-            // centerId가 없으면 'sehwa'로 간주하여 점수 계산
             const cData = allData.filter(p => (p.centerId === id || (!p.centerId && id === 'sehwa')) && p.status === 'approved');
             const totalWins = cData.reduce((acc, p) => acc + (p.recentGames || []).filter(g => g.res === '승').length, 0);
             const score = (totalWins * 10) + (cData.length * 5);
@@ -151,16 +153,12 @@
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
         updateCenterRanking();
 
-        // 🌟 핵심: 모든 데이터를 일단 가져온 뒤, centerId 유무에 따라 필터링 (기존 데이터 연동 해결책)
         const q = query(collection(db, "ranking"), orderBy("groupRank", "asc"));
         unsubscribe = onSnapshot(q, (snap) => {
             players = [];
             snap.forEach(d => {
                 const data = d.data();
-                // 1. centerId가 내가 찾는 센터와 같거나
-                // 2. centerId가 아예 없는데 내가 지금 'sehwa'를 보고 있을 때만 목록에 추가
                 const isMatch = (data.centerId === currentCenter) || (!data.centerId && currentCenter === 'sehwa');
-                
                 if(data.status === "approved" && isMatch) {
                     players.push({id: d.id, ...data});
                 }
@@ -179,7 +177,8 @@
             gender: document.getElementById("gender").value, league: document.getElementById("league").value, 
             groupRank: 999, status: "pending", recentGames: [], rankHistory: [999], lastGameDate: new Date().toISOString()
         });
-        alert("신청 완료!");
+        alert("신청 완료! 관리자 승인을 기다려주세요.");
+        document.getElementById("nameInput").value = "";
     };
 
     window.setResult = (res) => {
@@ -203,11 +202,20 @@
     };
 
     function renderUI() {
-        const groups = [{t: '오전', l: '챔피언', n: '🌅 오전 A'}, {t: '오전', l: '챌린저', n: '🌅 오전 B'}, {t: '오후', l: '챔피언', n: '🌇 오후 A'}, {t: '오후', l: '챌린저', n: '🌇 오후 B'}];
+        const groups = [
+            {t: '오전', l: '챔피언', n: '🌅 오전 A (챔피언)'}, 
+            {t: '오전', l: '챌린저', n: '🌅 오전 B (챌린저)'}, 
+            {t: '오후', l: '챔피언', n: '🌇 오후 A (챔피언)'}, 
+            {t: '오후', l: '챌린저', n: '🌇 오후 B (챌린저)'}
+        ];
+        
         let fullHtml = "";
         groups.forEach(g => {
+            // 성별 관계없이 해당 그룹 인원 모두 필터링
             const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
+            
             if(list.length > 0) {
+                list.sort((a, b) => Number(a.groupRank) - Number(b.groupRank));
                 let html = `<h4>${g.n}</h4><table><thead><tr><th>순위</th><th>이름</th><th>성별</th></tr></thead><tbody>`;
                 list.forEach(p => {
                     let arrow = '-';
@@ -215,12 +223,12 @@
                         const cur = p.rankHistory[p.rankHistory.length-1], pre = p.rankHistory[p.rankHistory.length-2];
                         if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
                     }
-                    html += `<tr><td>${p.groupRank}위 ${arrow}</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td><td>${p.gender}</td></tr>`;
+                    html += `<tr><td>${p.groupRank}위 ${arrow}</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td><td>${p.gender || '남'}</td></tr>`;
                 });
                 fullHtml += html + "</tbody></table>";
             }
         });
-        document.getElementById("rankContainer").innerHTML = fullHtml || "<p style='text-align:center; padding:30px; color:#aaa;'>데이터가 없습니다.</p>";
+        document.getElementById("rankContainer").innerHTML = fullHtml || "<p style='text-align:center; padding:30px; color:#aaa;'>등록된 선수가 없습니다.</p>";
     }
 
     window.showLog = (id) => {
@@ -229,7 +237,7 @@
         document.getElementById("modalOverlay").style.display = "flex";
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'line', data: { labels: p.rankHistory.map((_, i) => `${i+1}회`), datasets: [{ data: p.rankHistory, borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true } } } });
+        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => `${i+1}회`), datasets: [{ data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true } } } });
     };
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
     window.filterOpponents = () => {
