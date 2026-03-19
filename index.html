@@ -29,6 +29,14 @@
         .keep { color: #cbd5e0; font-size: 11px; margin-left: 3px; }
         
         .female-tag { font-size: 11px; color: #ed64a6; font-weight: 800; margin-left: 4px; background: #fff5f7; padding: 2px 6px; border-radius: 4px; border: 1px solid #fed7e2; }
+        
+        /* 🔥 추가된 보상 카드 스타일 */
+        .award-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .award-card { background: #fff; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #ffd700; box-shadow: 0 4px 10px rgba(255, 215, 0, 0.1); }
+        .award-title { font-size: 11px; font-weight: 800; color: #b7791f; margin-bottom: 5px; }
+        .award-name { font-size: 16px; font-weight: 800; color: #2d3748; }
+        .award-val { font-size: 12px; color: #718096; }
+
         .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-bottom: 40px; }
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .input-group { display: flex; flex-direction: column; gap: 12px; }
@@ -52,6 +60,19 @@
 </div>
 
 <h1 id="mainTitle">로딩 중...</h1>
+
+<div class="award-section" id="awardDisplay">
+    <div class="award-card">
+        <div class="award-title">🥇 이달의 다승왕</div>
+        <div class="award-name" id="bestWinner">-</div>
+        <div class="award-val" id="bestWinCount">0승</div>
+    </div>
+    <div class="award-card" style="border-color: #63b3ed;">
+        <div class="award-title" style="color: #3182ce;">🔥 이달의 열정왕</div>
+        <div class="award-name" id="bestActive">-</div>
+        <div class="award-val" id="bestActiveCount">0경기</div>
+    </div>
+</div>
 
 <div class="section">
     <h2 class="blue-h2">👤 신규 회원 등록</h2>
@@ -131,7 +152,7 @@
             }
         });
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
-        renderUI(); updateCenterRanking(); updateChallengerList();
+        renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
     function renderUI() {
@@ -167,6 +188,22 @@
         return html + "</table>";
     }
 
+    // ⭐ 개인 타이틀(다승왕, 열정왕) 계산 함수
+    function updateIndividualAwards() {
+        if(players.length === 0) return;
+        let winner = {name: '-', count: 0}, active = {name: '-', count: 0};
+        players.forEach(p => {
+            const games = p.recentGames || [];
+            const wins = games.filter(g => g.res === '승').length;
+            if(wins > winner.count) { winner = {name: p.name, count: wins}; }
+            if(games.length > active.count) { active = {name: p.name, count: games.length}; }
+        });
+        document.getElementById("bestWinner").innerText = winner.name;
+        document.getElementById("bestWinCount").innerText = winner.count + "승";
+        document.getElementById("bestActive").innerText = active.name;
+        document.getElementById("bestActiveCount").innerText = active.count + "경기";
+    }
+
     // ⭐ 요청하신 [승률 60% + 격파 보너스 20% + 참여율 20%] 공식 적용
     async function updateCenterRanking() {
         const centerScores = [];
@@ -191,7 +228,6 @@
                     games.forEach(game => {
                         if (game.res === '승') {
                             totalWins++;
-                            // 격파 보너스: 승리당 가중치 부여
                             upsetBonus += 10;
                         }
                     });
