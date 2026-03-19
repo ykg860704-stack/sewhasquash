@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="pageTitle">로딩 중...</title>
+    <title id="pageTitle">세화 스쿼시 랭킹</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; line-height: 1.5; }
         h1 { text-align: center; color: #1a202c; margin: 20px 0; font-size: 1.8em; font-weight: 800; letter-spacing: -1px; }
-        
         .mvp-container { display: flex; gap: 10px; margin-bottom: 20px; }
         .mvp-card { flex: 1; background: linear-gradient(135deg, #2d3748, #1a202c); color: white; padding: 15px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .mvp-label { font-size: 11px; opacity: 0.8; font-weight: 600; margin-bottom: 5px; }
         .mvp-name { font-size: 16px; font-weight: 800; }
-
         .section { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
         h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.15em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
         .blue-h2 { border-left-color: #3182ce; }
-        h4 { margin: 25px 0 10px 0; font-size: 1.05em; color: #2d3748; font-weight: 800; display: flex; align-items: center; }
-
+        h4 { margin: 25px 0 10px 0; font-size: 1.05em; color: #2d3748; font-weight: 800; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: block; }
@@ -28,26 +25,21 @@
         .record-tag { font-size: 9px; padding: 2px 3px; border-radius: 3px; font-weight: 800; margin: 0 1px; min-width: 16px; display: inline-block; }
         .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
-        
-        /* 화살표 스타일 */
         .up { color: #e53e3e; font-weight: bold; margin-left: 3px; }
         .down { color: #38a169; font-weight: bold; margin-left: 3px; }
-        .stay { color: #cbd5e0; margin-left: 3px; }
-
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; background: white; }
         .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; font-size: 16px; cursor: pointer; }
         .res-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; cursor: pointer; }
         .res-btn.active-win { border-color: #3182ce; background: #ebf8ff; color: #3182ce; font-weight: bold; }
         .res-btn.active-loss { border-color: #e53e3e; background: #fff5f5; color: #e53e3e; font-weight: bold; }
-
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-<h1 id="mainTitle">🏆 랭킹 시스템</h1>
+<h1 id="mainTitle">🏆 세화 스쿼시 랭킹</h1>
 
 <div class="mvp-container">
     <div class="mvp-card"><div class="mvp-label">🔥 이달의 다승왕</div><div id="topWinner" class="mvp-name">-</div></div>
@@ -107,16 +99,16 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 1. URL 파라미터로 센터 구분
+    // ★ 핵심 수정: 주소창에 아무것도 없으면 'sehwa'를 기본값으로 사용
     const urlParams = new URLSearchParams(window.location.search);
-    const centerId = urlParams.get('center') || 'sehwa'; // 없으면 기본 세화
+    const centerId = urlParams.get('center') || 'sehwa'; 
     const centerNames = { 'sehwa': '세화 스쿼시', 'daechi': '대치 국어 학원' };
-    document.getElementById("pageTitle").innerText = centerNames[centerId] || '통합 랭킹';
+    
+    document.getElementById("pageTitle").innerText = `${centerNames[centerId] || '스쿼시'} 랭킹`;
     document.getElementById("mainTitle").innerText = `🏆 ${centerNames[centerId] || '랭킹 시스템'}`;
 
     let players = [], challengerResult = null, myChart = null;
 
-    // 2. 해당 센터 데이터만 실시간 수신
     const q = query(collection(db, "ranking"), where("centerId", "==", centerId), orderBy("groupRank", "asc"));
     onSnapshot(q, (snap) => {
         players = [];
@@ -124,9 +116,7 @@
             const data = d.data();
             if(data.status === "approved") players.push({id: d.id, ...data});
         });
-        renderUI();
-        updateMVP();
-        updateChallengerList();
+        renderUI(); updateMVP(); updateChallengerList();
     });
 
     window.register = async () => {
@@ -192,47 +182,32 @@
         list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
         let femaleCount = 0;
         let html = `<table><thead><tr><th>순위</th><th>이름</th><th>성별</th></tr></thead><tbody>`;
-        
         list.forEach(p => {
-            // 화살표 로직
-            let arrow = '<span class="stay">-</span>';
+            let arrow = '<span style="color:#cbd5e0; margin-left:3px;">-</span>';
             if (p.rankHistory && p.rankHistory.length >= 2) {
                 const curr = p.rankHistory[p.rankHistory.length-1];
                 const prev = p.rankHistory[p.rankHistory.length-2];
                 if (curr < prev) arrow = '<span class="up">▲</span>';
                 else if (curr > prev) arrow = '<span class="down">▼</span>';
             }
-            
             let nameExtra = "";
-            if (p.gender === '여') {
-                femaleCount++;
-                nameExtra = `<span style="color:#d63384; font-size:11px; margin-left:4px; font-weight:bold;">(여 ${femaleCount}위)</span>`;
-            }
-            
-            html += `<tr>
-                <td>${p.groupRank}위${arrow}</td>
-                <td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${nameExtra}</a></td>
-                <td>${p.gender}</td>
-            </tr>`;
+            if (p.gender === '여') { femaleCount++; nameExtra = `<span style="color:#d63384; font-size:11px; margin-left:4px; font-weight:bold;">(여 ${femaleCount}위)</span>`; }
+            html += `<tr><td>${p.groupRank}위${arrow}</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}${nameExtra}</a></td><td>${p.gender}</td></tr>`;
         });
         return html + "</tbody></table>";
     }
 
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        let html = `<h3>${p.name} 최근 기록</h3>`;
+        let html = `<h3>${p.name} 기록</h3>`;
         (p.recentGames || []).forEach(g => html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px;"><span>${g.dt}</span> <strong>vs ${g.opp} (${g.res})</strong> <span>${g.sc}</span></div>`);
         document.getElementById("modalBody").innerHTML = html || "기록 없음";
         document.getElementById("modalOverlay").style.display = "flex";
-        
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
         myChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: p.rankHistory.map((_, i) => `${i+1}회`),
-                datasets: [{ data: p.rankHistory.map(v => v===999?null:v), borderColor: '#3182ce', spanGaps: true }]
-            },
+            data: { labels: p.rankHistory.map((_, i) => `${i+1}회`), datasets: [{ data: p.rankHistory.map(v => v===999?null:v), borderColor: '#3182ce', spanGaps: true }] },
             options: { scales: { y: { reverse: true } }, plugins: { legend: { display: false } } }
         });
     };
