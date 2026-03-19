@@ -19,13 +19,11 @@
         th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; }
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block; }
         
-        /* ✅ 1. 전적 아이콘 색상 옅게 조정 */
         .recent-box { display: flex; gap: 4px; margin-top: 6px; justify-content: flex-start; }
         .res-badge { width: 20px; height: 20px; line-height: 20px; border-radius: 5px; font-size: 10px; font-weight: 800; color: white; text-align: center; }
-        .win-bg { background-color: #feb2b2; } /* 옅은 빨강 */
-        .loss-bg { background-color: #90cdf4; } /* 옅은 파랑 */
+        .win-bg { background-color: #feb2b2; } 
+        .loss-bg { background-color: #90cdf4; } 
         
-        /* 순위 화살표 */
         .up { color: #e53e3e; font-size: 11px; margin-left: 3px; vertical-align: middle; }
         .down { color: #3182ce; font-size: 11px; margin-left: 3px; vertical-align: middle; }
         .keep { color: #cbd5e0; font-size: 11px; margin-left: 3px; }
@@ -137,23 +135,16 @@
     });
 
     function renderUI() {
-        // ✅ 3. 그룹 명칭에서 챔피언/챌린저 제거
         const groups = [
             {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'},
             {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}
         ];
-
-        // 통합 순위 렌더링 (오후 A그룹)
         const integratedData = players.filter(p => p.timeGroup === '오후' && p.league === '챔피언');
         document.getElementById("integratedRank").innerHTML = renderTableHtml(integratedData);
-
-        // 일반 그룹 랭킹 렌더링
         let fullHtml = "";
         groups.forEach(g => {
             const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
-            if(list.length > 0) {
-                fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list);
-            }
+            if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list);
         });
         document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
     }
@@ -161,62 +152,71 @@
     function renderTableHtml(list) {
         list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
         const femaleOnly = list.filter(p => p.gender === '여');
-        
         let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
         list.forEach(p => {
             let arrow = '<span class="keep">-</span>';
             if (p.rankHistory && p.rankHistory.length >= 2) {
-                const cur = p.rankHistory[p.rankHistory.length - 1];
-                const pre = p.rankHistory[p.rankHistory.length - 2];
+                const cur = p.rankHistory[p.rankHistory.length - 1], pre = p.rankHistory[p.rankHistory.length - 2];
                 if (cur < pre) arrow = '<span class="up">▲</span>'; 
                 else if (cur > pre) arrow = '<span class="down">▼</span>';
             }
-
-            const recentBadges = (p.recentGames || []).slice(0, 5).map(v => 
-                `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`
-            ).join('');
-
-            let femaleRankTag = "";
-            if(p.gender === '여') {
-                const fIdx = femaleOnly.findIndex(f => f.id === p.id) + 1;
-                femaleRankTag = `<span class="female-tag">여성 ${fIdx}위</span>`;
-            }
-
-            html += `<tr>
-                <td><strong>${p.groupRank}위</strong>${arrow}</td>
-                <td style="text-align:left; padding-left:15px;">
-                    <a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${femaleRankTag}
-                    <div class="recent-box">${recentBadges}</div>
-                </td>
-            </tr>`;
+            const recentBadges = (p.recentGames || []).slice(0, 5).map(v => `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`).join('');
+            let femaleRankTag = p.gender === '여' ? `<span class="female-tag">여성 ${femaleOnly.findIndex(f => f.id === p.id) + 1}위</span>` : "";
+            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${femaleRankTag}<div class="recent-box">${recentBadges}</div></td></tr>`;
         });
         return html + "</table>";
     }
 
+    // ⭐ 요청하신 [승률 60% + 격파 보너스 20% + 참여율 20%] 공식 적용
     async function updateCenterRanking() {
         const centerScores = [];
         const allSnap = await getDocs(collection(db, "ranking"));
         const allData = allSnap.docs.map(d => ({id: d.id, ...d.data()}));
+        
         for (const [id, name] of Object.entries(centerNames)) {
             const cData = allData.filter(p => (p.centerId === id || (!p.centerId && id === 'sehwa')) && p.status === 'approved');
-            const wins = cData.reduce((acc, p) => acc + (p.recentGames || []).filter(g => g.res === '승').length, 0);
-            centerScores.push({ id, name, score: (wins * 10) + (cData.length * 5) });
+            if (cData.length === 0) {
+                centerScores.push({ id, name, score: 0, activeCount: 0 });
+                continue;
+            }
+
+            let totalGames = 0, totalWins = 0, upsetBonus = 0;
+            let activePlayers = new Set();
+
+            cData.forEach(player => {
+                const games = player.recentGames || [];
+                if (games.length > 0) {
+                    activePlayers.add(player.id);
+                    totalGames += games.length;
+                    games.forEach(game => {
+                        if (game.res === '승') {
+                            totalWins++;
+                            // 격파 보너스: 승리당 가중치 부여
+                            upsetBonus += 10;
+                        }
+                    });
+                }
+            });
+
+            const winRateScore = totalGames > 0 ? (totalWins / totalGames) * 60 : 0;
+            const upsetScore = cData.length > 0 ? Math.min((upsetBonus / (cData.length * 5)) * 20, 20) : 0;
+            const participationScore = (activePlayers.size / cData.length) * 20;
+            const finalScore = (winRateScore + upsetScore + participationScore).toFixed(1);
+
+            centerScores.push({ id, name, score: parseFloat(finalScore), activeCount: activePlayers.size });
         }
         centerScores.sort((a,b) => b.score - a.score);
         document.getElementById("centerRankList").innerHTML = centerScores.map((c, i) => `
             <div class="center-rank-item ${c.id === currentCenter ? 'my-center' : ''}">
-                <span>${i+1}위. ${c.name}</span><span>${c.score.toLocaleString()} PT</span>
+                <span>${i+1}위. ${c.name} <small style="font-size:10px; opacity:0.8;">(${c.activeCount}명 활동)</small></span>
+                <span style="font-weight:800; color:#ecc94b;">${c.score} PT</span>
             </div>`).join('');
     }
 
     window.register = async () => {
         const name = document.getElementById("nameInput").value.trim();
         if(!name) return;
-        await addDoc(collection(db, "ranking"), { 
-            centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, 
-            gender: document.getElementById("gender").value, league: document.getElementById("league").value, 
-            groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] 
-        });
+        await addDoc(collection(db, "ranking"), { centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] });
         alert("신청 완료!");
         document.getElementById("nameInput").value = "";
     };
