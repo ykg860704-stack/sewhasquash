@@ -16,11 +16,21 @@
         h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.15em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
         .blue-h2 { border-left-color: #3182ce; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; }
-        .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: block; }
-        .recent-box { font-size: 11px; font-weight: 800; display: block; margin-top: 2px; letter-spacing: 1px; }
-        .win { color: #e53e3e; } .loss { color: #3182ce; }
-        .female-tag { font-size: 11px; color: #ed64a6; font-weight: 800; margin-left: 4px; background: #fff5f7; padding: 2px 5px; border-radius: 4px; }
+        th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; }
+        .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block; }
+        
+        /* 전적 배지 디자인 개선 */
+        .recent-box { display: flex; gap: 3px; margin-top: 5px; justify-content: flex-start; }
+        .res-badge { width: 18px; height: 18px; line-height: 18px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-align: center; }
+        .win-bg { background-color: #e53e3e; } /* 승: 빨강 */
+        .loss-bg { background-color: #3182ce; } /* 패: 파랑 */
+        
+        /* 순위 화살표 */
+        .up { color: #e53e3e; font-size: 11px; margin-left: 3px; vertical-align: middle; }
+        .down { color: #3182ce; font-size: 11px; margin-left: 3px; vertical-align: middle; }
+        .keep { color: #cbd5e0; font-size: 11px; margin-left: 3px; }
+        
+        .female-tag { font-size: 11px; color: #ed64a6; font-weight: 800; margin-left: 4px; background: #fff5f7; padding: 2px 6px; border-radius: 4px; border: 1px solid #fed7e2; }
         .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-bottom: 40px; }
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .input-group { display: flex; flex-direction: column; gap: 12px; }
@@ -130,17 +140,24 @@
         groups.forEach(g => {
             const list = players.filter(p => p.timeGroup === g.t && p.league === g.l);
             if(list.length > 0) {
-                list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-                
-                // 🌟 여성 회원만 따로 추출해서 여성간의 순위 계산
                 const femaleOnly = list.filter(p => p.gender === '여');
-                
                 let html = `<h4>${g.n}</h4><table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
                 list.forEach(p => {
-                    // 전적 승승패패 생성 (최근 10개)
-                    const recent = (p.recentGames || []).slice(0,10).map(v => `<span class="${v.res==='승'?'win':'loss'}">${v.res}</span>`).join('');
-                    
-                    // 여성 순위 계산 (여성일 경우에만 표시)
+                    // 1. 순위 화살표 로직
+                    let arrow = '<span class="keep">-</span>';
+                    if (p.rankHistory && p.rankHistory.length >= 2) {
+                        const cur = p.rankHistory[p.rankHistory.length - 1];
+                        const pre = p.rankHistory[p.rankHistory.length - 2];
+                        if (cur < pre) arrow = '<span class="up">▲</span>'; 
+                        else if (cur > pre) arrow = '<span class="down">▼</span>';
+                    }
+
+                    // 2. 전적 배지 로직 (Win/Loss)
+                    const recentBadges = (p.recentGames || []).slice(0, 5).map(v => 
+                        `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`
+                    ).join('');
+
+                    // 3. 여성 순위 태그
                     let femaleRankTag = "";
                     if(p.gender === '여') {
                         const fIdx = femaleOnly.findIndex(f => f.id === p.id) + 1;
@@ -148,10 +165,10 @@
                     }
 
                     html += `<tr>
-                        <td>${p.groupRank}위</td>
+                        <td><strong>${p.groupRank}위</strong>${arrow}</td>
                         <td style="text-align:left; padding-left:15px;">
-                            <a class="name-link" onclick="showLog('${p.id}')">${p.name} ${femaleRankTag}</a>
-                            <span class="recent-box">${recent || '<span style="color:#ccc">기록 없음</span>'}</span>
+                            <a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${femaleRankTag}
+                            <div class="recent-box">${recentBadges || '<span style="color:#ccc; font-size:10px;">전적 없음</span>'}</div>
                         </td>
                     </tr>`;
                 });
@@ -191,11 +208,11 @@
 
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 최근 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
+        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 최근 상세 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
         document.getElementById("modalOverlay").style.display = "flex";
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => `${i+1}회`), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce' }] }, options: { scales: { y: { reverse: true } } } });
+        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => `${i+1}회`), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true } } } });
     };
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
@@ -212,7 +229,7 @@
         uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
         uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
         await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD);
-        alert("기록 완료!");
+        alert("기록 성공!");
     };
 
     window.filterOpponents = () => {
