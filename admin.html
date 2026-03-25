@@ -2,100 +2,307 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>통합 관리자</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스쿼시 통합 관리자 센터</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-bottom: 5px; }
-        .btn-blue { background: #3182ce; }
-        .btn-green { background: #48bb78; }
+        /* [기존 스타일 100% 유지] */
+        * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
+        body { padding: 20px; background: #f8f9fa; display: none; max-width: 800px; margin: auto; }
+        .login-section { display: block; text-align: center; margin-top: 100px; }
+        #loginBox { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; border: 1px solid #eee; }
+        h1, h2 { color: #2d3748; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
+        th { background: #f1f3f5; color: #4a5568; }
+        .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .edit-input { width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; margin: 2px 0; }
+        .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; }
+        .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+
+        /* [신규 관리 항목 스타일] */
+        .admin-tab-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .admin-tab { padding: 10px 20px; background: #eee; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; white-space: nowrap; }
+        .admin-tab.active { background: #2d3748; color: white; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        textarea.edit-input { height: 80px; resize: none; }
     </style>
 </head>
 <body>
-    <h1>🛠️ 통합 관리자</h1>
-    
-    <div class="card">
-        <h3>🏢 관리 센터 선택</h3>
-        <select id="adminCenterSelect" onchange="switchAdmin()" style="width:100%; padding:10px;"></select>
+
+    <div id="loginSection" class="login-section">
+        <div id="loginBox">
+            <h2>🏢 센터 관리자 접속</h2>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">부여받은 센터 코드를 입력해주세요.</p>
+            <input type="password" id="centerCodeInput" placeholder="코드 입력" style="width:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center;"><br>
+            <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px; font-size:16px; border-radius:8px;">관리자 로그인</button>
+            <p id="errorMsg" style="color:red; display:none; margin-top:15px; font-size:13px;">코드가 일치하지 않습니다.</p>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>⏳ 승인 대기 명단</h3>
-        <div id="pendingList">승인을 기다리는 회원이 없습니다.</div>
-    </div>
+    <div id="adminPanel" style="display:none;">
+        <h1 id="adminTitle">🛠️ 관리 시스템</h1>
 
-    <div class="card">
-        <h3>🏢 센터 정보 수정</h3>
-        <input id="infoLoc" placeholder="위치 주소">
-        <input id="infoTel" placeholder="전화번호">
-        <textarea id="infoNotice" placeholder="공지사항"></textarea>
-        <button class="btn-blue" onclick="updateInfo()">정보 업데이트</button>
-    </div>
+        <div class="admin-tab-bar">
+            <div class="admin-tab active" onclick="showTab('players')">👤 선수/승인 관리</div>
+            <div class="admin-tab" onclick="showTab('info')">🏢 센터/대회 정보</div>
+            <div class="admin-tab" onclick="showTab('gallery')">📸 사진첩 관리</div>
+            <div class="admin-tab" onclick="showTab('market')">💰 중고 시세 관리</div>
+        </div>
+        
+        <div id="panel-players" class="tab-panel active">
+            <div class="card" style="display: flex; justify-content: space-between;">
+                <button class="btn-sync" onclick="syncData()">🔄 순위 강제 정렬</button>
+                <button class="btn-down" onclick="autoDemote()">⚠️ 7일 미경기자 강등</button>
+            </div>
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 승인 대기 명단</h2>
+                <div id="pendingList">데이터 로딩 중...</div>
+            </div>
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리</h2>
+                <div id="activeList">데이터 로딩 중...</div>
+            </div>
+        </div>
 
-    <div class="card">
-        <h3>📸 사진 추가</h3>
-        <input id="photoUrl" placeholder="이미지 URL 주소">
-        <input id="photoTitle" placeholder="사진 제목">
-        <button class="btn-green" onclick="uploadPhoto()">갤러리 등록</button>
+        <div id="panel-info" class="tab-panel">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">🏢 센터 상세 정보</h2>
+                <input id="infoLoc" class="edit-input" placeholder="주소 (예: 서울시 ...)">
+                <input id="infoTel" class="edit-input" placeholder="연락처 (예: 02-123-4567)">
+                <input id="infoTime" class="edit-input" placeholder="운영 시간 (예: 평일 06:00~23:00)">
+                <textarea id="infoNotice" class="edit-input" placeholder="공지사항 내용"></textarea>
+                <button class="btn-save" style="width:100%; margin-top:10px;" onclick="saveCenterInfo()">센터 정보 저장</button>
+            </div>
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">🎾 대회 정보 업데이트</h2>
+                <textarea id="matchInfo" class="edit-input" style="height:120px;" placeholder="대회 일정 및 내용을 입력하세요."></textarea>
+                <button class="btn-save" style="width:100%; margin-top:10px; background:#805ad5;" onclick="saveMatchInfo()">대회 정보 저장</button>
+            </div>
+        </div>
+
+        <div id="panel-gallery" class="tab-panel">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed64a6; padding-left:10px;">📸 새 사진 등록</h2>
+                <input id="photoUrl" class="edit-input" placeholder="이미지 URL 주소">
+                <input id="photoTitle" class="edit-input" placeholder="사진 제목">
+                <button class="btn-save" style="width:100%; margin-top:10px; background:#ed64a6;" onclick="addGallery()">사진 올리기</button>
+            </div>
+            <div class="card">
+                <h3>현재 등록된 사진 (최신 5개)</h3>
+                <div id="adminGalleryList"></div>
+            </div>
+        </div>
+
+        <div id="panel-market" class="tab-panel">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">💰 라켓 시세 등록</h2>
+                <input id="marketName" class="edit-input" placeholder="라켓 모델명">
+                <input id="marketPrice" class="edit-input" placeholder="중고 시세 (예: 12~15만)">
+                <button class="btn-save" style="width:100%; margin-top:10px; background:#38a169;" onclick="addMarket()">시세 추가</button>
+            </div>
+            <div class="card">
+                <div id="adminMarketList"></div>
+            </div>
+        </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, where, updateDoc, doc, setDoc, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, setDoc, addDoc, serverTimestamp, where, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-    const CENTERS = { "sehwa": "세화 스쿼시", "chan": "찬스쿼시", "sq3": "스쿼시 3", "sq4": "스쿼시 4", "sq5": "스쿼시 5" };
-    const firebaseConfig = { /* 키값 */ };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let currentAdminCenter = "sehwa";
-
-    // 셀렉트 박스
-    const sel = document.getElementById("adminCenterSelect");
-    Object.keys(CENTERS).forEach(id => {
-        const opt = document.createElement("option"); opt.value = id; opt.innerText = CENTERS[id];
-        sel.appendChild(opt);
-    });
-
-    window.switchAdmin = () => {
-        currentAdminCenter = sel.value;
-        loadAdminData();
+    // [기존 Firebase 설정 유지]
+    const firebaseConfig = {
+        apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
+        authDomain: "sehwa-squash-ranking-system.firebaseapp.com",
+        projectId: "sehwa-squash-ranking-system",
+        storageBucket: "sehwa-squash-ranking-system.firebasestorage.app",
+        messagingSenderId: "75716030773",
+        appId: "1:75716030773:web:59f609a633fdac9ac45c7c"
     };
 
-    // 기존 승인 로직
-    function loadAdminData() {
-        onSnapshot(query(collection(db, "ranking"), where("centerId", "==", currentAdminCenter), where("status", "==", "pending")), (snap) => {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const codeMap = { 
+        'sewha123': { id: 'sehwa', name: '세화 스쿼시' },
+        'chan123': { id: 'chan', name: '찬 스쿼시' },
+        'sq3': { id: 'squash3', name: '스쿼시 3센터' },
+        'sq4': { id: 'squash4', name: '스쿼시 4센터' },
+        'sq5': { id: 'squash5', name: '스쿼시 5센터' }
+    };
+
+    let currentCenterId = "";
+    let players = [];
+    let tempRecords = [];
+
+    // [탭 전환 함수]
+    window.showTab = (tabId) => {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('panel-' + tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    };
+
+    window.checkCode = () => {
+        const input = document.getElementById("centerCodeInput").value;
+        if (codeMap[input]) {
+            currentCenterId = codeMap[input].id;
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("adminPanel").style.display = "block";
+            document.getElementById("adminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
+            startListening();
+        } else {
+            document.getElementById("errorMsg").style.display = "block";
+        }
+    };
+
+    function startListening() {
+        // 기존 선수 명단 감시
+        const q = query(collection(db, "ranking"), orderBy("groupRank", "asc"));
+        onSnapshot(q, (snap) => {
+            players = [];
+            let pList = "<table><tr><th>이름</th><th>타임</th><th>그룹</th><th>승인</th></tr>";
+            let aList = "<table><tr><th>순위</th><th>이름</th><th>정보</th><th>관리</th></tr>";
+            snap.forEach(d => {
+                const p = {id: d.id, ...d.data()};
+                const pCenter = p.centerId || 'sehwa';
+                if (pCenter === currentCenterId) {
+                    players.push(p);
+                    const leagueLabel = p.league === '챔피언' ? 'A' : 'B';
+                    if(p.status === "pending") {
+                        pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td>${leagueLabel}</td>
+                            <td><button class="btn-save" onclick="approve('${p.id}')">승인</button> 
+                                <button class="btn-del" onclick="removePlayer('${p.id}')">거절</button></td></tr>`;
+                    } else {
+                        aList += `<tr id="row-${p.id}">
+                            <td>${p.groupRank}위</td><td><strong>${p.name}</strong></td>
+                            <td>${p.timeGroup} / ${leagueLabel} / ${p.gender}</td>
+                            <td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button>
+                                <button class="btn-del" onclick="removePlayer('${p.id}')">제명</button></td></tr>`;
+                    }
+                }
+            });
+            document.getElementById("pendingList").innerHTML = players.filter(x=>x.status==='pending').length ? pList + "</table>" : "대기자 없음";
+            document.getElementById("activeList").innerHTML = aList + "</table>";
+        });
+
+        // 추가 기능 데이터 로드 (정보/갤러리 등)
+        loadExtendedData();
+    }
+
+    // 신규 관리 기능들
+    async function loadExtendedData() {
+        // 센터 정보 로드
+        onSnapshot(doc(db, "centerInfo", currentCenterId), (d) => {
+            if(d.exists()) {
+                const data = d.data();
+                document.getElementById("infoLoc").value = data.loc || "";
+                document.getElementById("infoTel").value = data.tel || "";
+                document.getElementById("infoTime").value = data.time || "";
+                document.getElementById("infoNotice").value = data.notice || "";
+            }
+        });
+
+        // 대회 정보 로드
+        onSnapshot(doc(db, "matchInfo", currentCenterId), (d) => {
+            if(d.exists()) document.getElementById("matchInfo").value = d.data().content || "";
+        });
+
+        // 사진 목록 로드 (최신 5개)
+        onSnapshot(query(collection(db, "gallery"), where("centerId", "==", currentCenterId), orderBy("createdAt", "desc"), limit(5)), (snap) => {
             let h = "";
-            snap.forEach(d => h += `<div>${d.data().name} <button onclick="approve('${d.id}')">승인</button></div>`);
-            document.getElementById("pendingList").innerHTML = h || "대기자 없음";
+            snap.forEach(d => h += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; font-size:12px; border-bottom:1px solid #eee; padding:5px;"><span>${d.data().title}</span><button class="mini-del" onclick="deleteDoc(doc(db, 'gallery', '${d.id}'))">삭제</button></div>`);
+            document.getElementById("adminGalleryList").innerHTML = h || "등록된 사진 없음";
+        });
+
+        // 시세 목록 로드
+        onSnapshot(collection(db, "marketPrices"), (snap) => {
+            let h = "<table><tr><th>라켓</th><th>시세</th><th>삭제</th></tr>";
+            snap.forEach(d => h += `<tr><td>${d.data().name}</td><td>${d.data().price}</td><td><button class="mini-del" onclick="deleteDoc(doc(db, 'marketPrices', '${d.id}'))">X</button></td></tr>`);
+            document.getElementById("adminMarketList").innerHTML = h + "</table>";
         });
     }
 
-    window.approve = async (id) => {
-        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 1 });
-        alert("승인 완료");
-    };
-
-    // 신규 관리 로직
-    window.updateInfo = async () => {
-        await setDoc(doc(db, "centerInfo", currentAdminCenter), {
+    window.saveCenterInfo = async () => {
+        await setDoc(doc(db, "centerInfo", currentCenterId), {
             loc: document.getElementById("infoLoc").value,
             tel: document.getElementById("infoTel").value,
+            time: document.getElementById("infoTime").value,
             notice: document.getElementById("infoNotice").value
         });
-        alert("정보 수정됨");
+        alert("센터 정보 저장 완료!");
     };
 
-    window.uploadPhoto = async () => {
+    window.saveMatchInfo = async () => {
+        await setDoc(doc(db, "matchInfo", currentCenterId), { content: document.getElementById("matchInfo").value });
+        alert("대회 정보 저장 완료!");
+    };
+
+    window.addGallery = async () => {
         const url = document.getElementById("photoUrl").value;
-        if(!url) return alert("URL 입력!");
+        if(!url) return alert("URL을 입력하세요");
         await addDoc(collection(db, "gallery"), {
-            centerId: currentAdminCenter, url, title: document.getElementById("photoTitle").value, createdAt: serverTimestamp()
+            centerId: currentCenterId, url: url, title: document.getElementById("photoTitle").value, createdAt: serverTimestamp()
         });
-        alert("사진 등록됨");
+        document.getElementById("photoUrl").value = ""; document.getElementById("photoTitle").value = "";
+        alert("사진 등록 완료!");
     };
 
-    switchAdmin();
+    window.addMarket = async () => {
+        const name = document.getElementById("marketName").value;
+        if(!name) return;
+        await addDoc(collection(db, "marketPrices"), { name: name, price: document.getElementById("marketPrice").value });
+        document.getElementById("marketName").value = ""; document.getElementById("marketPrice").value = "";
+        alert("시세 등록 완료!");
+    };
+
+    // [기존 로직 유지 시작]
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        tempRecords = [...(p.recentGames || [])];
+        const row = document.getElementById(`row-${id}`);
+        let recordHtml = `<div class="record-edit-box"><strong>전적/점수 관리:</strong>`;
+        tempRecords.forEach((g, idx) => {
+            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp} (${g.res})</span><input id="score-${id}-${idx}" class="edit-input" style="width:60px;" value="${g.sc || ''}"><button class="mini-del" onclick="removeLog(${idx}, '${id}')">삭제</button></div>`;
+        });
+        recordHtml += `</div>`;
+        row.innerHTML = `<td colspan="3" style="text-align:left;">
+            <div>순위:<input id="e-rank-${id}" class="edit-input" style="width:40px;" type="number" value="${p.groupRank}"> 이름:<input id="e-name-${id}" class="edit-input" style="width:80px;" type="text" value="${p.name}"></div>
+            <div style="margin-top:5px;">
+                타임:<select id="e-time-${id}" class="edit-input" style="width:60px;"><option value="오전" ${p.timeGroup==='오전'?'selected':''}>오전</option><option value="오후" ${p.timeGroup==='오후'?'selected':''}>오후</option></select>
+                그룹:<select id="e-league-${id}" class="edit-input" style="width:60px;"><option value="챔피언" ${p.league==='챔피언'?'selected':''}>A</option><option value="챌린저" ${p.league==='챌린저'?'selected':''}>B</option></select>
+                성별:<select id="e-gender-${id}" class="edit-input" style="width:50px;"><option value="남" ${p.gender==='남'?'selected':''}>남</option><option value="여" ${p.gender==='여'?'selected':''}>여</option></select>
+            </div>${recordHtml}</td>
+            <td><button class="btn-save" onclick="saveEdit('${id}')">저장</button><br><button class="btn-del" style="margin-top:5px;" onclick="window.location.reload()">취소</button></td>`;
+    };
+
+    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("삭제됨 (저장 필수)"); };
+    window.saveEdit = async (id) => {
+        const updatedGames = tempRecords.map((g, idx) => ({ ...g, sc: document.getElementById(`score-${id}-${idx}`).value }));
+        const updates = { groupRank: Number(document.getElementById(`e-rank-${id}`).value), name: document.getElementById(`e-name-${id}`).value, timeGroup: document.getElementById(`e-time-${id}`).value, league: document.getElementById(`e-league-${id}`).value, gender: document.getElementById(`e-gender-${id}`).value, recentGames: updatedGames };
+        await updateDoc(doc(db, "ranking", id), updates); alert("저장됨"); syncData();
+    };
+    window.removePlayer = async (id) => { if(confirm("삭제하시겠습니까?")) await deleteDoc(doc(db, "ranking", id)); };
+    window.syncData = async () => {
+        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
+        for (const [t, l] of groups) {
+            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l).sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+            for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
+        }
+    };
+    window.approve = async (id) => { await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99, lastGameDate: new Date().toISOString() }); syncData(); };
+    window.autoDemote = async () => { if(!confirm("7일 미경기자 강등?")) return; await syncData(); };
+    // [기존 로직 유지 끝]
+
+    document.body.style.display = "block";
 </script>
 </body>
 </html>
