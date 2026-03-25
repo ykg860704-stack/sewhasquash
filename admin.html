@@ -90,7 +90,7 @@
                 <div id="pendingList">데이터 로딩 중...</div>
             </div>
             <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리 (전적 수정)</h2>
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리 (전체 정보 수정)</h2>
                 <div id="activeList">데이터 로딩 중...</div>
             </div>
         </div>
@@ -133,13 +133,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const codeMap = { 
-        'sewha123': { id: 'sehwa', name: '세화 스쿼시' }, 
-        'chan123': { id: 'chan', name: '찬 스쿼시' },
-        'sq3': { id: 'squash3', name: '스쿼시 3센터' },
-        'sq4': { id: 'squash4', name: '스쿼시 4센터' },
-        'sq5': { id: 'squash5', name: '스쿼시 5센터' }
-    };
+    const codeMap = { 'sewha123': { id: 'sehwa', name: '세화 스쿼시' }, 'chan123': { id: 'chan', name: '찬 스쿼시' } };
     let players = [], centers = [], matches = [], currentCenterId = "", tempRecords = [];
 
     window.switchGlobalTab = (tabId, btn) => {
@@ -175,12 +169,63 @@
                 if ((p.centerId || 'sehwa') === currentCenterId) {
                     players.push(p);
                     if(p.status === "pending") pList += `<tr><td>${p.name}</td><td><button class="btn-save" onclick="approve('${p.id}')">승인</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">거절</button></td></tr>`;
-                    else aList += `<tr id="row-${p.id}"><td>${p.groupRank}위</td><td><strong>${p.name}</strong></td><td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></td></tr>`;
+                    else aList += `<tr id="row-${p.id}"><td>${p.groupRank}위</td><td><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></td></tr>`;
                 }
             });
             document.getElementById("pendingList").innerHTML = pList + "</table>"; document.getElementById("activeList").innerHTML = aList + "</table>";
         });
     }
+
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
+        const row = document.getElementById(`row-${id}`);
+        
+        let recordHtml = `<div class="record-edit-box">`;
+        tempRecords.forEach((g, idx) => {
+            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp}</span>
+                <input id="score-${id}-${idx}" class="edit-input" style="width:50px;" value="${g.sc || ''}">
+                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">X</button></div>`;
+        });
+
+        row.innerHTML = `<td colspan="2" style="text-align:left;">
+            <div>
+                순위:<input id="e-rank-${id}" class="edit-input" style="width:35px;" value="${p.groupRank}">
+                이름:<input id="e-name-${id}" class="edit-input" style="width:70px;" value="${p.name}">
+            </div>
+            <div style="margin-top:5px;">
+                <select id="e-time-${id}" class="edit-input" style="width:60px;">
+                    <option value="오전" ${p.timeGroup==='오전'?'selected':''}>오전</option>
+                    <option value="오후" ${p.timeGroup==='오후'?'selected':''}>오후</option>
+                </select>
+                <select id="e-league-${id}" class="edit-input" style="width:75px;">
+                    <option value="챔피언" ${p.league==='챔피언'?'selected':''}>챔피언</option>
+                    <option value="챌린저" ${p.league==='챌린저'?'selected':''}>챌린저</option>
+                </select>
+                <select id="e-gender-${id}" class="edit-input" style="width:55px;">
+                    <option value="남" ${p.gender==='남'?'selected':''}>남</option>
+                    <option value="여" ${p.gender==='여'?'selected':''}>여</option>
+                </select>
+            </div>
+            ${recordHtml}</div>
+        </td>
+        <td><div class="action-btns"><button class="btn-save" onclick="saveEdit('${id}')">저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startCenterListening()">취소</button></div></td>`;
+    };
+
+    window.saveEdit = async (id) => {
+        const updatedGames = tempRecords.map((g, idx) => ({ ...g, sc: document.getElementById(`score-${id}-${idx}`).value }));
+        await updateDoc(doc(db, "ranking", id), {
+            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
+            name: document.getElementById(`e-name-${id}`).value,
+            timeGroup: document.getElementById(`e-time-${id}`).value,
+            league: document.getElementById(`e-league-${id}`).value,
+            gender: document.getElementById(`e-gender-${id}`).value,
+            recentGames: updatedGames
+        });
+        alert("수정 완료");
+    };
+
+    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("전적 삭제됨 (저장을 눌러야 반영됩니다)"); };
 
     function startGlobalListening() {
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
@@ -200,57 +245,15 @@
             });
             document.getElementById("matchManageList").innerHTML = html + "</table>";
         });
-
-        onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc")), (snap) => {
-            let html = "<table><tr><th>센터</th><th>내용</th><th>관리</th></tr>";
-            snap.forEach(d => {
-                const c = {id: d.id, ...d.data()};
-                html += `<tr><td style="width:20%; font-size:11px; color:#666;">${c.center || '알수없음'}</td><td style="text-align:left; word-break:keep-all;">${c.text}</td><td style="width:15%;"><button class="btn-del" onclick="removeData('globalChats', '${c.id}')">삭제</button></td></tr>`;
-            });
-            document.getElementById("chatManageList").innerHTML = html + "</table>";
-        });
     }
 
-    // 개별 센터 관리 - 선수 정보 수정
-    window.toggleEdit = (id) => {
-        const p = players.find(x => x.id === id);
-        tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
-        const row = document.getElementById(`row-${id}`);
-        let recordHtml = `<div class="record-edit-box">`;
-        tempRecords.forEach((g, idx) => {
-            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp}</span>
-                <input id="score-${id}-${idx}" class="edit-input" style="width:50px;" value="${g.sc || ''}">
-                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">X</button></div>`;
-        });
-        row.innerHTML = `<td colspan="2" style="text-align:left;">
-            순위:<input id="e-rank-${id}" class="edit-input" style="width:35px;" value="${p.groupRank}">
-            이름:<input id="e-name-${id}" class="edit-input" style="width:70px;" value="${p.name}">
-            ${recordHtml}</div></td>
-            <td><button class="btn-save" onclick="saveEdit('${id}')">저장</button></td>`;
-    };
-
-    window.saveEdit = async (id) => {
-        const updatedGames = tempRecords.map((g, idx) => ({ ...g, sc: document.getElementById(`score-${id}-${idx}`).value }));
-        await updateDoc(doc(db, "ranking", id), {
-            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
-            name: document.getElementById(`e-name-${id}`).value,
-            recentGames: updatedGames
-        });
-        alert("저장완료");
-    };
-
-    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("저장을 눌러야 반영됩니다."); };
-
-    // 총괄 관리 - 센터 상세 수정 (영업시간 추가)
     window.toggleCenterEdit = (id) => {
-        const c = centers.find(x => x.id === id);
-        const row = document.getElementById(`crow-${id}`);
-        row.innerHTML = `<td colspan="2">
-            <div class="global-edit-box">
+        const c = centers.find(x => x.id === id); const row = document.getElementById(`crow-${id}`);
+        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
                 <div><span class="edit-label">지역/상호</span><input id="ce-sido-${id}" class="edit-input" style="width:60px;" value="${c.sido || ''}"> <input id="ce-name-${id}" class="edit-input" style="width:150px;" value="${c.name || ''}"></div>
                 <div><span class="edit-label">상세주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
                 <div><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:130px;" value="${c.contact || ''}"></div>
-                <div><span class="edit-label">영업시간</span><input id="ce-hours-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23, 주말 09-18" value="${c.hours || ''}"></div>
+                <div><span class="edit-label">영업시간</span><input id="ce-hours-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.hours || ''}"></div>
                 <div><span class="edit-label">시설현황</span>
                     <div class="court-grid">
                         <div>정식: <input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:40px;" value="${c.courtReg || 0}">면</div>
@@ -259,57 +262,18 @@
                     </div>
                 </div>
                 <div style="margin-top:5px;"><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:130px;" value="${c.fee || ''}"></div>
-            </div>
-        </td>
+            </div></td>
         <td><div class="action-btns"><button class="btn-save" onclick="saveCenterEdit('${id}')">저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button></div></td>`;
     };
 
     window.saveCenterEdit = async (id) => {
         await updateDoc(doc(db, "infoRequests", id), {
-            sido: document.getElementById(`ce-sido-${id}`).value,
-            name: document.getElementById(`ce-name-${id}`).value,
-            addr: document.getElementById(`ce-addr-${id}`).value,
-            contact: document.getElementById(`ce-contact-${id}`).value,
-            hours: document.getElementById(`ce-hours-${id}`).value,
-            courtReg: Number(document.getElementById(`ce-court-reg-${id}`).value),
-            courtSemi: Number(document.getElementById(`ce-court-semi-${id}`).value),
-            courtDub: Number(document.getElementById(`ce-court-dub-${id}`).value),
+            sido: document.getElementById(`ce-sido-${id}`).value, name: document.getElementById(`ce-name-${id}`).value,
+            addr: document.getElementById(`ce-addr-${id}`).value, contact: document.getElementById(`ce-contact-${id}`).value,
+            hours: document.getElementById(`ce-hours-${id}`).value, courtReg: Number(document.getElementById(`ce-court-reg-${id}`).value),
+            courtSemi: Number(document.getElementById(`ce-court-semi-${id}`).value), courtDub: Number(document.getElementById(`ce-court-dub-${id}`).value),
             fee: document.getElementById(`ce-fee-${id}`).value
-        });
-        alert("모든 센터 정보가 수정되었습니다.");
-    };
-
-    window.toggleMatchEdit = (id) => {
-        const m = matches.find(x => x.id === id); const row = document.getElementById(`mrow-${id}`);
-        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-            <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
-            <div><span class="edit-label">대회날짜</span><input id="me-date-${id}" type="date" class="edit-input" style="width:140px;" value="${m.date || ''}"></div>
-            <div><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
-        </div></td>
-        <td><div class="action-btns"><button class="btn-save" onclick="saveMatchEdit('${id}')">저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button></div></td>`;
-    };
-
-    window.saveMatchEdit = async (id) => {
-        await updateDoc(doc(db, "matchRequests", id), {
-            title: document.getElementById(`me-title-${id}`).value,
-            date: document.getElementById(`me-date-${id}`).value,
-            loc: document.getElementById(`me-loc-${id}`).value
-        });
-        alert("대회 정보가 수정되었습니다.");
-    };
-
-    window.syncData = async () => {
-        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
-        for (const [t, l] of groups) {
-            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l).sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-            for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
-        }
-        alert("정렬 완료");
-    };
-
-    window.approve = async (id) => {
-        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99 });
-        syncData();
+        }); alert("센터 정보 수정 완료");
     };
 
     window.updateStatus = async (col, id, status) => { if(confirm("승인하시겠습니까?")) await updateDoc(doc(db, col, id), { status }); };
