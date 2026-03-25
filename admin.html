@@ -30,24 +30,29 @@
         th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         th { background: #f1f3f5; color: #4a5568; }
         
+        /* 버튼 공통 스타일 */
         .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
         .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
         .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         
+        /* 총괄 관리용 가로 정렬 버튼 컨테이너 */
+        .action-btns { display: flex; gap: 4px; justify-content: center; align-items: center; }
+        
         .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
         .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
         .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
         .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
-        .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
+        .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; }
         
         .login-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center; font-size:15px; }
         .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
         .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
 
         /* 수정 모드용 입력창 스타일 */
-        .global-edit-box { background: #f0f7ff; padding: 10px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; }
+        .global-edit-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; font-size: 12px; }
+        .edit-label { display: inline-block; width: 60px; font-weight: bold; color: #2b6cb0; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -227,7 +232,7 @@
         // 센터 등록 정보 감시
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
             centers = [];
-            let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>상태/관리</th></tr>";
+            let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const c = {id: d.id, ...d.data()};
                 centers.push(c);
@@ -235,9 +240,11 @@
                     <td style="text-align:left;"><b>${c.sido}</b><br>${c.name}</td>
                     <td>${c.contact || '-'}</td>
                     <td>
-                        <button class="btn-edit" onclick="toggleCenterEdit('${c.id}')">수정</button>
-                        ${c.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
-                        <button class="btn-del" onclick="removeData('infoRequests', '${c.id}')">삭제</button>
+                        <div class="action-btns">
+                            <button class="btn-edit" onclick="toggleCenterEdit('${c.id}')">수정</button>
+                            ${c.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
+                            <button class="btn-del" onclick="removeData('infoRequests', '${c.id}')">삭제</button>
+                        </div>
                     </td>
                 </tr>`;
             });
@@ -255,9 +262,11 @@
                     <td style="text-align:left;">${m.title}</td>
                     <td>${m.date}</td>
                     <td>
-                        <button class="btn-edit" onclick="toggleMatchEdit('${m.id}')">수정</button>
-                        ${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
-                        <button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">삭제</button>
+                        <div class="action-btns">
+                            <button class="btn-edit" onclick="toggleMatchEdit('${m.id}')">수정</button>
+                            ${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
+                            <button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">삭제</button>
+                        </div>
                     </td>
                 </tr>`;
             });
@@ -287,14 +296,19 @@
         const row = document.getElementById(`crow-${id}`);
         row.innerHTML = `<td colspan="2">
             <div class="global-edit-box">
-                지역:<input id="ce-sido-${id}" class="edit-input" style="width:70px;" value="${c.sido || ''}"> 
-                상호:<input id="ce-name-${id}" class="edit-input" style="width:120px;" value="${c.name || ''}"><br>
-                주소:<input id="ce-addr-${id}" class="edit-input" style="width:90%;" value="${c.addr || ''}"><br>
-                연락처:<input id="ce-contact-${id}" class="edit-input" style="width:120px;" value="${c.contact || ''}">
-                입장료:<input id="ce-fee-${id}" class="edit-input" style="width:80px;" value="${c.fee || ''}">
+                <div><span class="edit-label">지역/상호</span><input id="ce-sido-${id}" class="edit-input" style="width:60px;" value="${c.sido || ''}"> <input id="ce-name-${id}" class="edit-input" style="width:150px;" value="${c.name || ''}"></div>
+                <div><span class="edit-label">주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
+                <div><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:130px;" value="${c.contact || ''}"></div>
+                <div><span class="edit-label">코트수</span><input id="ce-courts-${id}" type="number" class="edit-input" style="width:60px;" value="${c.courts || 0}"> 면</div>
+                <div><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:130px;" value="${c.fee || ''}"></div>
             </div>
         </td>
-        <td><button class="btn-save" onclick="saveCenterEdit('${id}')">저장</button></td>`;
+        <td>
+            <div class="action-btns">
+                <button class="btn-save" onclick="saveCenterEdit('${id}')">저장</button>
+                <button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button>
+            </div>
+        </td>`;
     };
 
     window.saveCenterEdit = async (id) => {
@@ -303,9 +317,10 @@
             name: document.getElementById(`ce-name-${id}`).value,
             addr: document.getElementById(`ce-addr-${id}`).value,
             contact: document.getElementById(`ce-contact-${id}`).value,
+            courts: Number(document.getElementById(`ce-courts-${id}`).value),
             fee: document.getElementById(`ce-fee-${id}`).value
         });
-        alert("센터 정보가 수정되었습니다.");
+        alert("센터 정보가 성공적으로 수정되었습니다.");
     };
 
     window.toggleMatchEdit = (id) => {
@@ -313,13 +328,18 @@
         const row = document.getElementById(`mrow-${id}`);
         row.innerHTML = `<td colspan="2">
             <div class="global-edit-box">
-                대회명:<input id="me-title-${id}" class="edit-input" style="width:200px;" value="${m.title || ''}"><br>
-                날짜:<input id="me-date-${id}" type="date" class="edit-input" style="width:140px;" value="${m.date || ''}"><br>
-                장소:<input id="me-loc-${id}" class="edit-input" style="width:200px;" value="${m.loc || ''}"><br>
-                링크:<input id="me-link-${id}" class="edit-input" style="width:90%;" value="${m.link || ''}">
+                <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
+                <div><span class="edit-label">대회날짜</span><input id="me-date-${id}" type="date" class="edit-input" style="width:140px;" value="${m.date || ''}"></div>
+                <div><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
+                <div><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}"></div>
             </div>
         </td>
-        <td><button class="btn-save" onclick="saveMatchEdit('${id}')">저장</button></td>`;
+        <td>
+            <div class="action-btns">
+                <button class="btn-save" onclick="saveMatchEdit('${id}')">저장</button>
+                <button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button>
+            </div>
+        </td>`;
     };
 
     window.saveMatchEdit = async (id) => {
@@ -329,7 +349,7 @@
             loc: document.getElementById(`me-loc-${id}`).value,
             link: document.getElementById(`me-link-${id}`).value
         });
-        alert("대회 정보가 수정되었습니다.");
+        alert("대회 정보가 성공적으로 수정되었습니다.");
     };
 
     // ==========================================
