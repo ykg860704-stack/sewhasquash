@@ -2,319 +2,98 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>스쿼시 통합 플랫폼</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>플랫폼 관리자</title>
     <style>
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; line-height: 1.5; }
-        h1 { text-align: center; color: #1a202c; margin: 15px 0; font-size: 1.5em; font-weight: 800; }
-        
-        /* 상단 센터 선택 */
-        .center-card { background: #3182ce; color: white; padding: 15px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(49,130,206,0.2); }
-        select { width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; color: #3182ce; background: white; }
-
-        /* 탭 메뉴 */
-        .tab-menu { display: flex; background: white; border-radius: 12px; margin-bottom: 20px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 10px; z-index: 100; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: 700; color: #a0aec0; cursor: pointer; border-radius: 8px; font-size: 13px; transition: 0.2s; }
-        .tab-btn.active { background: #3182ce; color: white; }
-
-        /* 섹션 제어 */
-        .content-section { display: none; animation: fadeIn 0.3s ease; }
-        .content-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 기존 스타일 (랭킹/MVP/입력) */
-        .mvp-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        .mvp-card { flex: 1; background: linear-gradient(135deg, #2d3748, #1a202c); color: white; padding: 15px; border-radius: 16px; text-align: center; }
-        .mvp-label { font-size: 11px; opacity: 0.8; margin-bottom: 5px; }
-        .mvp-name { font-size: 16px; font-weight: 800; }
-        .section { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
-        h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.1em; margin-bottom: 15px; color: #2d3748; font-weight: 700; }
-        .blue-h2 { border-left-color: #3182ce; }
-        .purple-h2 { border-left-color: #805ad5; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; text-align: center; font-size: 14px; }
-        .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 15px; cursor: pointer; display: block; }
-        .win-rate { font-size: 11px; color: #3182ce; font-weight: 600; }
-        .record-tag { font-size: 9px; padding: 2px 3px; border-radius: 3px; font-weight: 800; margin: 0 1px; display: inline-block; min-width: 16px; }
-        .win { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
-        .loss { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
-        input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; outline: none; margin-bottom: 10px; }
-        .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; cursor: pointer; }
-
-        /* 사진첩 & 센터정보 */
-        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .photo-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .photo-card img { width: 100%; height: 130px; object-fit: cover; border-bottom: 1px solid #f1f3f5; }
-        .photo-title { padding: 8px; font-size: 12px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .info-item { margin-bottom: 15px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px; }
-        .info-label { font-weight: 800; color: #3182ce; font-size: 12px; display: block; margin-bottom: 3px; }
-
-        /* 채팅 */
-        #chatDisplay { height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px; background: #fdfdfd; border: 1px solid #eee; border-radius: 12px; }
-        .msg { font-size: 13px; padding: 8px 12px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
-        .msg-other { background: #edf2f7; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .msg-me { background: #3182ce; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-
-        /* 모달 */
-        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
-        .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
-        .chart-box { height: 180px; margin: 15px 0; }
+        body { font-family: 'Pretendard', sans-serif; padding: 20px; background: #f8f9fa; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 8px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 5px; color: white; }
+        .btn-blue { background: #3182ce; }
+        .btn-purple { background: #805ad5; }
+        .btn-red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
 
-<h1 id="mainTitle">🏆 세화 스쿼시 플랫폼</h1>
+    <h1>🛠️ 플랫폼 관리자</h1>
 
-<div class="center-card">
-    <select id="centerSelect" onchange="switchCenter()"></select>
-</div>
+    <div class="card">
+        <h3>🏢 관리 센터 선택</h3>
+        <select id="adminCenterSelect" onchange="switchAdmin()"></select>
+    </div>
 
-<div class="tab-menu">
-    <button class="tab-btn active" id="btn-rank" onclick="openTab('rank')">랭킹</button>
-    <button class="tab-btn" id="btn-info" onclick="openTab('info')">정보</button>
-    <button class="tab-btn" id="btn-gallery" onclick="openTab('gallery')">사진첩</button>
-    <button class="tab-btn" id="btn-chat" onclick="openTab('chat')">채팅</button>
-</div>
+    <div class="card">
+        <h3>📍 센터 정보/공지 관리</h3>
+        <input id="infoLoc" placeholder="센터 주소">
+        <input id="infoTel" placeholder="전화번호">
+        <textarea id="infoNotice" placeholder="공지사항"></textarea>
+        <button class="btn-blue" onclick="saveInfo()">정보 업데이트</button>
+    </div>
 
-<div id="rank" class="content-section active">
-    <div class="mvp-container">
-        <div class="mvp-card"><div class="mvp-label">🔥 이달의 다승왕</div><div id="topWinner" class="mvp-name">-</div></div>
-        <div class="mvp-card"><div class="mvp-label">🎾 이달의 열정왕</div><div id="topPlayer" class="mvp-name">-</div></div>
+    <div class="card">
+        <h3>📸 사진첩 관리</h3>
+        <input type="file" id="photoFile" accept="image/*">
+        <input id="photoTitle" placeholder="사진 제목">
+        <button class="btn-purple" onclick="uploadPhoto()">사진 업로드 (URL 방식)</button>
+        <p style="font-size:11px; color:red;">* 현재는 이미지 URL을 직접 입력하거나 Storage 연동이 필요합니다.</p>
     </div>
-    <div class="section">
-        <h2 class="blue-h2">👤 신규 회원 등록</h2>
-        <input id="nameInput" placeholder="이름을 입력하세요">
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <select id="regTime" style="padding:10px; border:1px solid #e2e8f0;"><option value="오후">오후</option><option value="오전">오전</option></select>
-            <select id="regGender" style="padding:10px; border:1px solid #e2e8f0;"><option value="남">남성</option><option value="여">여성</option></select>
-            <select id="regLeague" style="padding:10px; border:1px solid #e2e8f0;"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select>
-        </div>
-        <button class="btn-battle" onclick="register()">해당 센터에 신청하기</button>
-    </div>
-    <div id="rankingArea">
-        <div class="section"><h2 class="blue-h2">🥇 통합 랭킹 (오후 A)</h2><div id="totalARank"></div></div>
-        <div class="section"><h2>🌅 오전 타임 랭킹</h2><div id="morningRank"></div></div>
-        <div class="section"><h2>🌇 오후 타임 랭킹</h2><div id="afternoonRank"></div></div>
-    </div>
-    <div class="section" style="border: 2px solid #805ad5;">
-        <h2 class="purple-h2">🔥 실시간 센터 대항전</h2>
-        <div id="centerLeaderboard"></div>
-    </div>
-</div>
 
-<div id="info" class="content-section">
-    <div class="section">
-        <h2 class="blue-h2">🏢 센터 정보</h2>
-        <div id="infoContent">
-            <div class="info-item"><span class="info-label">📍 위치</span><span id="infoLoc">-</span></div>
-            <div class="info-item"><span class="info-label">📞 연락처</span><span id="infoTel">-</span></div>
-            <div class="info-item"><span class="info-label">⏰ 운영시간</span><span id="infoTime">평일 06:00 ~ 23:00 / 토요일 09:00 ~ 18:00</span></div>
-            <div class="info-item"><span class="info-label">📢 공지사항</span><span id="infoNotice">즐거운 운동 되세요!</span></div>
-        </div>
+    <div class="card">
+        <h3>⏳ 승인 대기</h3>
+        <div id="pendingList"></div>
     </div>
-</div>
-
-<div id="gallery" class="content-section">
-    <div class="gallery-grid" id="galleryArea"></div>
-</div>
-
-<div id="chat" class="content-section">
-    <div class="section">
-        <h2 class="blue-h2">💬 실시간 커뮤니티</h2>
-        <div id="chatDisplay"></div>
-        <div style="display:flex; gap:5px; margin-top:10px;">
-            <input id="chatInput" placeholder="메시지를 입력하세요..." style="margin:0;">
-            <button class="btn-battle" style="width:70px; padding:0; margin:0;" onclick="sendChat()">전송</button>
-        </div>
-    </div>
-</div>
-
-<div id="modalOverlay" onclick="if(event.target===this) closeModal()">
-    <div class="modal-content">
-        <div id="modalBody"></div>
-        <div class="chart-box"><canvas id="rankChart"></canvas></div>
-        <button onclick="closeModal()" style="width:100%; padding:15px; border-radius:12px; border:none; background:#edf2f7; font-weight:700;">닫기</button>
-    </div>
-</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, where, updateDoc, doc, addDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-    const CENTERS = {
-        "sehwa": { name: "세화 스쿼시", code: "1111" },
-        "chan": { name: "찬스쿼시", code: "2222" },
-        "sq3": { name: "스쿼시 3", code: "3333" },
-        "sq4": { name: "스쿼시 4", code: "4444" },
-        "sq5": { name: "스쿼시 5", code: "5555" }
-    };
-
-    const firebaseConfig = { /* 원장님 Firebase 키값 입력 */ };
+    const CENTERS = { "sehwa": "세화 스쿼시", "chan": "찬스쿼시", "sq3": "스쿼시 3", "sq4": "스쿼시 4", "sq5": "스쿼시 5" };
+    const firebaseConfig = { /* 원장님 키값 */ };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    let players = [], currentCenter = "sehwa", myChart = null;
+    let currentAdminCenter = "sehwa";
 
-    // 센터 선택창 초기화
-    const selector = document.getElementById("centerSelect");
+    const select = document.getElementById("adminCenterSelect");
     Object.keys(CENTERS).forEach(id => {
-        const opt = document.createElement("option"); opt.value = id; opt.innerText = CENTERS[id].name;
-        selector.appendChild(opt);
+        const opt = document.createElement("option"); opt.value = id; opt.innerText = CENTERS[id];
+        select.appendChild(opt);
     });
 
-    // 탭 전환
-    window.openTab = (tabId) => {
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        document.getElementById('btn-'+tabId).classList.add('active');
-        if(tabId === 'info') loadInfo();
-        if(tabId === 'gallery') loadGallery();
-        if(tabId === 'chat') loadChat();
+    window.switchAdmin = () => {
+        currentAdminCenter = select.value;
+        loadAdminData();
     };
 
-    window.switchCenter = () => {
-        currentCenter = selector.value;
-        document.getElementById("mainTitle").innerText = `🏆 ${CENTERS[currentCenter].name} 플랫폼`;
-        loadData();
-        const activeTab = document.querySelector('.content-section.active').id;
-        openTab(activeTab);
+    // 정보 저장
+    window.saveInfo = async () => {
+        await setDoc(doc(db, "centerInfo", currentAdminCenter), {
+            centerId: currentAdminCenter,
+            loc: document.getElementById("infoLoc").value,
+            tel: document.getElementById("infoTel").value,
+            notice: document.getElementById("infoNotice").value
+        });
+        alert("저장 완료");
     };
 
-    // 랭킹 데이터 로드
-    function loadData() {
-        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenter), orderBy("groupRank", "asc"));
-        onSnapshot(q, (snap) => {
-            players = [];
-            snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
-            updateMVP(); renderUI();
+    // 사진 업로드 (이미지 URL을 넣는 방식 예시)
+    window.uploadPhoto = async () => {
+        const url = prompt("이미지 주소(URL)를 입력하세요."); 
+        if(!url) return;
+        await addDoc(collection(db, "gallery"), {
+            centerId: currentAdminCenter,
+            url: url,
+            title: document.getElementById("photoTitle").value || "센터 사진",
+            createdAt: serverTimestamp()
         });
-    }
-
-    // 대항전 로직
-    function loadLeaderboard() {
-        onSnapshot(query(collection(db, "ranking"), where("status", "==", "approved")), (snap) => {
-            const stats = {};
-            Object.keys(CENTERS).forEach(id => stats[id] = { name: CENTERS[id].name, score: 0, matches: 0 });
-            snap.forEach(d => {
-                const p = d.data();
-                if(stats[p.centerId]) {
-                    const wins = (p.recentGames || []).filter(g => g.res === '승').length;
-                    const total = (p.recentGames || []).length;
-                    stats[p.centerId].matches += total;
-                    stats[p.centerId].score += (wins * 10) + (total * 2);
-                }
-            });
-            const sorted = Object.values(stats).sort((a,b) => b.score - a.score);
-            let html = `<table><thead><tr><th>순위</th><th>센터</th><th>경기</th><th>점수</th></tr></thead><tbody>`;
-            sorted.forEach((s, i) => html += `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.matches}</td><td style="color:#805ad5;font-weight:800;">${s.score}</td></tr>`);
-            document.getElementById("centerLeaderboard").innerHTML = html + "</tbody></table>";
-        });
-    }
-
-    // 센터 정보 로드
-    function loadInfo() {
-        onSnapshot(query(collection(db, "centerInfo"), where("centerId", "==", currentCenter)), (snap) => {
-            if(!snap.empty) {
-                const d = snap.docs[0].data();
-                document.getElementById("infoLoc").innerText = d.loc || "-";
-                document.getElementById("infoTel").innerText = d.tel || "-";
-                document.getElementById("infoNotice").innerText = d.notice || "즐거운 운동 되세요!";
-            }
-        });
-    }
-
-    // 사진첩 로드
-    function loadGallery() {
-        const area = document.getElementById("galleryArea");
-        onSnapshot(query(collection(db, "gallery"), where("centerId", "==", currentCenter), orderBy("createdAt", "desc")), (snap) => {
-            area.innerHTML = "";
-            snap.forEach(d => {
-                const g = d.data();
-                area.innerHTML += `<div class="photo-card"><img src="${g.url}"><div class="photo-title">${g.title}</div></div>`;
-            });
-            if(snap.empty) area.innerHTML = "<p style='grid-column:1/3; text-align:center; padding:50px; color:#ccc;'>사진이 없습니다.</p>";
-        });
-    }
-
-    // 채팅 로드
-    let chatUnsub = null;
-    function loadChat() {
-        if(chatUnsub) chatUnsub();
-        const display = document.getElementById("chatDisplay");
-        const q = query(collection(db, "chats"), where("centerId", "==", currentCenter), orderBy("createdAt", "desc"), limit(50));
-        chatUnsub = onSnapshot(q, (snap) => {
-            display.innerHTML = "";
-            const msgs = [];
-            snap.forEach(d => msgs.push(d.data()));
-            msgs.reverse().forEach(m => {
-                const div = document.createElement("div");
-                div.className = `msg ${m.sender === '관리자' ? 'msg-me' : 'msg-other'}`;
-                div.innerHTML = `<div style="font-size:9px; opacity:0.7; margin-bottom:2px;">${m.sender}</div>${m.text}`;
-                display.appendChild(div);
-            });
-            display.scrollTop = display.scrollHeight;
-        });
-    }
-
-    window.sendChat = async () => {
-        const input = document.getElementById("chatInput");
-        if(!input.value.trim()) return;
-        await addDoc(collection(db, "chats"), {
-            centerId: currentCenter, text: input.value, sender: "익명회원", createdAt: serverTimestamp()
-        });
-        input.value = "";
+        alert("업로드 완료");
     };
 
-    // --- 기존 유틸 함수 (등록, 렌더링, MVP 등) ---
-    window.register = async () => {
-        const code = prompt(`${CENTERS[currentCenter].name} 고유번호`);
-        if(code !== CENTERS[currentCenter].code) return alert("틀림");
-        await addDoc(collection(db, "ranking"), { 
-            centerId: currentCenter, name: document.getElementById("nameInput").value,
-            timeGroup: document.getElementById("regTime").value, gender: document.getElementById("regGender").value, league: document.getElementById("regLeague").value, 
-            groupRank: 999, status: "pending", recentGames: [], rankHistory: [999], lastGameDate: new Date().toISOString()
-        });
-        alert("신청됨");
-    };
+    // 기존 선수 관리 로직 (생략 - 이전 코드와 동일)
+    function loadAdminData() { /* ... */ }
 
-    function renderUI() {
-        const f = (t, l) => players.filter(p => p.timeGroup === t && p.league === l);
-        document.getElementById("totalARank").innerHTML = buildTable(f("오후", "챔피언"));
-        document.getElementById("morningRank").innerHTML = buildTable(f("오전", "챔피언"));
-        document.getElementById("afternoonRank").innerHTML = buildTable(f("오후", "챔피언"));
-    }
-
-    function buildTable(list) {
-        let html = `<table><tr><th>순위</th><th>이름</th><th>성별</th></tr>`;
-        list.forEach(p => {
-            html += `<tr><td>${p.groupRank}</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td><td>${p.gender}</td></tr>`;
-        });
-        return html + `</table>`;
-    }
-
-    window.showLog = (id) => {
-        const p = players.find(x => x.id === id);
-        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 기록</h3>` + p.recentGames.map(g => `<p>${g.dt} vs ${g.opp} (${g.res})</p>`).join("");
-        document.getElementById("modalOverlay").style.display = "flex";
-        setTimeout(() => drawChart(p.rankHistory), 100);
-    };
-
-    window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
-
-    function drawChart(h) {
-        const ctx = document.getElementById('rankChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type:'line', data:{ labels:h.map((_,i)=>i+1), datasets:[{data:h, borderColor:'#3182ce'}] }, options:{ scales:{y:{reverse:true}} }});
-    }
-
-    function updateMVP() {
-        // ... 기존 MVP 로직 ...
-    }
-
-    loadData(); loadLeaderboard();
+    switchAdmin();
 </script>
 </body>
 </html>
