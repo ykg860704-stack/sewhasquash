@@ -3,86 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스쿼시 시스템 통합 관리자</title>
+    <title>스쿼시 통합 관리자 센터</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { background: #f1f3f5; padding: 20px; margin: 0; color: #333; }
-        .admin-container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 20px; shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h1 { font-size: 24px; font-weight: 800; border-bottom: 3px solid #2d3748; padding-bottom: 10px; margin-bottom: 30px; }
-        .section { margin-bottom: 40px; }
-        h2 { font-size: 18px; color: #2d3748; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f8f9fa; font-weight: 700; }
-        .btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 12px; margin-right: 4px; }
-        .btn-approve { background: #3182ce; color: white; }
-        .btn-edit { background: #718096; color: white; }
-        .btn-delete { background: #e53e3e; color: white; }
+        body { padding: 20px; background: #f8f9fa; display: none; max-width: 800px; margin: auto; }
+        .login-section { display: block; text-align: center; margin-top: 100px; }
+        #loginBox { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; border: 1px solid #eee; }
+        h1, h2 { color: #2d3748; text-align: center; }
+        
+        /* 탭 스타일 추가 */
+        .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #4a5568; font-weight: bold; cursor: pointer; border-radius: 8px; white-space: nowrap; }
+        .tab-btn.active { background: #2d3748; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
+        th { background: #f1f3f5; color: #4a5568; }
+        
+        .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        
+        .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
+        .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
+        .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
         .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
         .status-pending { background: #fff5f5; color: #e53e3e; }
-        .status-approved { background: #f0fff4; color: #38a169; }
-        input, select { padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
-        .edit-mode input { width: 100px; }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <h1>🛡️ 스쿼시 시스템 통합 관리자</h1>
-
-    <div class="section">
-        <h2>👤 회원 승인 및 랭킹 수정</h2>
-        <table id="playerTable">
-            <thead>
-                <tr>
-                    <th>센터/이름</th>
-                    <th>그룹/성별</th>
-                    <th>순위</th>
-                    <th>상태</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="playerList"></tbody>
-        </table>
+    <div id="loginSection" class="login-section">
+        <div id="loginBox">
+            <h2>🏢 센터 관리자 접속</h2>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">부여받은 센터 코드를 입력해주세요.</p>
+            <input type="password" id="centerCodeInput" placeholder="코드 입력" style="width:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center;"><br>
+            <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px; font-size:16px; border-radius:8px;">관리자 로그인</button>
+            <p id="errorMsg" style="color:red; display:none; margin-top:15px; font-size:13px;">코드가 일치하지 않습니다.</p>
+        </div>
     </div>
 
-    <div class="section">
-        <h2>🏢 센터 정보 승인 및 관리</h2>
-        <table id="centerTable">
-            <thead>
-                <tr>
-                    <th>지역/상호명</th>
-                    <th>영업시간</th>
-                    <th>주소</th>
-                    <th>상태</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="centerList"></tbody>
-        </table>
-    </div>
+    <div id="adminPanel" style="display:none;">
+        <h1 id="adminTitle">🛠️ 관리 시스템</h1>
 
-    <div class="section">
-        <h2>🎾 대회 정보 승인 및 관리</h2>
-        <table id="matchTable">
-            <thead>
-                <tr>
-                    <th>대회명</th>
-                    <th>날짜</th>
-                    <th>장소</th>
-                    <th>상태</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="matchList"></tbody>
-        </table>
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-players')">👥 선수 관리</button>
+            <button class="tab-btn" onclick="switchTab('tab-centers')">🏢 센터 정보</button>
+            <button class="tab-btn" onclick="switchTab('tab-matches')">🎾 대회 관리</button>
+        </div>
+        
+        <div id="tab-players" class="tab-content active">
+            <div class="card" style="display: flex; justify-content: space-between;">
+                <button class="btn-sync" onclick="syncData()">🔄 순위 강제 정렬</button>
+                <button class="btn-down" onclick="autoDemote()">⚠️ 7일 미경기자 강등</button>
+            </div>
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 승인 대기 명단</h2>
+                <div id="pendingList">데이터 로딩 중...</div>
+            </div>
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리</h2>
+                <div id="activeList">데이터 로딩 중...</div>
+            </div>
+        </div>
+
+        <div id="tab-centers" class="tab-content">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 등록된 센터 정보 관리</h2>
+                <div id="centerManageList">데이터 로딩 중...</div>
+            </div>
+        </div>
+
+        <div id="tab-matches" class="tab-content">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 승인 및 관리</h2>
+                <div id="matchManageList">데이터 로딩 중...</div>
+            </div>
+        </div>
     </div>
-</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -96,92 +105,152 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 1. 회원(랭킹) 데이터 실시간 감시 및 렌더링
-    onSnapshot(query(collection(db, "ranking"), orderBy("status", "desc")), (snap) => {
-        const list = document.getElementById("playerList");
-        list.innerHTML = "";
-        snap.forEach(d => {
-            const p = d.data();
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td><b>[${p.centerId}]</b><br>${p.name}</td>
-                <td>${p.timeGroup} / ${p.league}<br>${p.gender}</td>
-                <td class="edit-mode"><input type="number" value="${p.groupRank}" id="rank-${d.id}">위</td>
-                <td><span class="status-tag ${p.status==='approved'?'status-approved':'status-pending'}">${p.status}</span></td>
-                <td>
-                    ${p.status === 'pending' ? `<button class="btn btn-approve" onclick="updateStatus('ranking', '${d.id}', 'approved')">승인</button>` : ''}
-                    <button class="btn btn-edit" onclick="updateRank('${d.id}')">수정</button>
-                    <button class="btn btn-delete" onclick="deleteData('ranking', '${d.id}')">삭제</button>
-                </td>
-            `;
-            list.appendChild(row);
-        });
-    });
+    const codeMap = { 
+        'sewha123': { id: 'sehwa', name: '세화 스쿼시' },
+        'chan123': { id: 'chan', name: '찬 스쿼시' },
+        'sq3': { id: 'squash3', name: '스쿼시 3센터' },
+        'sq4': { id: 'squash4', name: '스쿼시 4센터' },
+        'sq5': { id: 'squash5', name: '스쿼시 5센터' }
+    };
 
-    // 2. 센터 정보 데이터 실시간 감시
-    onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
-        const list = document.getElementById("centerList");
-        list.innerHTML = "";
-        snap.forEach(d => {
-            const c = d.data();
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td><b>${c.sido}</b><br>${c.name}</td>
-                <td>${c.time || '-'}</td>
-                <td style="font-size:11px;">${c.addr}</td>
-                <td><span class="status-tag ${c.status==='approved'?'status-approved':'status-pending'}">${c.status}</span></td>
-                <td>
-                    ${c.status === 'pending' ? `<button class="btn btn-approve" onclick="updateStatus('infoRequests', '${d.id}', 'approved')">승인</button>` : ''}
-                    <button class="btn btn-delete" onclick="deleteData('infoRequests', '${d.id}')">삭제</button>
-                </td>
-            `;
-            list.appendChild(row);
-        });
-    });
+    let currentCenterId = "";
+    let players = [];
+    let tempRecords = [];
 
-    // 3. 대회 정보 데이터 실시간 감시
-    onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
-        const list = document.getElementById("matchList");
-        list.innerHTML = "";
-        snap.forEach(d => {
-            const m = d.data();
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${m.title}</td>
-                <td>${m.date}</td>
-                <td>${m.loc}</td>
-                <td><span class="status-tag ${m.status==='approved'?'status-approved':'status-pending'}">${m.status}</span></td>
-                <td>
-                    ${m.status === 'pending' ? `<button class="btn btn-approve" onclick="updateStatus('matchRequests', '${d.id}', 'approved')">승인</button>` : ''}
-                    <button class="btn btn-delete" onclick="deleteData('matchRequests', '${d.id}')">삭제</button>
-                </td>
-            `;
-            list.appendChild(row);
-        });
-    });
+    // 탭 전환 함수
+    window.switchTab = (tabId) => {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    };
 
-    // 공통 함수: 상태 변경 (승인 등)
+    window.checkCode = () => {
+        const input = document.getElementById("centerCodeInput").value;
+        if (codeMap[input]) {
+            currentCenterId = codeMap[input].id;
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("adminPanel").style.display = "block";
+            document.getElementById("adminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
+            startListening();
+        } else {
+            document.getElementById("errorMsg").style.display = "block";
+        }
+    };
+
+    function startListening() {
+        // 1. 선수 리스트 감시
+        onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
+            players = [];
+            let pList = "<table><tr><th>이름</th><th>타임</th><th>승인</th></tr>";
+            let aList = "<table><tr><th>순위</th><th>이름</th><th>관리</th></tr>";
+            snap.forEach(d => {
+                const p = {id: d.id, ...d.data()};
+                if ((p.centerId || 'sehwa') === currentCenterId) {
+                    players.push(p);
+                    if(p.status === "pending") {
+                        pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td><button class="btn-save" onclick="approve('${p.id}')">승인</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">거절</button></td></tr>`;
+                    } else {
+                        aList += `<tr id="row-${p.id}"><td>${p.groupRank}위</td><td><strong>${p.name}</strong></td><td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></td></tr>`;
+                    }
+                }
+            });
+            document.getElementById("pendingList").innerHTML = pList + "</table>";
+            document.getElementById("activeList").innerHTML = aList + "</table>";
+        });
+
+        // 2. 센터 정보 감시
+        onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
+            let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>상태/관리</th></tr>";
+            snap.forEach(d => {
+                const c = {id: d.id, ...d.data()};
+                html += `<tr>
+                    <td style="text-align:left;"><b>${c.sido}</b><br>${c.name}</td>
+                    <td>${c.contact || '-'}</td>
+                    <td>
+                        ${c.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
+                        <button class="btn-del" onclick="removeData('infoRequests', '${c.id}')">삭제</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById("centerManageList").innerHTML = html + "</table>";
+        });
+
+        // 3. 대회 정보 감시
+        onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
+            let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
+            snap.forEach(d => {
+                const m = {id: d.id, ...d.data()};
+                html += `<tr>
+                    <td style="text-align:left;">${m.title}</td>
+                    <td>${m.date}</td>
+                    <td>
+                        ${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
+                        <button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">삭제</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById("matchManageList").innerHTML = html + "</table>";
+        });
+    }
+
+    // 공통 상태 변경 함수 (승인용)
     window.updateStatus = async (col, id, status) => {
         if(!confirm("승인하시겠습니까?")) return;
         await updateDoc(doc(db, col, id), { status });
         alert("승인 완료");
     };
 
-    // 랭킹 전용: 순위 수정
-    window.updateRank = async (id) => {
-        const newRank = document.getElementById(`rank-${id}`).value;
-        await updateDoc(doc(db, "ranking", id), { groupRank: Number(newRank) });
-        alert("순위가 수정되었습니다.");
+    // 공통 삭제 함수
+    window.removeData = async (col, id) => {
+        if(confirm("정말로 삭제하시겠습니까?")) await deleteDoc(doc(db, col, id));
     };
 
-    // 공통 함수: 데이터 삭제
-    window.deleteData = async (col, id) => {
-        if(!confirm("정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
-        await deleteDoc(doc(db, col, id));
-        alert("삭제되었습니다.");
+    /* 기존 선수 수정/정렬 로직 유지 */
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
+        const row = document.getElementById(`row-${id}`);
+        let recordHtml = `<div class="record-edit-box">`;
+        tempRecords.forEach((g, idx) => {
+            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp}</span>
+                <input id="score-${id}-${idx}" class="edit-input" style="width:50px;" value="${g.sc || ''}">
+                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">X</button></div>`;
+        });
+        row.innerHTML = `<td colspan="2" style="text-align:left;">
+            순위:<input id="e-rank-${id}" class="edit-input" style="width:35px;" value="${p.groupRank}">
+            이름:<input id="e-name-${id}" class="edit-input" style="width:70px;" value="${p.name}">
+            ${recordHtml}</div></td>
+            <td><button class="btn-save" onclick="saveEdit('${id}')">저장</button></td>`;
     };
 
+    window.saveEdit = async (id) => {
+        const updatedGames = tempRecords.map((g, idx) => ({ ...g, sc: document.getElementById(`score-${id}-${idx}`).value }));
+        await updateDoc(doc(db, "ranking", id), {
+            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
+            name: document.getElementById(`e-name-${id}`).value,
+            recentGames: updatedGames
+        });
+        alert("저장완료");
+    };
+
+    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("저장을 눌러야 반영됩니다."); };
+
+    window.syncData = async () => {
+        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
+        for (const [t, l] of groups) {
+            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l).sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+            for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
+        }
+        alert("정렬 완료");
+    };
+
+    window.approve = async (id) => {
+        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99 });
+        syncData();
+    };
+
+    document.body.style.display = "block";
 </script>
-
 </body>
 </html>
