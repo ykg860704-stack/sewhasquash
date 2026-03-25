@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* [기존 스타일 유지] */
+        /* [원본 스타일 100% 유지] */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; line-height: 1.5; }
         .center-selector-bar { background: #fff; padding: 10px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0; }
@@ -21,7 +21,8 @@
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block; }
         .recent-box { display: flex; gap: 4px; margin-top: 6px; justify-content: flex-start; }
         .res-badge { width: 20px; height: 20px; line-height: 20px; border-radius: 5px; font-size: 10px; font-weight: 800; color: white; text-align: center; }
-        .win-bg { background-color: #feb2b2; } .loss-bg { background-color: #90cdf4; }
+        .win-bg { background-color: #feb2b2; } 
+        .loss-bg { background-color: #90cdf4; } 
         .up { color: #e53e3e; font-size: 11px; margin-left: 3px; vertical-align: middle; }
         .down { color: #3182ce; font-size: 11px; margin-left: 3px; vertical-align: middle; }
         .keep { color: #cbd5e0; font-size: 11px; margin-left: 3px; }
@@ -39,33 +40,24 @@
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
 
-        /* [새로 추가된 탭 메뉴 스타일] */
-        .tab-bar { display: flex; background: #fff; border-radius: 12px; margin-bottom: 15px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .tab-item { flex: 1; text-align: center; padding: 10px; font-size: 13px; font-weight: 800; color: #a0aec0; cursor: pointer; border-radius: 8px; }
-        .tab-item.active { background: #3182ce; color: #fff; }
-        .content-tab { display: none; }
-        .content-tab.active { display: block; }
-        
-        /* 사진첩 & 채팅 추가 스타일 */
-        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .photo-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; }
-        .photo-card img { width: 100%; height: 120px; object-fit: cover; }
-        #chatDisplay { height: 300px; overflow-y: auto; background: #f8f9fa; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #eee; margin-bottom: 10px; }
-        .chat-msg { font-size: 13px; padding: 8px 12px; border-radius: 10px; max-width: 85%; }
-        .msg-mine { align-self: flex-end; background: #3182ce; color: white; }
-        .msg-other { align-self: flex-start; background: white; border: 1px solid #e2e8f0; }
+        /* [상단 탭 메뉴 전용 스타일] */
+        .top-tab-nav { display: flex; background: white; border-radius: 12px; padding: 4px; margin-bottom: 15px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .top-tab-item { flex: 1; text-align: center; padding: 10px 0; font-weight: 800; font-size: 14px; color: #718096; cursor: pointer; border-radius: 8px; }
+        .top-tab-item.active { background: #2d3748; color: white; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
     </style>
 </head>
 <body>
 
-<div class="tab-bar">
-    <div class="tab-item active" onclick="changeTab(0)">랭킹</div>
-    <div class="tab-item" onclick="changeTab(1)">센터정보</div>
-    <div class="tab-item" onclick="changeTab(2)">사진첩</div>
-    <div class="tab-item" onclick="changeTab(3)">채팅</div>
+<div class="top-tab-nav">
+    <div class="top-tab-item active" onclick="moveTab(0)">랭킹</div>
+    <div class="top-tab-item" onclick="moveTab(1)">정보</div>
+    <div class="top-tab-item" onclick="moveTab(2)">사진첩</div>
+    <div class="top-tab-item" onclick="moveTab(3)">채팅</div>
 </div>
 
-<div id="tab0" class="content-tab active">
+<div id="p0" class="tab-panel active">
     <div class="center-selector-bar">
         <label style="font-size:13px; font-weight:700;">📍 센터</label>
         <select id="centerSelectMain" onchange="location.search='?center='+this.value">
@@ -76,99 +68,29 @@
             <option value="squash5">스쿼시 5</option>
         </select>
     </div>
-
     <h1 id="mainTitle">로딩 중...</h1>
-
     <div class="award-section" id="awardDisplay">
-        <div class="award-card">
-            <div class="award-title">🥇 이달의 다승왕</div>
-            <div class="award-name" id="bestWinner">-</div>
-            <div class="award-val" id="bestWinCount">0승</div>
-        </div>
-        <div class="award-card" style="border-color: #63b3ed;">
-            <div class="award-title" style="color: #3182ce;">🔥 이달의 열정왕</div>
-            <div class="award-name" id="bestActive">-</div>
-            <div class="award-val" id="bestActiveCount">0경기</div>
-        </div>
+        <div class="award-card"><div class="award-title">🥇 이달의 다승왕</div><div class="award-name" id="bestWinner">-</div><div class="award-val" id="bestWinCount">0승</div></div>
+        <div class="award-card" style="border-color: #63b3ed;"><div class="award-title" style="color: #3182ce;">🔥 이달의 열정왕</div><div class="award-name" id="bestActive">-</div><div class="award-val" id="bestActiveCount">0경기</div></div>
     </div>
-
-    <div class="section">
-        <h2 class="blue-h2">👤 신규 회원 등록</h2>
-        <div class="input-group">
-            <input id="nameInput" placeholder="이름을 입력하세요">
-            <div style="display:flex; gap:8px;">
-                <select id="timeGroup"><option value="오후">오후</option><option value="오전">오전</option></select>
-                <select id="gender"><option value="남">남성</option><option value="여">여성</option></select>
-                <select id="league"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select>
-            </div>
-            <button class="btn-battle" onclick="register()">신청 완료</button>
-        </div>
-    </div>
-
-    <div class="section" style="background: #fffcf0;">
-        <h2>⚔️ 경기 결과 기록</h2>
-        <div class="input-group">
-            <select id="challengerSelect" onchange="filterOpponents()"><option value="">도전자 선택</option></select>
-            <select id="defenderSelect"><option value="">방어자 선택</option></select>
-            <div style="display:flex; gap:10px;">
-                <button id="resWin" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('승')">도전자 승</button>
-                <button id="resLoss" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('패')">도전자 패</button>
-            </div>
-            <input id="scoreInput" placeholder="점수 입력 (예: 11:9)">
-            <button class="btn-battle" onclick="battleRecord()">결과 저장</button>
-        </div>
-    </div>
-
-    <div class="section" style="border: 2px solid #e74c3c;">
-        <h2>🏆 실시간 통합 랭킹</h2>
-        <div id="integratedRank"></div>
-    </div>
-
-    <div class="section">
-        <h2 class="blue-h2">🥇 그룹별 랭킹</h2>
-        <div id="rankContainer"></div>
-    </div>
-
-    <div class="inter-center-rank">
-        <div style="font-size:14px; font-weight:700; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px;">🏆 센터 대항전 실시간 순위</div>
-        <div id="centerRankList"></div>
-    </div>
+    <div class="section"><h2 class="blue-h2">👤 신규 회원 등록</h2><div class="input-group"><input id="nameInput" placeholder="이름을 입력하세요"><div style="display:flex; gap:8px;"><select id="timeGroup"><option value="오후">오후</option><option value="오전">오전</option></select><select id="gender"><option value="남">남성</option><option value="여">여성</option></select><select id="league"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select></div><button class="btn-battle" onclick="register()">신청 완료</button></div></div>
+    <div class="section" style="background: #fffcf0;"><h2>⚔️ 경기 결과 기록</h2><div class="input-group"><select id="challengerSelect" onchange="filterOpponents()"><option value="">도전자 선택</option></select><select id="defenderSelect"><option value="">방어자 선택</option></select><div style="display:flex; gap:10px;"><button id="resWin" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('승')">도전자 승</button><button id="resLoss" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('패')">도전자 패</button></div><input id="scoreInput" placeholder="점수 입력 (예: 11:9)"><button class="btn-battle" onclick="battleRecord()">결과 저장</button></div></div>
+    <div class="section" style="border: 2px solid #e74c3c;"><h2>🏆 실시간 통합 랭킹</h2><div id="integratedRank"></div></div>
+    <div class="section"><h2 class="blue-h2">🥇 그룹별 랭킹</h2><div id="rankContainer"></div></div>
+    <div class="inter-center-rank"><div style="font-size:14px; font-weight:700; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px;">🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
 </div>
 
-<div id="tab1" class="content-tab">
-    <div class="section">
-        <h2 class="blue-h2">🏢 센터 정보</h2>
-        <p id="infoAddress">📍 로딩 중...</p>
-        <p id="infoTel">📞 로딩 중...</p>
-        <p id="infoNotice" style="background: #fdf2f2; padding: 10px; border-radius: 8px;">📢 공지사항: 로딩 중...</p>
-    </div>
-</div>
-
-<div id="tab2" class="content-tab">
-    <div class="gallery-grid" id="galleryArea">
-        <p style="text-align:center; grid-column: 1/3; padding:50px;">등록된 사진이 없습니다.</p>
-    </div>
-</div>
-
-<div id="tab3" class="content-tab">
-    <div class="section">
-        <h2 class="blue-h2">💬 센터 실시간 대화</h2>
-        <div id="chatDisplay"></div>
-        <div class="input-group">
-            <input id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) sendChat()">
-            <button class="btn-battle" onclick="sendChat()">전송</button>
-        </div>
-    </div>
-</div>
+<div id="p1" class="tab-panel"><div class="section"><h2>🏢 센터 정보</h2><p>센터 정보를 준비 중입니다.</p></div></div>
+<div id="p2" class="tab-panel"><div class="section"><h2>📸 사진첩</h2><div id="galleryArea">준비 중입니다.</div></div></div>
+<div id="p3" class="tab-panel"><div class="section"><h2>💬 채팅</h2><div id="chatDisplay">준비 중입니다.</div></div></div>
 
 <div id="modalOverlay" onclick="if(event.target===this) closeModal()">
     <div class="modal-content"><div id="modalBody"></div><div style="height:200px; margin-top:15px;"><canvas id="rankChart"></canvas></div><button onclick="closeModal()" class="btn-battle" style="background:#eee; color:#333; margin-top:20px;">닫기</button></div>
 </div>
 
 <script type="module">
-    // (이전 import 및 초기 설정 원본 그대로 유지)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -182,69 +104,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // [탭 이동 함수]
+    window.moveTab = (idx) => {
+        document.querySelectorAll('.top-tab-item').forEach((b, i) => b.classList.toggle('active', i === idx));
+        document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+    };
+
+    // [원본 데이터 로직 - 변경 없음]
     const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '스쿼시 3', 'squash4': '스쿼시 4', 'squash5': '스쿼시 5' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
-    
-    // [탭 전환 함수 추가]
-    window.changeTab = (idx) => {
-        document.querySelectorAll('.tab-item').forEach((t, i) => t.classList.toggle('active', i === idx));
-        document.querySelectorAll('.content-tab').forEach((c, i) => c.classList.toggle('active', i === idx));
-        if(idx === 1) loadInfo();
-        if(idx === 2) loadGallery();
-        if(idx === 3) loadChat();
-    };
-
-    // [추가 기능: 정보/사진/채팅 로드 함수]
-    function loadInfo() {
-        onSnapshot(doc(db, "centerSettings", currentCenter), (d) => {
-            if(d.exists()) {
-                const data = d.data();
-                document.getElementById("infoAddress").innerText = "📍 " + (data.address || "주소 미설정");
-                document.getElementById("infoTel").innerText = "📞 " + (data.tel || "번호 미설정");
-                document.getElementById("infoNotice").innerText = "📢 공지: " + (data.notice || "공지가 없습니다.");
-            }
-        });
-    }
-
-    function loadGallery() {
-        onSnapshot(query(collection(db, "gallery"), where("centerId", "==", currentCenter), orderBy("createdAt", "desc")), (snap) => {
-            const area = document.getElementById("galleryArea");
-            area.innerHTML = "";
-            snap.forEach(d => {
-                area.innerHTML += `<div class="photo-card"><img src="${d.data().url}"></div>`;
-            });
-        });
-    }
-
-    let chatUnsub = null;
-    function loadChat() {
-        if(chatUnsub) chatUnsub();
-        const display = document.getElementById("chatDisplay");
-        const qChat = query(collection(db, "chats"), where("centerId", "==", currentCenter), orderBy("createdAt", "desc"), limit(50));
-        chatUnsub = onSnapshot(qChat, (snap) => {
-            display.innerHTML = "";
-            const msgs = [];
-            snap.forEach(d => msgs.push(d.data()));
-            msgs.reverse().forEach(m => {
-                const isMine = m.senderId === localStorage.getItem("myId");
-                display.innerHTML += `<div class="chat-msg ${isMine?'msg-mine':'msg-other'}">${m.text}</div>`;
-            });
-            display.scrollTop = display.scrollHeight;
-        });
-    }
-
-    window.sendChat = async () => {
-        const input = document.getElementById("chatInput");
-        if(!input.value.trim()) return;
-        await addDoc(collection(db, "chats"), {
-            centerId: currentCenter, text: input.value, createdAt: serverTimestamp(), senderId: localStorage.getItem("myId")
-        });
-        input.value = "";
-    };
-
-    // --- 이하 기존 원본 스크립트 (register, renderUI, battleRecord 등) 그대로 ---
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
+
     const q = query(collection(db, "ranking"), orderBy("groupRank", "asc"));
     onSnapshot(q, (snap) => {
         players = [];
@@ -258,8 +129,8 @@
         renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
-    // (renderUI, renderTableHtml, updateIndividualAwards, updateCenterRanking, register, showLog, battleRecord 등 원본 그대로 복사)
-    function renderUI() { /* 원본 내용 */ 
+    // --- (원본 함수들: renderUI, register, battleRecord 등) ---
+    function renderUI() {
         const groups = [{t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}, {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}];
         const integratedData = players.filter(p => p.timeGroup === '오후' && p.league === '챔피언');
         document.getElementById("integratedRank").innerHTML = renderTableHtml(integratedData);
@@ -292,8 +163,8 @@
         players.forEach(p => {
             const games = p.recentGames || [];
             const wins = games.filter(g => g.res === '승').length;
-            if(wins > winner.count) { winner = {name: p.name, count: wins}; }
-            if(games.length > active.count) { active = {name: p.name, count: games.length}; }
+            if(wins > winner.count) winner = {name: p.name, count: wins};
+            if(games.length > active.count) active = {name: p.name, count: games.length};
         });
         document.getElementById("bestWinner").innerText = winner.name;
         document.getElementById("bestWinCount").innerText = winner.count + "승";
@@ -307,13 +178,11 @@
         for (const [id, name] of Object.entries(centerNames)) {
             const cData = allData.filter(p => (p.centerId === id || (!p.centerId && id === 'sehwa')) && p.status === 'approved');
             if (cData.length === 0) { centerScores.push({ id, name, score: 0, activeCount: 0 }); continue; }
-            let totalGames = 0, totalWins = 0, upsetBonus = 0;
-            let activePlayers = new Set();
+            let totalGames = 0, totalWins = 0, upsetBonus = 0, activePlayers = new Set();
             cData.forEach(player => {
                 const games = player.recentGames || [];
                 if (games.length > 0) {
-                    activePlayers.add(player.id);
-                    totalGames += games.length;
+                    activePlayers.add(player.id); totalGames += games.length;
                     games.forEach(game => { if (game.res === '승') { totalWins++; upsetBonus += 10; } });
                 }
             });
@@ -327,11 +196,9 @@
         document.getElementById("centerRankList").innerHTML = centerScores.map((c, i) => `<div class="center-rank-item ${c.id === currentCenter ? 'my-center' : ''}"><span>${i+1}위. ${c.name} <small style="font-size:10px; opacity:0.8;">(${c.activeCount}명 활동)</small></span><span style="font-weight:800; color:#ecc94b;">${c.score} PT</span></div>`).join('');
     }
     window.register = async () => {
-        const name = document.getElementById("nameInput").value.trim();
-        if(!name) return;
+        const name = document.getElementById("nameInput").value.trim(); if(!name) return;
         await addDoc(collection(db, "ranking"), { centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] });
-        alert("신청 완료!");
-        document.getElementById("nameInput").value = "";
+        alert("신청 완료!"); document.getElementById("nameInput").value = "";
     };
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
@@ -353,12 +220,10 @@
         if (challengerResult === '승') { uC.groupRank = Number(d.groupRank); uD.groupRank = Number(c.groupRank); }
         uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
         uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
-        await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD);
-        alert("기록 성공!");
+        await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD); alert("기록 성공!");
     };
     window.filterOpponents = () => {
-        const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
-        if(!c) return;
+        const c = players.find(p => p.id === document.getElementById("challengerSelect").value); if(!c) return;
         const targets = players.filter(p => p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
         document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     };
