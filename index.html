@@ -60,7 +60,6 @@
         .info-card b { font-size: 16px; color: #2d3748; }
         .info-card p { margin: 5px 0 0 0; font-size: 13px; color: #718096; }
         
-        /* 지도 버튼 스타일 */
         .map-btn-group { display: flex; gap: 5px; margin-top: 10px; }
         .btn-map { flex: 1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-align: center; text-decoration: none; color: white; }
         .naver-bg { background: #03C75A; }
@@ -123,12 +122,22 @@
                 <input id="infoName" placeholder="상호명">
                 <input id="infoAddr" placeholder="상세 주소">
                 <input id="infoFee" placeholder="일일입장료">
-                <div style="display:flex; gap:8px;">
-                    <input id="courtFull" type="number" placeholder="정식 코트" style="flex:1;">
-                    <input id="courtSemi" type="number" placeholder="세미 코트" style="flex:1;">
-                </div>
+                <div style="display:flex; gap:8px;"><input id="courtFull" type="number" placeholder="정식 코트" style="flex:1;"><input id="courtSemi" type="number" placeholder="세미 코트" style="flex:1;"></div>
                 <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
             </div>
+        </div>
+        
+        <div class="section" style="background: #f1f3f5; padding: 15px;">
+            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
+            <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
+                <option value="전체">🌏 전체 지역</option>
+                <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+                <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+                <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+                <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+                <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+                <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+            </select>
         </div>
         <div id="info-list"></div>
     </div>
@@ -182,50 +191,46 @@
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
+    let allCenters = []; // 전체 센터 데이터를 담아둘 변수
 
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
-        snap.forEach(d => {
-            const data = d.data();
-            if(data.status === "approved") { players.push({id: d.id, ...data}); }
-        });
+        snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
-        renderUI(); 
-        updateCenterRanking(); 
-        updateChallengerList(); 
-        updateIndividualAwards();
+        renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
-    // 센터정보 실시간 감시 (지역 및 지도연동 반영)
+    // 센터정보 실시간 감시 (필터링 로직 통합)
     onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
-        let html = "";
-        snap.forEach(d => {
-            const data = d.data();
-            if(data.status === "approved") {
-                const searchAddr = encodeURIComponent(data.addr);
-                html += `
-                <div class="info-card">
-                    <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold;">${data.sido || '지역미지정'}</span><br>
-                    <b>${data.name}</b>
-                    <p>${data.addr}<br>입장료: ${data.fee} / 코트: ${data.court}</p>
-                    <div class="map-btn-group">
-                        <a href="https://map.naver.com/v5/search/${searchAddr}" target="_blank" class="btn-map naver-bg">네이버 지도</a>
-                        <a href="https://www.google.com/maps/search/${searchAddr}" target="_blank" class="btn-map google-bg">구글 지도</a>
-                    </div>
-                </div>`;
-            }
-        });
-        document.getElementById("info-list").innerHTML = html || "승인된 정보가 없습니다.";
+        allCenters = [];
+        snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
+        renderInfoList(); // 데이터가 들어오면 렌더링 호출
     });
+
+    window.renderInfoList = () => {
+        const filter = document.getElementById("filterSido").value;
+        let html = "";
+        const filtered = filter === "전체" ? allCenters : allCenters.filter(c => c.sido === filter);
+        
+        filtered.forEach(data => {
+            const searchAddr = encodeURIComponent(data.addr);
+            html += `
+            <div class="info-card">
+                <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold;">${data.sido || '지역미지정'}</span><br>
+                <b>${data.name}</b>
+                <p>${data.addr}<br>입장료: ${data.fee} / 코트: ${data.court}</p>
+                <div class="map-btn-group">
+                    <a href="https://map.naver.com/v5/search/${searchAddr}" target="_blank" class="btn-map naver-bg">네이버 지도</a>
+                    <a href="https://www.google.com/maps/search/${searchAddr}" target="_blank" class="btn-map google-bg">구글 지도</a>
+                </div>
+            </div>`;
+        });
+        document.getElementById("info-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>해당 지역에 등록된 센터가 없습니다.</p>";
+    };
 
     onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
         let html = "";
-        snap.forEach(d => {
-            const data = d.data();
-            if(data.status === "approved") {
-                html += `<div class="info-card" style="border-left: 5px solid #e74c3c;"><b>${data.title}</b><p>날짜: ${data.date}<br>장소: ${data.loc}<br><a href="${data.link}" target="_blank" style="color:#3182ce;">[공고 상세보기]</a></p></div>`;
-            }
-        });
+        snap.forEach(d => { if(d.data().status === "approved") html += `<div class="info-card" style="border-left: 5px solid #e74c3c;"><b>${d.data().title}</b><p>날짜: ${d.data().date}<br>장소: ${d.data().loc}<br><a href="${d.data().link}" target="_blank" style="color:#3182ce;">[공고 상세보기]</a></p></div>`; });
         document.getElementById("match-list").innerHTML = html || "승인된 대회정보가 없습니다.";
     });
 
@@ -235,41 +240,28 @@
         if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name,
-            addr,
-            fee: document.getElementById("infoFee").value,
+            name, addr, fee: document.getElementById("infoFee").value,
             court: `정식 ${document.getElementById("courtFull").value || 0} / 세미 ${document.getElementById("courtSemi").value || 0}`,
             status: "pending", createdAt: serverTimestamp()
         });
-        alert("센터 등록 신청 완료! 관리자 승인 후 지도 버튼과 함께 표시됩니다.");
+        alert("신청 완료! 관리자 승인 후 표시됩니다.");
         document.getElementById("infoName").value = ""; document.getElementById("infoAddr").value = "";
     };
 
+    /* 이하 기존 랭킹/채팅 로직 유지 */
     window.submitMatch = async () => {
         const title = document.getElementById("matchTitle").value.trim();
         if(!title) return;
-        await addDoc(collection(db, "matchRequests"), {
-            title,
-            date: document.getElementById("matchDate").value,
-            loc: document.getElementById("matchLoc").value,
-            link: document.getElementById("matchLink").value,
-            status: "pending", createdAt: serverTimestamp()
-        });
-        alert("대회 정보 신청이 완료되었습니다!");
-        document.getElementById("matchTitle").value = "";
+        await addDoc(collection(db, "matchRequests"), { title, date: document.getElementById("matchDate").value, loc: document.getElementById("matchLoc").value, link: document.getElementById("matchLink").value, status: "pending", createdAt: serverTimestamp() });
+        alert("대회 정보 신청 완료!"); document.getElementById("matchTitle").value = "";
     };
 
-    /* 기존 로직 유지 */
     function renderUI() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
         const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
-        const integratedData = centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언');
-        document.getElementById("integratedRank").innerHTML = renderTableHtml(integratedData);
+        document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
         let fullHtml = "";
-        groups.forEach(g => { 
-            const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); 
-            if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); 
-        });
+        groups.forEach(g => { const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); });
         document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
     }
 
@@ -284,8 +276,7 @@
                 if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
             }
             const recentBadges = (p.recentGames || []).slice(0, 5).map(v => `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`).join('');
-            let femaleRankTag = p.gender === '여' ? `<span class="female-tag">여성 ${femaleOnly.findIndex(f => f.id === p.id) + 1}위</span>` : "";
-            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${femaleRankTag}<div class="recent-box">${recentBadges}</div></td></tr>`;
+            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${p.gender==='여'?'<span class="female-tag">여성 '+(femaleOnly.findIndex(f=>f.id===p.id)+1)+'위</span>':""}<div class="recent-box">${recentBadges}</div></td></tr>`;
         });
         return html + "</table>";
     }
@@ -307,10 +298,7 @@
         const totalPlayers = players.length;
         const sortedCenters = Object.keys(centerStats).map(id => {
             const s = centerStats[id];
-            const winRate = s.totalGames > 0 ? (s.wins / s.totalGames) : 0;
-            const highRankBonus = s.wins > 0 ? (s.highRankWins / s.wins) : 0;
-            const participation = totalPlayers > 0 ? (s.members / totalPlayers) : 0;
-            const finalScore = ((winRate * 0.6) + (highRankBonus * 0.2) + (participation * 0.2)) * 100;
+            const finalScore = (((s.totalGames>0?s.wins/s.totalGames:0)*0.6) + ((s.wins>0?s.highRankWins/s.wins:0)*0.2) + ((totalPlayers>0?s.members/totalPlayers:0)*0.2)) * 100;
             return { name: s.name, score: finalScore.toFixed(2) };
         }).sort((a, b) => b.score - a.score);
         centerRankList.innerHTML = sortedCenters.map((c, i) => `<div class="center-rank-item"><span>${i + 1}위 ${c.name}</span><span style="font-weight:800;">${c.score}점</span></div>`).join('');
@@ -323,13 +311,11 @@
         centerPlayers.forEach(p => {
             const wins = (p.recentGames || []).filter(g => g.res === '승').length;
             const total = (p.recentGames || []).length;
-            if(wins > bestW.count) { bestW = {name: p.name, count: wins}; }
-            if(total > bestA.count) { bestA = {name: p.name, count: total}; }
+            if(wins > bestW.count) bestW = {name: p.name, count: wins};
+            if(total > bestA.count) bestA = {name: p.name, count: total};
         });
-        document.getElementById("bestWinner").innerText = bestW.name;
-        document.getElementById("bestWinCount").innerText = bestW.count + "승";
-        document.getElementById("bestActive").innerText = bestA.name;
-        document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
+        document.getElementById("bestWinner").innerText = bestW.name; document.getElementById("bestWinCount").innerText = bestW.count + "승";
+        document.getElementById("bestActive").innerText = bestA.name; document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
     }
 
     window.register = async () => {
@@ -345,7 +331,7 @@
         document.getElementById("modalOverlay").style.display = "flex";
         const ctx = document.getElementById('rankChart').getContext('2d');
         if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => `${i+1}회`), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true, ticks: { stepSize: 1 } } } } });
+        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => (i+1)+'회'), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true, ticks: { stepSize: 1 } } } } });
     };
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
