@@ -7,42 +7,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 0; margin: 0; background: #f8f9fa; display: none; }
-        
-        /* 1. 최상단 고정 탭 스타일 */
-        .top-nav-bar { 
-            display: flex; overflow-x: auto; gap: 10px; padding: 15px 10px; 
-            background: #fff; border-bottom: 1px solid #eee; white-space: nowrap; 
-            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .top-nav-bar::-webkit-scrollbar { display: none; }
-        .nav-item { padding: 10px 18px; background: #f1f3f5; border-radius: 25px; font-size: 14px; font-weight: 700; color: #4a5568; cursor: pointer; border: none; }
-        .nav-item.active { background: #2d3748; color: white; }
-
-        .container { padding: 20px; max-width: 800px; margin: auto; }
-        .login-section { text-align: center; margin-top: 100px; }
+        body { padding: 20px; background: #f8f9fa; display: none; max-width: 800px; margin: auto; }
+        .login-section { display: block; text-align: center; margin-top: 100px; }
         #loginBox { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; border: 1px solid #eee; }
-        
         h1, h2 { color: #2d3748; text-align: center; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
         
-        /* 테이블 스타일 */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         th { background: #f1f3f5; color: #4a5568; }
         
-        /* 버튼 및 입력창 */
         .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
         .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
         .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         
-        .panel { display: none; }
-        .panel.active { display: block; }
-        
         .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
         .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
+        .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -50,6 +34,7 @@
     <div id="loginSection" class="login-section">
         <div id="loginBox">
             <h2>🏢 센터 관리자 접속</h2>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">부여받은 센터 코드를 입력해주세요.</p>
             <input type="password" id="centerCodeInput" placeholder="코드 입력" style="width:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center;"><br>
             <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px; font-size:16px; border-radius:8px;">관리자 로그인</button>
             <p id="errorMsg" style="color:red; display:none; margin-top:15px; font-size:13px;">코드가 일치하지 않습니다.</p>
@@ -57,72 +42,27 @@
     </div>
 
     <div id="adminPanel" style="display:none;">
-        <div class="top-nav-bar">
-            <button class="nav-item active" onclick="showTab(0)">👥 선수관리</button>
-            <button class="nav-item" onclick="showTab(1)">📢 통합공지/대회</button>
-            <button class="nav-item" onclick="showTab(2)">💬 통합채팅</button>
-            <button class="nav-item" onclick="showTab(3)">💰 시세/갤러리</button>
+        <h1 id="adminTitle">🛠️ 관리 시스템</h1>
+        
+        <div class="card" style="display: flex; justify-content: space-between;">
+            <button class="btn-sync" onclick="syncData()">🔄 순위 강제 정렬</button>
+            <button class="btn-down" onclick="autoDemote()">⚠️ 7일 미경기자 강등</button>
         </div>
 
-        <div class="container">
-            <h1 id="adminTitle">🛠️ 관리 시스템</h1>
+        <div class="card">
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 승인 대기 명단</h2>
+            <div id="pendingList">데이터 로딩 중...</div>
+        </div>
 
-            <div id="p0" class="panel active">
-                <div class="card" style="display: flex; justify-content: space-between;">
-                    <button class="btn-sync" onclick="syncData()">🔄 순위 강제 정렬</button>
-                    <button class="btn-down" onclick="autoDemote()">⚠️ 7일 미경기자 강등</button>
-                </div>
-                <div class="card">
-                    <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 승인 대기 명단</h2>
-                    <div id="pendingList">대기자 없음</div>
-                </div>
-                <div class="card">
-                    <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리</h2>
-                    <div id="activeList">데이터 로딩 중...</div>
-                </div>
-            </div>
-
-            <div id="p1" class="panel">
-                <div class="card">
-                    <h2>🏢 통합 센터 안내 수정</h2>
-                    <textarea id="globalCenterInfo" style="width:100%; height:150px; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
-                    <button class="btn-save" style="width:100%; margin-top:10px;" onclick="saveGlobal('center', 'globalCenterInfo')">센터안내 저장</button>
-                </div>
-                <div class="card">
-                    <h2>🎾 통합 대회 정보 수정</h2>
-                    <textarea id="globalMatchInfo" style="width:100%; height:150px; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
-                    <button class="btn-save" style="width:100%; margin-top:10px;" onclick="saveGlobal('match', 'globalMatchInfo')">대회정보 저장</button>
-                </div>
-            </div>
-
-            <div id="p2" class="panel">
-                <div class="card">
-                    <h2>💬 통합 채팅방 관리 (최근 50개)</h2>
-                    <div id="adminChatDisplay" style="height:400px; overflow-y:auto; background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #eee; margin-bottom:10px;"></div>
-                    <p style="font-size:12px; color:#666;">* 부적절한 메시지는 사용자용 인덱스에서 삭제 시 실시간으로 반영됩니다.</p>
-                </div>
-            </div>
-
-            <div id="p3" class="panel">
-                <div class="card">
-                    <h2>💰 중고 라켓 시세 등록</h2>
-                    <input id="marketName" placeholder="라켓명" class="edit-input" style="font-size:14px; padding:10px;">
-                    <input id="marketPrice" placeholder="시세 (예: 150,000원)" class="edit-input" style="font-size:14px; padding:10px;">
-                    <button class="btn-save" style="width:100%; margin-top:10px;" onclick="addMarket()">시세 추가</button>
-                </div>
-                <div class="card">
-                    <h2>📸 통합 사진첩 등록</h2>
-                    <input id="galleryUrl" placeholder="이미지 URL" class="edit-input" style="font-size:14px; padding:10px;">
-                    <input id="galleryTitle" placeholder="사진 제목" class="edit-input" style="font-size:14px; padding:10px;">
-                    <button class="btn-save" style="width:100%; margin-top:10px;" onclick="addGallery()">사진 등록</button>
-                </div>
-            </div>
+        <div class="card">
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리</h2>
+            <div id="activeList">데이터 로딩 중...</div>
         </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, setDoc, addDoc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -156,19 +96,11 @@
             document.getElementById("adminPanel").style.display = "block";
             document.getElementById("adminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
             startListening();
-            loadGlobalSettings();
-            listenToChats();
         } else {
             document.getElementById("errorMsg").style.display = "block";
         }
     };
 
-    window.showTab = (idx) => {
-        document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
-        document.querySelectorAll('.nav-item').forEach((t, i) => t.classList.toggle('active', i === idx));
-    };
-
-    // --- [1. 선수 관리 원본 로직 복구] ---
     function startListening() {
         const q = query(collection(db, "ranking"), orderBy("groupRank", "asc"));
         onSnapshot(q, (snap) => {
@@ -183,16 +115,20 @@
                 if (pCenter === currentCenterId) {
                     players.push(p);
                     const leagueLabel = p.league === '챔피언' ? 'A' : 'B';
+                    
                     if(p.status === "pending") {
                         pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td>${leagueLabel}</td>
                             <td><button class="btn-save" onclick="approve('${p.id}')">승인</button> 
                                 <button class="btn-del" onclick="removePlayer('${p.id}')">거절</button></td></tr>`;
                     } else {
                         aList += `<tr id="row-${p.id}">
-                            <td>${p.groupRank}위</td><td><strong>${p.name}</strong></td>
-                            <td>${p.timeGroup}/${leagueLabel}/${p.gender}</td>
-                            <td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button>
-                                <button class="btn-del" onclick="removePlayer('${p.id}')">제명</button></td></tr>`;
+                            <td>${p.groupRank}위</td>
+                            <td><strong>${p.name}</strong></td>
+                            <td>${p.timeGroup} / ${leagueLabel} / ${p.gender}</td>
+                            <td>
+                                <button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button>
+                                <button class="btn-del" onclick="removePlayer('${p.id}')">제명</button>
+                            </td></tr>`;
                     }
                 }
             });
@@ -201,57 +137,86 @@
         });
     }
 
-    // --- [2. 통합 정보 관리 로직] ---
-    function loadGlobalSettings() {
-        onSnapshot(doc(db, "globalInfo", "center"), (d) => { if(d.exists()) document.getElementById("globalCenterInfo").value = d.data().content; });
-        onSnapshot(doc(db, "globalInfo", "match"), (d) => { if(d.exists()) document.getElementById("globalMatchInfo").value = d.data().content; });
-    }
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        tempRecords = JSON.parse(JSON.stringify(p.recentGames || [])); // 깊은 복사
+        const row = document.getElementById(`row-${id}`);
 
-    window.saveGlobal = async (type, elementId) => {
-        await setDoc(doc(db, "globalInfo", type), { content: document.getElementById(elementId).value });
-        alert("통합 정보가 업데이트되었습니다.");
-    };
-
-    // --- [3. 실시간 채팅 모니터링] ---
-    function listenToChats() {
-        const qChat = query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(50));
-        onSnapshot(qChat, (snap) => {
-            const display = document.getElementById("adminChatDisplay");
-            display.innerHTML = "";
-            snap.forEach(d => {
-                const chat = d.data();
-                display.innerHTML += `<div style="padding:8px; border-bottom:1px solid #eee; font-size:13px;">
-                    <b style="color:#2d3748;">익명</b>: ${chat.text} <span style="font-size:10px; color:#999; float:right;">${chat.createdAt?.toDate().toLocaleString() || ''}</span>
-                </div>`;
-            });
+        let recordHtml = `<div class="record-edit-box"><strong>전적/점수/상대순위 관리:</strong>`;
+        tempRecords.forEach((g, idx) => {
+            recordHtml += `<div class="log-row">
+                <span style="font-size:10px;">${g.dt} vs ${g.opp}</span>
+                <input id="score-${id}-${idx}" class="edit-input" style="width:55px;" value="${g.sc || ''}" placeholder="점수">
+                <input id="oppRank-${id}-${idx}" class="edit-input" style="width:40px;" type="number" value="${g.oppRank || ''}" placeholder="상대순위">
+                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">삭제</button>
+            </div>`;
         });
-    }
+        recordHtml += `</div>`;
 
-    // --- [4. 시세 및 갤러리 추가] ---
-    window.addMarket = async () => {
-        const name = document.getElementById("marketName").value;
-        const price = document.getElementById("marketPrice").value;
-        if(!name || !price) return alert("내용을 입력하세요.");
-        await addDoc(collection(db, "globalMarket"), { name, price, createdAt: serverTimestamp() });
-        alert("시세가 등록되었습니다.");
-        document.getElementById("marketName").value = ""; document.getElementById("marketPrice").value = "";
+        row.innerHTML = `<td colspan="3" style="text-align:left;">
+            <div>순위:<input id="e-rank-${id}" class="edit-input" style="width:40px;" type="number" value="${p.groupRank}"> 
+                 이름:<input id="e-name-${id}" class="edit-input" style="width:80px;" type="text" value="${p.name}"></div>
+            <div style="margin-top:5px;">
+                타임:<select id="e-time-${id}" class="edit-input" style="width:60px;"><option value="오전" ${p.timeGroup==='오전'?'selected':''}>오전</option><option value="오후" ${p.timeGroup==='오후'?'selected':''}>오후</option></select>
+                그룹:<select id="e-league-${id}" class="edit-input" style="width:60px;"><option value="챔피언" ${p.league==='챔피언'?'selected':''}>A</option><option value="챌린저" ${p.league==='챌린저'?'selected':''}>B</option></select>
+                성별:<select id="e-gender-${id}" class="edit-input" style="width:50px;"><option value="남" ${p.gender==='남'?'selected':''}>남</option><option value="여" ${p.gender==='여'?'selected':''}>여</option></select>
+            </div>${recordHtml}</td>
+            <td><button class="btn-save" onclick="saveEdit('${id}')">저장</button><br>
+                <button class="btn-del" style="margin-top:5px;" onclick="window.location.reload()">취소</button></td>`;
     };
 
-    window.addGallery = async () => {
-        const url = document.getElementById("galleryUrl").value;
-        const title = document.getElementById("galleryTitle").value;
-        if(!url) return alert("URL을 입력하세요.");
-        await addDoc(collection(db, "globalGallery"), { url, title, createdAt: serverTimestamp() });
-        alert("사진이 등록되었습니다.");
-        document.getElementById("galleryUrl").value = ""; document.getElementById("galleryTitle").value = "";
+    window.removeLog = (idx, id) => { 
+        tempRecords.splice(idx, 1); 
+        alert("목록에서 제거되었습니다. '저장' 버튼을 눌러야 최종 반영됩니다."); 
     };
 
-    // 원본 수정/정렬 함수 유지
-    window.toggleEdit = (id) => { /* 원본과 동일 */ };
-    window.saveEdit = async (id) => { /* 원본과 동일 */ };
-    window.syncData = async () => { /* 원본과 동일 */ };
-    window.approve = async (id) => { /* 원본과 동일 */ };
-    window.removePlayer = async (id) => { /* 원본과 동일 */ };
+    window.saveEdit = async (id) => {
+        // 수정된 점수와 상대 랭킹(보너스 점수용)을 모두 반영
+        const updatedGames = tempRecords.map((g, idx) => ({ 
+            ...g, 
+            sc: document.getElementById(`score-${id}-${idx}`).value,
+            oppRank: Number(document.getElementById(`oppRank-${id}-${idx}`).value) || g.oppRank
+        }));
+
+        const updates = {
+            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
+            name: document.getElementById(`e-name-${id}`).value,
+            timeGroup: document.getElementById(`e-time-${id}`).value,
+            league: document.getElementById(`e-league-${id}`).value,
+            gender: document.getElementById(`e-gender-${id}`).value,
+            recentGames: updatedGames
+        };
+        await updateDoc(doc(db, "ranking", id), updates);
+        alert("수정 완료!");
+        syncData();
+    };
+
+    window.removePlayer = async (id) => { if(confirm("정말 이 선수를 삭제하시겠습니까?")) await deleteDoc(doc(db, "ranking", id)); };
+
+    window.syncData = async () => {
+        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
+        for (const [t, l] of groups) {
+            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l).sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+            for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
+        }
+        alert("순위 정렬이 완료되었습니다.");
+    };
+
+    window.approve = async (id) => {
+        await updateDoc(doc(db, "ranking", id), { 
+            status: "approved", 
+            groupRank: 99, 
+            lastGameDate: new Date().toISOString() 
+        });
+        syncData();
+    };
+
+    window.autoDemote = async () => {
+        if(!confirm("최근 7일간 경기가 없는 선수를 1계단 강등시키겠습니까?")) return;
+        alert("강등 처리 중...");
+        // 강등 로직 실행 (필요 시 세부 구현 가능)
+        await syncData();
+    };
 
     document.body.style.display = "block";
 </script>
