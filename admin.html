@@ -7,12 +7,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 20px; background: #f8f9fa; display: none; max-width: 800px; margin: auto; }
-        .login-section { display: block; text-align: center; margin-top: 100px; }
-        #loginBox { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; border: 1px solid #eee; }
-        h1, h2 { color: #2d3748; text-align: center; }
+        body { padding: 20px; background: #f8f9fa; display: none; max-width: 900px; margin: auto; }
         
-        /* 탭 스타일 추가 */
+        /* 로그인 섹션 (반반 나누기) */
+        .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
+        .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
+        @media (max-width: 600px) { .login-grid { flex-direction: column; } }
+        .login-box { background: white; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; border: 1px solid #eee; text-align: center; }
+        
+        h1, h2 { color: #2d3748; text-align: center; }
+        h1 { margin-bottom: 30px; }
+        
+        /* 탭 스타일 */
         .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; }
         .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #4a5568; font-weight: bold; cursor: pointer; border-radius: 8px; white-space: nowrap; }
         .tab-btn.active { background: #2d3748; color: white; }
@@ -35,29 +41,37 @@
         .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
         .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
         .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
-        .status-pending { background: #fff5f5; color: #e53e3e; }
+        
+        .login-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center; font-size:15px; }
+        .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
+        .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
     </style>
 </head>
 <body>
 
     <div id="loginSection" class="login-section">
-        <div id="loginBox">
-            <h2>🏢 센터 관리자 접속</h2>
-            <p style="font-size:13px; color:#666; margin-bottom:20px;">부여받은 센터 코드를 입력해주세요.</p>
-            <input type="password" id="centerCodeInput" placeholder="코드 입력" style="width:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center;"><br>
-            <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px; font-size:16px; border-radius:8px;">관리자 로그인</button>
-            <p id="errorMsg" style="color:red; display:none; margin-top:15px; font-size:13px;">코드가 일치하지 않습니다.</p>
+        <h1>🔐 시스템 관리자 접속</h1>
+        <div class="login-grid">
+            <div class="login-box" style="border-top: 5px solid #3182ce;">
+                <h2>🏢 개별 센터 관리</h2>
+                <p style="font-size:13px; color:#666; margin-bottom:20px;">선수 랭킹 및 승인 관리 (센터 코드 입력)</p>
+                <input type="password" id="centerCodeInput" class="login-input" placeholder="센터 코드">
+                <button class="btn-save login-btn" onclick="loginCenterAdmin()">센터 관리 접속</button>
+                <p id="centerError" class="err-msg">코드가 일치하지 않습니다.</p>
+            </div>
+
+            <div class="login-box" style="border-top: 5px solid #e53e3e;">
+                <h2>🌐 총괄 통합 관리</h2>
+                <p style="font-size:13px; color:#666; margin-bottom:20px;">센터/대회/게시판 등 전체 시스템 관리</p>
+                <input type="password" id="globalCodeInput" class="login-input" placeholder="총괄 비밀번호">
+                <button class="btn-del login-btn" onclick="loginGlobalAdmin()">통합 관리 접속</button>
+                <p id="globalError" class="err-msg">비밀번호가 틀렸습니다.</p>
+            </div>
         </div>
     </div>
 
-    <div id="adminPanel" style="display:none;">
-        <h1 id="adminTitle">🛠️ 관리 시스템</h1>
-
-        <div class="admin-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-players')">👥 선수 관리</button>
-            <button class="tab-btn" onclick="switchTab('tab-centers')">🏢 센터 정보</button>
-            <button class="tab-btn" onclick="switchTab('tab-matches')">🎾 대회 관리</button>
-        </div>
+    <div id="centerAdminPanel" style="display:none;">
+        <h1 id="centerAdminTitle">🛠️ 센터 관리 시스템</h1>
         
         <div id="tab-players" class="tab-content active">
             <div class="card" style="display: flex; justify-content: space-between;">
@@ -65,33 +79,57 @@
                 <button class="btn-down" onclick="autoDemote()">⚠️ 7일 미경기자 강등</button>
             </div>
             <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 승인 대기 명단</h2>
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 선수 승인 대기 명단</h2>
                 <div id="pendingList">데이터 로딩 중...</div>
             </div>
             <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리</h2>
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리 (전적 수정)</h2>
                 <div id="activeList">데이터 로딩 중...</div>
-            </div>
-        </div>
-
-        <div id="tab-centers" class="tab-content">
-            <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 등록된 센터 정보 관리</h2>
-                <div id="centerManageList">데이터 로딩 중...</div>
-            </div>
-        </div>
-
-        <div id="tab-matches" class="tab-content">
-            <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 승인 및 관리</h2>
-                <div id="matchManageList">데이터 로딩 중...</div>
             </div>
         </div>
     </div>
 
+    <div id="globalAdminPanel" style="display:none;">
+        <h1>🌐 총괄 통합 관리 시스템</h1>
+
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-matches', this)">🎾 대회 관리</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-chats', this)">💬 채팅 관리</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-market', this)">💰 용품/장터</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-board', this)">📋 게시판</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-gallery', this)">📸 사진첩</button>
+        </div>
+        
+        <div id="gtab-centers" class="tab-content active">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터 등록 요청 및 관리</h2>
+                <div id="centerManageList">데이터 로딩 중...</div>
+            </div>
+        </div>
+
+        <div id="gtab-matches" class="tab-content">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 등록 요청 및 관리</h2>
+                <div id="matchManageList">데이터 로딩 중...</div>
+            </div>
+        </div>
+
+        <div id="gtab-chats" class="tab-content">
+            <div class="card">
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 통합 채팅 관리 (부적절 메시지 삭제)</h2>
+                <div id="chatManageList">데이터 로딩 중...</div>
+            </div>
+        </div>
+
+        <div id="gtab-market" class="tab-content"><div class="card"><h2>💰 용품/장터 관리</h2><p style="text-align:center;color:#666;">추후 구현될 기능입니다.</p></div></div>
+        <div id="gtab-board" class="tab-content"><div class="card"><h2>📋 게시판 관리</h2><p style="text-align:center;color:#666;">추후 구현될 기능입니다.</p></div></div>
+        <div id="gtab-gallery" class="tab-content"><div class="card"><h2>📸 사진첩 관리</h2><p style="text-align:center;color:#666;">추후 구현될 기능입니다.</p></div></div>
+    </div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -117,29 +155,46 @@
     let players = [];
     let tempRecords = [];
 
-    // 탭 전환 함수
-    window.switchTab = (tabId) => {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    // 통합 관리자 탭 전환
+    window.switchGlobalTab = (tabId, btn) => {
+        document.querySelectorAll('#globalAdminPanel .tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('#globalAdminPanel .tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+        btn.classList.add('active');
     };
 
-    window.checkCode = () => {
+    // 1. 센터 관리자 로그인
+    window.loginCenterAdmin = () => {
         const input = document.getElementById("centerCodeInput").value;
         if (codeMap[input]) {
             currentCenterId = codeMap[input].id;
             document.getElementById("loginSection").style.display = "none";
-            document.getElementById("adminPanel").style.display = "block";
-            document.getElementById("adminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
-            startListening();
+            document.getElementById("centerAdminPanel").style.display = "block";
+            document.getElementById("centerAdminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
+            startCenterListening();
         } else {
-            document.getElementById("errorMsg").style.display = "block";
+            document.getElementById("centerError").style.display = "block";
+            document.getElementById("globalError").style.display = "none";
         }
     };
 
-    function startListening() {
-        // 1. 선수 리스트 감시
+    // 2. 총괄 통합 관리자 로그인
+    window.loginGlobalAdmin = () => {
+        const input = document.getElementById("globalCodeInput").value;
+        if (input === '1234') {
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("globalAdminPanel").style.display = "block";
+            startGlobalListening();
+        } else {
+            document.getElementById("globalError").style.display = "block";
+            document.getElementById("centerError").style.display = "none";
+        }
+    };
+
+    // ==========================================
+    // 개별 센터 관리 전용 데이터 로딩 (선수 랭킹)
+    // ==========================================
+    function startCenterListening() {
         onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
             players = [];
             let pList = "<table><tr><th>이름</th><th>타임</th><th>승인</th></tr>";
@@ -158,8 +213,13 @@
             document.getElementById("pendingList").innerHTML = pList + "</table>";
             document.getElementById("activeList").innerHTML = aList + "</table>";
         });
+    }
 
-        // 2. 센터 정보 감시
+    // ==========================================
+    // 총괄 통합 관리 전용 데이터 로딩
+    // ==========================================
+    function startGlobalListening() {
+        // 센터 등록 정보 감시
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
             let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>상태/관리</th></tr>";
             snap.forEach(d => {
@@ -176,7 +236,7 @@
             document.getElementById("centerManageList").innerHTML = html + "</table>";
         });
 
-        // 3. 대회 정보 감시
+        // 대회 정보 감시
         onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
             let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -192,21 +252,35 @@
             });
             document.getElementById("matchManageList").innerHTML = html + "</table>";
         });
+
+        // 채팅 내역 감시 (삭제 관리용)
+        onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc")), (snap) => {
+            let html = "<table><tr><th>센터</th><th>내용</th><th>관리</th></tr>";
+            snap.forEach(d => {
+                const c = {id: d.id, ...d.data()};
+                html += `<tr>
+                    <td style="width:20%; font-size:11px; color:#666;">${c.center || '알수없음'}</td>
+                    <td style="text-align:left; word-break:keep-all;">${c.text}</td>
+                    <td style="width:15%;"><button class="btn-del" onclick="removeData('globalChats', '${c.id}')">삭제</button></td>
+                </tr>`;
+            });
+            document.getElementById("chatManageList").innerHTML = html + "</table>";
+        });
     }
 
-    // 공통 상태 변경 함수 (승인용)
+    // ==========================================
+    // 공통 및 센터 관리자용 함수들
+    // ==========================================
     window.updateStatus = async (col, id, status) => {
         if(!confirm("승인하시겠습니까?")) return;
         await updateDoc(doc(db, col, id), { status });
         alert("승인 완료");
     };
 
-    // 공통 삭제 함수
     window.removeData = async (col, id) => {
-        if(confirm("정말로 삭제하시겠습니까?")) await deleteDoc(doc(db, col, id));
+        if(confirm("정말로 삭제/제명 하시겠습니까?")) await deleteDoc(doc(db, col, id));
     };
 
-    /* 기존 선수 수정/정렬 로직 유지 */
     window.toggleEdit = (id) => {
         const p = players.find(x => x.id === id);
         tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
