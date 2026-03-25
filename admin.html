@@ -10,7 +10,7 @@
         body { padding: 20px; background: #f8f9fa; display: none; max-width: 800px; margin: auto; }
         .login-section { display: block; text-align: center; margin-top: 100px; }
         #loginBox { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; border: 1px solid #eee; }
-        h1, h2 { color: #2d3748; text-align: center; margin-bottom: 20px; }
+        h1, h2 { color: #2d3748; text-align: center; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -23,19 +23,23 @@
         .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
         
-        .req-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
-        .req-info { font-size: 13px; }
-        .chat-admin-box { height: 200px; overflow-y: auto; background: #f1f3f5; padding: 10px; border-radius: 8px; font-size: 12px; }
-        .chat-row { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #ddd; background: white; margin-bottom: 4px; border-radius: 4px; }
+        .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
+        .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
+        .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+        
+        /* 채팅/요청 관리 */
+        .chat-admin-box { height: 150px; overflow-y: auto; background: #f1f3f5; padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
+        .req-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
     </style>
 </head>
 <body>
 
     <div id="loginSection" class="login-section">
         <div id="loginBox">
-            <h2>🏢 관리자 접속</h2>
-            <input type="password" id="centerCodeInput" placeholder="코드 입력" style="width:200px; padding:12px; border:1px solid #ddd; border-radius:8px; text-align:center;"><br><br>
-            <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px;">로그인</button>
+            <h2>🏢 센터 관리자 접속</h2>
+            <input type="password" id="centerCodeInput" placeholder="코드 입력" style="width:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center;"><br>
+            <button class="btn-save" onclick="checkCode()" style="padding:12px 30px; width:200px; font-size:16px;">로그인</button>
         </div>
     </div>
 
@@ -43,8 +47,10 @@
         <h1 id="adminTitle">🛠️ 관리 시스템</h1>
         
         <div class="card">
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #4a5568; padding-left:10px;">💬 실시간 채팅 관리 (삭제)</h2>
-            <div id="chatAdminList" class="chat-admin-box">로딩 중...</div>
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #4a5568; padding-left:10px;">💬 채팅/정보 통합 관리</h2>
+            <div id="chatAdminList" class="chat-admin-box">채팅 로딩 중...</div>
+            <div id="infoRequestList"></div>
+            <div id="matchRequestList" style="margin-top:10px;"></div>
         </div>
 
         <div class="card" style="display: flex; justify-content: space-between;">
@@ -53,15 +59,13 @@
         </div>
 
         <div class="card">
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 선수 승인 및 활동 관리</h2>
-            <div id="pendingList"></div>
-            <div id="activeList" style="margin-top:20px;"></div>
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 승인 대기 명단</h2>
+            <div id="pendingList">데이터 로딩 중...</div>
         </div>
 
         <div class="card">
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터/대회 정보 승인</h2>
-            <div id="infoRequestList"></div>
-            <div id="matchRequestList" style="margin-top:20px;"></div>
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리 (수정/제명)</h2>
+            <div id="activeList">데이터 로딩 중...</div>
         </div>
     </div>
 
@@ -84,6 +88,7 @@
     const codeMap = { 'sewha123': 'sehwa', 'chan123': 'chan', 'sq3': 'squash3', 'sq4': 'squash4', 'sq5': 'squash5' };
     let currentCenterId = "";
     let players = [];
+    let tempRecords = [];
 
     window.checkCode = () => {
         const input = document.getElementById("centerCodeInput").value;
@@ -92,70 +97,107 @@
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("adminPanel").style.display = "block";
             startListening();
-        } else { alert("코드 불일치"); }
+        } else { alert("코드가 일치하지 않습니다."); }
     };
 
     function startListening() {
-        // 선수 리스트 & 제명 기능
+        // 선수 데이터 (수정/제명/승인)
         onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
             players = [];
-            let pTable = "<h3>승인 대기</h3><table>";
-            let aTable = "<h3>활동 선수 (제명 가능)</h3><table>";
+            let pList = "<table><tr><th>이름</th><th>타임</th><th>그룹</th><th>승인</th></tr>";
+            let aList = "<table><tr><th>순위</th><th>이름</th><th>정보</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const p = {id: d.id, ...d.data()};
                 if ((p.centerId || 'sehwa') === currentCenterId) {
                     players.push(p);
-                    const row = `<tr><td>${p.groupRank}위</td><td>${p.name}</td><td>
-                        <button class="btn-del" onclick="deleteDocById('ranking','${p.id}')">제명</button>
-                        ${p.status==='pending'?`<button class="btn-save" onclick="approvePlayer('${p.id}')">승인</button>`:''}
-                    </td></tr>`;
-                    if(p.status === 'pending') pTable += row; else aTable += row;
+                    const leagueLabel = p.league === '챔피언' ? 'A' : 'B';
+                    if(p.status === "pending") {
+                        pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td>${leagueLabel}</td>
+                            <td><button class="btn-save" onclick="approvePlayer('${p.id}')">승인</button> 
+                                <button class="btn-del" onclick="deleteDocById('ranking','${p.id}')">거절</button></td></tr>`;
+                    } else {
+                        aList += `<tr id="row-${p.id}"><td>${p.groupRank}위</td><td><strong>${p.name}</strong></td><td>${p.timeGroup}/${leagueLabel}/${p.gender}</td>
+                            <td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button> 
+                                <button class="btn-del" onclick="deleteDocById('ranking','${p.id}')">제명</button></td></tr>`;
+                    }
                 }
             });
-            document.getElementById("pendingList").innerHTML = pTable + "</table>";
-            document.getElementById("activeList").innerHTML = aTable + "</table>";
+            document.getElementById("pendingList").innerHTML = players.filter(x=>x.status==='pending').length ? pList + "</table>" : "대기자 없음";
+            document.getElementById("activeList").innerHTML = aList + "</table>";
         });
 
-        // 채팅 관리 (삭제 기능)
+        // 실시간 채팅 관리
         onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
             let html = "";
             snap.forEach(d => {
-                const data = d.data();
-                html += `<div class="chat-row"><span>[${data.center}] ${data.text}</span>
-                    <button class="mini-del" onclick="deleteDocById('globalChats','${d.id}')" style="background:#e74c3c; color:white; border:none; border-radius:3px; cursor:pointer;">삭제</button></div>`;
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:white; padding:5px; border-radius:4px;">
+                    <span>[${d.data().center}] ${d.data().text}</span>
+                    <button onclick="deleteDocById('globalChats','${d.id}')" style="background:#e74c3c; color:white; border:none; padding:2px 5px; border-radius:3px; cursor:pointer; font-size:10px;">삭제</button></div>`;
             });
-            document.getElementById("chatAdminList").innerHTML = html;
+            document.getElementById("chatAdminList").innerHTML = html || "채팅 내역 없음";
         });
 
-        // 센터/대회 정보 승인 리스트
+        // 정보 승인 요청
         onSnapshot(collection(db, "infoRequests"), (snap) => {
-            let html = "<h3>센터 정보 요청</h3>";
+            let html = "";
             snap.forEach(d => {
                 const data = d.data();
-                html += `<div class="req-item"><div class="req-info"><b>${data.name}</b> (${data.status})</div>
-                    <div><button class="btn-save" onclick="approveReq('infoRequests','${d.id}')">승인</button>
-                    <button class="btn-del" onclick="deleteDocById('infoRequests','${d.id}')">삭제</button></div></div>`;
+                if(data.status === 'pending') {
+                    html += `<div class="req-item"><span><b>센터신청:</b> ${data.name}</span>
+                        <div><button class="btn-save" onclick="approveReq('infoRequests','${d.id}')">승인</button>
+                        <button class="btn-del" onclick="deleteDocById('infoRequests','${d.id}')">삭제</button></div></div>`;
+                }
             });
             document.getElementById("infoRequestList").innerHTML = html;
         });
 
         onSnapshot(collection(db, "matchRequests"), (snap) => {
-            let html = "<h3>대회 정보 요청</h3>";
+            let html = "";
             snap.forEach(d => {
                 const data = d.data();
-                html += `<div class="req-item"><div class="req-info"><b>${data.title}</b> (${data.status})</div>
-                    <div><button class="btn-save" onclick="approveReq('matchRequests','${d.id}')">승인</button>
-                    <button class="btn-del" onclick="deleteDocById('matchRequests','${d.id}')">삭제</button></div></div>`;
+                if(data.status === 'pending') {
+                    html += `<div class="req-item"><span><b>대회신청:</b> ${data.title}</span>
+                        <div><button class="btn-save" onclick="approveReq('matchRequests','${d.id}')">승인</button>
+                        <button class="btn-del" onclick="deleteDocById('matchRequests','${d.id}')">삭제</button></div></div>`;
+                }
             });
             document.getElementById("matchRequestList").innerHTML = html;
         });
     }
 
-    // 공통 함수
-    window.deleteDocById = async (coll, id) => { if(confirm("정말 삭제/제명하시겠습니까?")) await deleteDoc(doc(db, coll, id)); };
-    window.approveReq = async (coll, id) => { await updateDoc(doc(db, coll, id), { status: "approved" }); alert("승인완료"); };
-    window.approvePlayer = async (id) => { await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99 }); syncData(); };
+    // 선수 수정 로직 (이전 기능 완벽 복구)
+    window.toggleEdit = (id) => {
+        const p = players.find(x => x.id === id);
+        tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
+        const row = document.getElementById(`row-${id}`);
+        let recordHtml = `<div class="record-edit-box"><strong>전적 관리:</strong>`;
+        tempRecords.forEach((g, idx) => {
+            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp}</span>
+                <input id="score-${id}-${idx}" class="edit-input" style="width:55px;" value="${g.sc || ''}">
+                <input id="oppRank-${id}-${idx}" class="edit-input" style="width:40px;" type="number" value="${g.oppRank || ''}">
+                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">삭제</button></div>`;
+        });
+        row.innerHTML = `<td colspan="3" style="text-align:left;">
+            <div>순위:<input id="e-rank-${id}" class="edit-input" style="width:40px;" type="number" value="${p.groupRank}"> 이름:<input id="e-name-${id}" class="edit-input" style="width:80px;" value="${p.name}"></div>
+            <div style="margin-top:5px;">
+                타임:<select id="e-time-${id}" class="edit-input" style="width:60px;"><option value="오전" ${p.timeGroup==='오전'?'selected':''}>오전</option><option value="오후" ${p.timeGroup==='오후'?'selected':''}>오후</option></select>
+                그룹:<select id="e-league-${id}" class="edit-input" style="width:60px;"><option value="챔피언" ${p.league==='챔피언'?'selected':''}>A</option><option value="챌린저" ${p.league==='챌린저'?'selected':''}>B</option></select>
+                성별:<select id="e-gender-${id}" class="edit-input" style="width:50px;"><option value="남" ${p.gender==='남'?'selected':''}>남</option><option value="여" ${p.gender==='여'?'selected':''}>여</option></select>
+            </div>${recordHtml + `</div>`}</td>
+            <td><button class="btn-save" onclick="saveEdit('${id}')">저장</button><br><button class="btn-del" style="margin-top:5px;" onclick="window.location.reload()">취소</button></td>`;
+    };
 
+    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("삭제됨. 저장 필수!"); };
+    window.saveEdit = async (id) => {
+        const updatedGames = tempRecords.map((g, idx) => ({ ...g, sc: document.getElementById(`score-${id}-${idx}`).value, oppRank: Number(document.getElementById(`oppRank-${id}-${idx}`).value) || g.oppRank }));
+        await updateDoc(doc(db, "ranking", id), { groupRank: Number(document.getElementById(`e-rank-${id}`).value), name: document.getElementById(`e-name-${id}`).value, timeGroup: document.getElementById(`e-time-${id}`).value, league: document.getElementById(`e-league-${id}`).value, gender: document.getElementById(`e-gender-${id}`).value, recentGames: updatedGames });
+        alert("수정 완료!"); syncData();
+    };
+
+    // 공통 관리 함수
+    window.deleteDocById = async (coll, id) => { if(confirm("정말 삭제/제명하시겠습니까?")) await deleteDoc(doc(db, coll, id)); };
+    window.approveReq = async (coll, id) => { await updateDoc(doc(db, coll, id), { status: "approved" }); alert("승인완료!"); };
+    window.approvePlayer = async (id) => { await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99 }); syncData(); };
     window.syncData = async () => {
         const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
         for (const [t, l] of groups) {
@@ -163,7 +205,8 @@
             for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
         }
     };
-    
+    window.autoDemote = async () => { if(confirm("7일 미경기자 강등?")) await syncData(); };
+
     document.body.style.display = "block";
 </script>
 </body>
