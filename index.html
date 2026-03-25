@@ -121,6 +121,7 @@
                 </select>
                 <input id="infoName" placeholder="상호명">
                 <input id="infoAddr" placeholder="상세 주소">
+                <input id="infoTime" placeholder="영업시간 (예: 평일 06-23, 토 09-18)">
                 <input id="infoFee" placeholder="일일입장료">
                 <div style="display:flex; gap:5px;">
                     <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
@@ -221,6 +222,7 @@
             <div class="info-card">
                 <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold;">${data.sido || '지역미지정'}</span><br>
                 <b>${data.name}</b>
+                <p style="margin-top:5px;">🕒 ${data.time || '정보 없음'}</p>
                 <p>${data.addr}<br>입장료: ${data.fee} / 코트: ${data.court}</p>
                 <div class="map-btn-group">
                     <a href="https://map.naver.com/v5/search/${searchAddr}" target="_blank" class="btn-map naver-bg">네이버 지도</a>
@@ -240,6 +242,7 @@
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
         const addr = document.getElementById("infoAddr").value.trim();
+        const time = document.getElementById("infoTime").value.trim();
         if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
         
         const full = document.getElementById("courtFull").value || 0;
@@ -248,13 +251,18 @@
 
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name, addr, fee: document.getElementById("infoFee").value,
+            name, addr, time, fee: document.getElementById("infoFee").value,
             court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
             status: "pending", createdAt: serverTimestamp()
         });
         alert("신청 완료! 관리자 승인 후 표시됩니다.");
-        document.getElementById("infoName").value = ""; document.getElementById("infoAddr").value = "";
-        document.getElementById("courtFull").value = ""; document.getElementById("courtDouble").value = ""; document.getElementById("courtSemi").value = "";
+        document.getElementById("infoName").value = ""; 
+        document.getElementById("infoAddr").value = "";
+        document.getElementById("infoTime").value = "";
+        document.getElementById("infoFee").value = "";
+        document.getElementById("courtFull").value = ""; 
+        document.getElementById("courtDouble").value = ""; 
+        document.getElementById("courtSemi").value = "";
     };
 
     window.submitMatch = async () => {
@@ -367,23 +375,4 @@
     };
 
     function updateChallengerList() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
-    }
-
-    window.sendChat = async () => {
-        const msg = document.getElementById("chatInput").value.trim();
-        if(!msg) return;
-        await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
-        document.getElementById("chatInput").value = "";
-    };
-
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(50)), (snap) => {
-        const chatDisplay = document.getElementById("chatDisplay");
-        let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
-        rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
-        chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
-    });
-</script>
-</body>
-</html>
+        const centerPlayers = players.
