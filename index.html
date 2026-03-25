@@ -60,9 +60,10 @@
         .info-card b { font-size: 16px; color: #2d3748; }
         .info-card p { margin: 5px 0 0 0; font-size: 13px; color: #718096; }
         
-        .map-btn-group { display: flex; gap: 5px; margin-top: 10px; }
-        .btn-map { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; text-align: center; text-decoration: none; color: white; }
-        .naver-bg { background: #03C75A; }
+        .map-btn-group { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-map { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; text-align: center; text-decoration: none; color: white; border: none; }
+        .google-bg { background: #4285F4; }
+        .call-bg { background: #34A853; }
 
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
@@ -242,8 +243,9 @@
         const filtered = filter === "전체" ? allCenters : allCenters.filter(c => c.sido === filter);
         
         filtered.forEach(data => {
-            const searchKeyword = encodeURIComponent(data.name);
-            // 전화번호(contact) 렌더링 추가됨
+            const searchKeyword = encodeURIComponent(data.name + " " + data.addr);
+            const callNumber = data.contact ? data.contact.replace(/[^0-9]/g, "") : "";
+            
             html += `
             <div class="info-card">
                 <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#4a5568;">${data.sido || '지역미지정'}</span><br>
@@ -253,7 +255,8 @@
                 <p>📍 주소: ${data.addr}</p>
                 <p>💸 입장료: ${data.fee || '정보 없음'} / 🎾 코트: ${data.court}</p>
                 <div class="map-btn-group">
-                    <a href="https://m.map.naver.com/search2/search.naver?query=${searchKeyword}" target="_blank" class="btn-map naver-bg">네이버 지도 보기</a>
+                    <a href="https://www.google.com/maps/search/?api=1&query=${searchKeyword}" target="_blank" class="btn-map google-bg">구글 지도</a>
+                    <a href="tel:${callNumber}" class="btn-map call-bg">전화 걸기</a>
                 </div>
             </div>`;
         });
@@ -262,7 +265,7 @@
 
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
-        const contact = document.getElementById("infoContact").value.trim(); // 전화번호 값 가져오기
+        const contact = document.getElementById("infoContact").value.trim(); 
         const addr = document.getElementById("infoAddr").value.trim();
         const time = document.getElementById("infoTime").value.trim();
         const fee = document.getElementById("infoFee").value.trim();
@@ -274,12 +277,12 @@
 
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name, contact, addr, time, fee, // db에 전화번호 저장
+            name, contact, addr, time, fee, 
             court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
             status: "pending", createdAt: serverTimestamp()
         });
         alert("신청 완료! 관리자 승인 후 표시됩니다.");
-        ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = ""); // 초기화 목록에 infoContact 추가
+        ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
     window.submitMatch = async () => {
