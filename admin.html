@@ -9,7 +9,7 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 20px; background: #f8f9fa; display: none; max-width: 900px; margin: auto; }
         
-        /* 로그인 섹션 (반반 나누기) */
+        /* 로그인 섹션 */
         .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
         .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
         @media (max-width: 600px) { .login-grid { flex-direction: column; } }
@@ -19,7 +19,7 @@
         h1 { margin-bottom: 30px; }
         
         /* 탭 스타일 */
-        .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; }
+        .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
         .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #4a5568; font-weight: bold; cursor: pointer; border-radius: 8px; white-space: nowrap; }
         .tab-btn.active { background: #2d3748; color: white; }
         .tab-content { display: none; }
@@ -30,6 +30,7 @@
         th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         th { background: #f1f3f5; color: #4a5568; }
         
+        /* 버튼 스타일 */
         .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
         .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
         .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
@@ -43,7 +44,7 @@
         .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
         
         .login-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center; font-size:15px; }
-        .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
+        .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; color:white; border:none; cursor:pointer; }
         .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
     </style>
 </head>
@@ -54,17 +55,17 @@
         <div class="login-grid">
             <div class="login-box" style="border-top: 5px solid #3182ce;">
                 <h2>🏢 개별 센터 관리</h2>
-                <p style="font-size:13px; color:#666; margin-bottom:20px;">선수 랭킹 및 승인 관리 (센터 코드 입력)</p>
+                <p style="font-size:13px; color:#666; margin-bottom:20px;">선수 랭킹 및 승인 관리</p>
                 <input type="password" id="centerCodeInput" class="login-input" placeholder="센터 코드">
-                <button class="btn-save login-btn" onclick="loginCenterAdmin()">센터 관리 접속</button>
+                <button class="login-btn" style="background:#28a745;" onclick="loginCenterAdmin()">센터 관리 접속</button>
                 <p id="centerError" class="err-msg">코드가 일치하지 않습니다.</p>
             </div>
 
             <div class="login-box" style="border-top: 5px solid #e53e3e;">
                 <h2>🌐 총괄 통합 관리</h2>
-                <p style="font-size:13px; color:#666; margin-bottom:20px;">센터/대회/게시판 등 전체 시스템 관리</p>
+                <p style="font-size:13px; color:#666; margin-bottom:20px;">시스템 전체 및 유료 서비스 관리</p>
                 <input type="password" id="globalCodeInput" class="login-input" placeholder="총괄 비밀번호">
-                <button class="btn-del login-btn" onclick="loginGlobalAdmin()">통합 관리 접속</button>
+                <button class="login-btn" style="background:#dc3545;" onclick="loginGlobalAdmin()">통합 관리 접속</button>
                 <p id="globalError" class="err-msg">비밀번호가 틀렸습니다.</p>
             </div>
         </div>
@@ -72,59 +73,51 @@
 
     <div id="centerAdminPanel" style="display:none;">
         <h1 id="centerAdminTitle">🛠️ 센터 관리 시스템</h1>
-        
-        <div id="tab-players" class="tab-content active">
-            <div class="card" style="display: flex; justify-content: space-between;">
-                <button class="btn-sync" onclick="syncData()">🔄 순위 강제 정렬</button>
-                <button class="btn-down" onclick="autoDemote()">⚠️ 7일 미경기자 강등</button>
-            </div>
-            <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 선수 승인 대기 명단</h2>
-                <div id="pendingList">데이터 로딩 중...</div>
-            </div>
-            <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리 (전적 수정)</h2>
-                <div id="activeList">데이터 로딩 중...</div>
-            </div>
+        <div class="card" style="display: flex; justify-content: space-between;">
+            <button class="btn-sync" onclick="syncData()">🔄 순위 강제 정렬</button>
+            <button class="btn-down" onclick="alert('준비중인 기능입니다.')">⚠️ 7일 미경기자 강등</button>
+        </div>
+        <div class="card">
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #ed8936; padding-left:10px;">⏳ 선수 승인 대기</h2>
+            <div id="pendingList">데이터 로딩 중...</div>
+        </div>
+        <div class="card">
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">✅ 활동 선수 관리</h2>
+            <div id="activeList">데이터 로딩 중...</div>
         </div>
     </div>
 
     <div id="globalAdminPanel" style="display:none;">
-        <h1>🌐 총괄 통합 관리 시스템</h1>
-
+        <h1>🌐 총괄 통합 관리</h1>
         <div class="admin-tabs">
-            <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
+            <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 관리</button>
             <button class="tab-btn" onclick="switchGlobalTab('gtab-matches', this)">🎾 대회 관리</button>
             <button class="tab-btn" onclick="switchGlobalTab('gtab-chats', this)">💬 채팅 관리</button>
-            <button class="tab-btn" onclick="switchGlobalTab('gtab-market', this)">💰 용품/장터</button>
-            <button class="tab-btn" onclick="switchGlobalTab('gtab-board', this)">📋 게시판</button>
-            <button class="tab-btn" onclick="switchGlobalTab('gtab-gallery', this)">📸 사진첩</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-etc', this)">⚙️ 기타 설정</button>
         </div>
         
         <div id="gtab-centers" class="tab-content active">
             <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터 등록 요청 및 관리</h2>
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 등록 센터 수정 및 승인</h2>
                 <div id="centerManageList">데이터 로딩 중...</div>
             </div>
         </div>
 
         <div id="gtab-matches" class="tab-content">
             <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 등록 요청 및 관리</h2>
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 정보 수정 및 승인</h2>
                 <div id="matchManageList">데이터 로딩 중...</div>
             </div>
         </div>
 
         <div id="gtab-chats" class="tab-content">
             <div class="card">
-                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 통합 채팅 관리 (부적절 메시지 삭제)</h2>
+                <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 실시간 채팅 모니터링</h2>
                 <div id="chatManageList">데이터 로딩 중...</div>
             </div>
         </div>
 
-        <div id="gtab-market" class="tab-content"><div class="card"><h2>💰 용품/장터 관리</h2><p style="text-align:center;color:#666;">추후 구현될 기능입니다.</p></div></div>
-        <div id="gtab-board" class="tab-content"><div class="card"><h2>📋 게시판 관리</h2><p style="text-align:center;color:#666;">추후 구현될 기능입니다.</p></div></div>
-        <div id="gtab-gallery" class="tab-content"><div class="card"><h2>📸 사진첩 관리</h2><p style="text-align:center;color:#666;">추후 구현될 기능입니다.</p></div></div>
+        <div id="gtab-etc" class="tab-content"><div class="card"><h2>⚙️ 기타 관리</h2><p style="text-align:center;color:#666;">장터/게시판 기능은 데이터 준비 중입니다.</p></div></div>
     </div>
 
 <script type="module">
@@ -146,16 +139,33 @@
     const codeMap = { 
         'sewha123': { id: 'sehwa', name: '세화 스쿼시' },
         'chan123': { id: 'chan', name: '찬 스쿼시' },
-        'sq3': { id: 'squash3', name: '스쿼시 3센터' },
-        'sq4': { id: 'squash4', name: '스쿼시 4센터' },
-        'sq5': { id: 'squash5', name: '스쿼시 5센터' }
+        'sq3': { id: 'squash3', name: '스쿼시 3센터' }
     };
 
     let currentCenterId = "";
     let players = [];
     let tempRecords = [];
 
-    // 통합 관리자 탭 전환
+    // --- 로그인 로직 ---
+    window.loginCenterAdmin = () => {
+        const input = document.getElementById("centerCodeInput").value;
+        if (codeMap[input]) {
+            currentCenterId = codeMap[input].id;
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("centerAdminPanel").style.display = "block";
+            document.getElementById("centerAdminTitle").innerText = `🛠️ ${codeMap[input].name} 관리`;
+            startCenterListening();
+        } else { document.getElementById("centerError").style.display = "block"; }
+    };
+
+    window.loginGlobalAdmin = () => {
+        if (document.getElementById("globalCodeInput").value === '1234') {
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("globalAdminPanel").style.display = "block";
+            startGlobalListening();
+        } else { document.getElementById("globalError").style.display = "block"; }
+    };
+
     window.switchGlobalTab = (tabId, btn) => {
         document.querySelectorAll('#globalAdminPanel .tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('#globalAdminPanel .tab-btn').forEach(b => b.classList.remove('active'));
@@ -163,50 +173,20 @@
         btn.classList.add('active');
     };
 
-    // 1. 센터 관리자 로그인
-    window.loginCenterAdmin = () => {
-        const input = document.getElementById("centerCodeInput").value;
-        if (codeMap[input]) {
-            currentCenterId = codeMap[input].id;
-            document.getElementById("loginSection").style.display = "none";
-            document.getElementById("centerAdminPanel").style.display = "block";
-            document.getElementById("centerAdminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
-            startCenterListening();
-        } else {
-            document.getElementById("centerError").style.display = "block";
-            document.getElementById("globalError").style.display = "none";
-        }
-    };
-
-    // 2. 총괄 통합 관리자 로그인
-    window.loginGlobalAdmin = () => {
-        const input = document.getElementById("globalCodeInput").value;
-        if (input === '1234') {
-            document.getElementById("loginSection").style.display = "none";
-            document.getElementById("globalAdminPanel").style.display = "block";
-            startGlobalListening();
-        } else {
-            document.getElementById("globalError").style.display = "block";
-            document.getElementById("centerError").style.display = "none";
-        }
-    };
-
-    // ==========================================
-    // 개별 센터 관리 전용 데이터 로딩 (선수 랭킹)
-    // ==========================================
+    // --- 개별 센터 데이터 ---
     function startCenterListening() {
         onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
             players = [];
-            let pList = "<table><tr><th>이름</th><th>타임</th><th>승인</th></tr>";
+            let pList = "<table><tr><th>이름</th><th>타임</th><th>관리</th></tr>";
             let aList = "<table><tr><th>순위</th><th>이름</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const p = {id: d.id, ...d.data()};
                 if ((p.centerId || 'sehwa') === currentCenterId) {
                     players.push(p);
                     if(p.status === "pending") {
-                        pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td><button class="btn-save" onclick="approve('${p.id}')">승인</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">거절</button></td></tr>`;
+                        pList += `<tr><td>${p.name}</td><td>${p.timeGroup}</td><td><button class="btn-save" onclick="approve('${p.id}')">승인</button></td></tr>`;
                     } else {
-                        aList += `<tr id="row-${p.id}"><td>${p.groupRank}위</td><td><strong>${p.name}</strong></td><td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button> <button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></td></tr>`;
+                        aList += `<tr id="row-${p.id}"><td>${p.groupRank}위</td><td>${p.name}</td><td><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button></td></tr>`;
                     }
                 }
             });
@@ -215,20 +195,19 @@
         });
     }
 
-    // ==========================================
-    // 총괄 통합 관리 전용 데이터 로딩
-    // ==========================================
+    // --- 통합 관리자 데이터 (수정 기능 포함) ---
     function startGlobalListening() {
-        // 센터 등록 정보 감시
+        // 센터 관리
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
-            let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>상태/관리</th></tr>";
+            let html = "<table><tr><th>센터정보</th><th>연락처</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const c = {id: d.id, ...d.data()};
-                html += `<tr>
-                    <td style="text-align:left;"><b>${c.sido}</b><br>${c.name}</td>
+                html += `<tr id="crow-${c.id}">
+                    <td style="text-align:left;"><b>${c.sido}</b> ${c.name}</td>
                     <td>${c.contact || '-'}</td>
                     <td>
-                        ${c.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
+                        <button class="btn-edit" onclick="toggleCenterEdit('${c.id}', '${c.sido}', '${c.name}', '${c.contact || ''}')">수정</button>
+                        ${c.status==='pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">승인</button>` : ''}
                         <button class="btn-del" onclick="removeData('infoRequests', '${c.id}')">삭제</button>
                     </td>
                 </tr>`;
@@ -236,16 +215,17 @@
             document.getElementById("centerManageList").innerHTML = html + "</table>";
         });
 
-        // 대회 정보 감시
+        // 대회 관리
         onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
             let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const m = {id: d.id, ...d.data()};
-                html += `<tr>
+                html += `<tr id="mrow-${m.id}">
                     <td style="text-align:left;">${m.title}</td>
                     <td>${m.date}</td>
                     <td>
-                        ${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
+                        <button class="btn-edit" onclick="toggleMatchEdit('${m.id}', '${m.title}', '${m.date}')">수정</button>
+                        ${m.status==='pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : ''}
                         <button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">삭제</button>
                     </td>
                 </tr>`;
@@ -253,78 +233,37 @@
             document.getElementById("matchManageList").innerHTML = html + "</table>";
         });
 
-        // 채팅 내역 감시 (삭제 관리용)
+        // 채팅 관리
         onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc")), (snap) => {
-            let html = "<table><tr><th>센터</th><th>내용</th><th>관리</th></tr>";
+            let html = "<table><tr><th>내용</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const c = {id: d.id, ...d.data()};
-                html += `<tr>
-                    <td style="width:20%; font-size:11px; color:#666;">${c.center || '알수없음'}</td>
-                    <td style="text-align:left; word-break:keep-all;">${c.text}</td>
-                    <td style="width:15%;"><button class="btn-del" onclick="removeData('globalChats', '${c.id}')">삭제</button></td>
-                </tr>`;
+                html += `<tr><td style="text-align:left;">${c.text}</td><td><button class="btn-del" onclick="removeData('globalChats', '${c.id}')">삭제</button></td></tr>`;
             });
             document.getElementById("chatManageList").innerHTML = html + "</table>";
         });
     }
 
-    // ==========================================
-    // 공통 및 센터 관리자용 함수들
-    // ==========================================
-    window.updateStatus = async (col, id, status) => {
-        if(!confirm("승인하시겠습니까?")) return;
-        await updateDoc(doc(db, col, id), { status });
-        alert("승인 완료");
+    // --- 통합 관리자 수정 로직 ---
+    window.toggleCenterEdit = (id, sido, name, contact) => {
+        document.getElementById(`crow-${id}`).innerHTML = `
+            <td colspan="2" style="background:#fff9db; padding:10px;">
+                <input id="ce-sido-${id}" class="edit-input" style="width:25%;" value="${sido}">
+                <input id="ce-name-${id}" class="edit-input" style="width:40%;" value="${name}">
+                <input id="ce-contact-${id}" class="edit-input" style="width:30%;" value="${contact}">
+            </td>
+            <td style="background:#fff9db;"><button class="btn-save" onclick="saveCenterEdit('${id}')">저장</button></td>`;
     };
 
-    window.removeData = async (col, id) => {
-        if(confirm("정말로 삭제/제명 하시겠습니까?")) await deleteDoc(doc(db, col, id));
-    };
-
-    window.toggleEdit = (id) => {
-        const p = players.find(x => x.id === id);
-        tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
-        const row = document.getElementById(`row-${id}`);
-        let recordHtml = `<div class="record-edit-box">`;
-        tempRecords.forEach((g, idx) => {
-            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp}</span>
-                <input id="score-${id}-${idx}" class="edit-input" style="width:50px;" value="${g.sc || ''}">
-                <button class="mini-del" onclick="removeLog(${idx}, '${id}')">X</button></div>`;
+    window.saveCenterEdit = async (id) => {
+        await updateDoc(doc(db, "infoRequests", id), {
+            sido: document.getElementById(`ce-sido-${id}`).value,
+            name: document.getElementById(`ce-name-${id}`).value,
+            contact: document.getElementById(`ce-contact-${id}`).value
         });
-        row.innerHTML = `<td colspan="2" style="text-align:left;">
-            순위:<input id="e-rank-${id}" class="edit-input" style="width:35px;" value="${p.groupRank}">
-            이름:<input id="e-name-${id}" class="edit-input" style="width:70px;" value="${p.name}">
-            ${recordHtml}</div></td>
-            <td><button class="btn-save" onclick="saveEdit('${id}')">저장</button></td>`;
+        alert("센터 수정 완료");
     };
 
-    window.saveEdit = async (id) => {
-        const updatedGames = tempRecords.map((g, idx) => ({ ...g, sc: document.getElementById(`score-${id}-${idx}`).value }));
-        await updateDoc(doc(db, "ranking", id), {
-            groupRank: Number(document.getElementById(`e-rank-${id}`).value),
-            name: document.getElementById(`e-name-${id}`).value,
-            recentGames: updatedGames
-        });
-        alert("저장완료");
-    };
-
-    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("저장을 눌러야 반영됩니다."); };
-
-    window.syncData = async () => {
-        const groups = [["오전","챔피언"], ["오전","챌린저"], ["오후","챔피언"], ["오후","챌린저"]];
-        for (const [t, l] of groups) {
-            const members = players.filter(p => p.status === 'approved' && p.timeGroup === t && p.league === l).sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-            for(let i=0; i<members.length; i++) await updateDoc(doc(db, "ranking", members[i].id), { groupRank: i + 1 });
-        }
-        alert("정렬 완료");
-    };
-
-    window.approve = async (id) => {
-        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 99 });
-        syncData();
-    };
-
-    document.body.style.display = "block";
-</script>
-</body>
-</html>
+    window.toggleMatchEdit = (id, title, date) => {
+        document.getElementById(`mrow-${id}`).innerHTML = `
+            <td colspan="2
