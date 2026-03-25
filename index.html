@@ -1,36 +1,247 @@
-// [채팅 실시간 감시 및 즉시 출력 로직]
-const chatQ = query(collection(db, "chats"), where("centerId", "==", currentCenter), orderBy("dt", "asc"));
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>스쿼시 통합 랭킹 플랫폼</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
+        body { padding: 15px; max-width: 500px; margin: auto; background-color: #f8f9fa; color: #333; }
+        
+        /* 센터 선택 & 탭 */
+        .center-card { background: #3182ce; color: white; padding: 15px; border-radius: 16px; margin-bottom: 15px; }
+        select { width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; color: #3182ce; }
+        
+        .tab-menu { display: flex; background: white; border-radius: 12px; margin-bottom: 20px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 10px; z-index: 100; }
+        .tab-btn { flex: 1; padding: 12px 5px; border: none; background: none; font-weight: 700; color: #a0aec0; cursor: pointer; border-radius: 8px; font-size: 13px; }
+        .tab-btn.active { background: #3182ce; color: white; }
 
-// 이 함수가 데이터가 바뀔 때마다 자동으로 실행됩니다.
-onSnapshot(chatQ, (snap) => {
-    const chatArea = document.getElementById("chatArea");
-    if (!chatArea) return;
+        .content-section { display: none; animation: fadeIn 0.3s ease; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    // 1. 채팅창 내용 비우고 새로 그리기 (즉시 반영)
-    chatArea.innerHTML = snap.docs.map(d => {
-        const c = d.data();
-        return `<div style="margin-bottom:8px;">
-            <strong style="font-size:12px; color:#4a5568;">${c.user}</strong>
-            <div style="background:#edf2f7; padding:8px 12px; border-radius:12px; font-size:14px; display:inline-block; margin-top:2px;">${c.msg}</div>
-        </div>`;
-    }).join('');
+        /* 기존 스타일 유지 */
+        .mvp-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mvp-card { flex: 1; background: linear-gradient(135deg, #2d3748, #1a202c); color: white; padding: 15px; border-radius: 16px; text-align: center; }
+        .section { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+        h2 { border-left: 5px solid #e74c3c; padding-left: 10px; font-size: 1.1em; margin-bottom: 15px; font-weight: 700; }
+        .blue-h2 { border-left-color: #3182ce; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; }
+        th, td { padding: 12px 5px; border-bottom: 1px solid #f1f3f5; }
+        .name-link { color: #2d3748; text-decoration: none; font-weight: 700; cursor: pointer; }
 
-    // 2. 메시지가 오면 자동으로 스크롤을 맨 아래로 내림
-    chatArea.scrollTop = chatArea.scrollHeight;
-});
+        /* 사진첩 & 정보 */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .photo-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; }
+        .photo-card img { width: 100%; height: 120px; object-fit: cover; }
+        .info-item { margin-bottom: 15px; border-bottom: 1px solid #f1f3f5; padding-bottom: 8px; }
+        .info-label { font-weight: 800; color: #3182ce; font-size: 12px; display: block; }
 
-// [채팅 전송 함수]
-window.sendChat = async () => {
-    const input = document.getElementById("chatIn");
-    const msg = input.value.trim();
-    if (!msg) return;
+        /* 채팅 */
+        #chatDisplay { height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; }
+        .msg { font-size: 13px; padding: 8px 12px; border-radius: 12px; max-width: 80%; }
+        .msg-other { background: #edf2f7; align-self: flex-start; }
+        .msg-me { background: #3182ce; color: white; align-self: flex-end; }
 
-    await addDoc(collection(db, "chats"), {
-        centerId: currentCenter,
-        user: "회원", // 나중에 로그인 기능 넣으면 이름으로 변경 가능
-        msg: msg,
-        dt: new Date()
+        /* 모달 */
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-height: 85vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<h1 id="mainTitle" style="text-align:center;">🏆 세화 스쿼시</h1>
+
+<div class="center-card">
+    <select id="centerSelect" onchange="switchCenter()"></select>
+</div>
+
+<div class="tab-menu">
+    <button class="tab-btn active" id="btn-rank" onclick="openTab('rank')">랭킹</button>
+    <button class="tab-btn" id="btn-info" onclick="openTab('info')">정보</button>
+    <button class="tab-btn" id="btn-gallery" onclick="openTab('gallery')">사진첩</button>
+    <button class="tab-btn" id="btn-chat" onclick="openTab('chat')">채팅</button>
+</div>
+
+<div id="rank" class="content-section active">
+    <div class="mvp-container">
+        <div class="mvp-card"><div style="font-size:11px;">다승왕</div><div id="topWinner" style="font-weight:800;">-</div></div>
+        <div class="mvp-card"><div style="font-size:11px;">열정왕</div><div id="topPlayer" style="font-weight:800;">-</div></div>
+    </div>
+    <div class="section">
+        <h2 class="blue-h2">👤 회원 등록</h2>
+        <input id="nameInput" placeholder="이름 입력" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+        <button onclick="register()" style="width:100%; padding:12px; background:#2d3748; color:white; border:none; border-radius:8px; font-weight:800;">신청하기</button>
+    </div>
+    <div id="rankingListArea"></div>
+    <div class="section" style="border:2px solid #805ad5;"><h2 style="border-left-color:#805ad5;">🔥 센터 대항전 순위</h2><div id="leaderboard"></div></div>
+</div>
+
+<div id="info" class="content-section">
+    <div class="section">
+        <h2 class="blue-h2">🏢 센터 상세 정보</h2>
+        <div id="infoContent">
+            <div class="info-item"><span class="info-label">📍 위치</span><span id="infoLoc">-</span></div>
+            <div class="info-item"><span class="info-label">📞 연락처</span><span id="infoTel">-</span></div>
+            <div class="info-item"><span class="info-label">📢 공지사항</span><span id="infoNotice">반갑습니다!</span></div>
+        </div>
+    </div>
+</div>
+
+<div id="gallery" class="content-section">
+    <div class="gallery-grid" id="galleryArea"></div>
+</div>
+
+<div id="chat" class="content-section">
+    <div class="section">
+        <h2 class="blue-h2">💬 실시간 톡</h2>
+        <div id="chatDisplay"></div>
+        <div style="display:flex; gap:5px; margin-top:10px;">
+            <input id="chatInput" placeholder="메시지.." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
+            <button onclick="sendChat()" style="padding:10px 20px; background:#3182ce; color:white; border:none; border-radius:8px; font-weight:800;">전송</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal-content"><div id="modalBody"></div><div style="height:150px;"><canvas id="rankChart"></canvas></div></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, where, limit, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const CENTERS = {
+        "sehwa": { name: "세화 스쿼시", code: "1111" },
+        "chan": { name: "찬스쿼시", code: "2222" },
+        "sq3": { name: "스쿼시 3", code: "3333" },
+        "sq4": { name: "스쿼시 4", code: "4444" },
+        "sq5": { name: "스쿼시 5", code: "5555" }
+    };
+
+    const firebaseConfig = { /* 원장님 키값 */ };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let currentCenter = "sehwa", players = [], myChart = null;
+
+    // 초기화
+    const sel = document.getElementById("centerSelect");
+    Object.keys(CENTERS).forEach(id => {
+        const opt = document.createElement("option"); opt.value = id; opt.innerText = CENTERS[id].name;
+        sel.appendChild(opt);
     });
 
-    input.value = ""; // 전송 후 입력창 비우기
-};
+    window.openTab = (id) => {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.getElementById('btn-'+id).classList.add('active');
+        if(id === 'info') loadInfo();
+        if(id === 'gallery') loadGallery();
+        if(id === 'chat') loadChat();
+    };
+
+    window.switchCenter = () => {
+        currentCenter = sel.value;
+        document.getElementById("mainTitle").innerText = CENTERS[currentCenter].name;
+        loadRanking();
+        openTab(document.querySelector('.tab-btn.active').id.replace('btn-',''));
+    };
+
+    // 데이터 로직 (기존 유지)
+    function loadRanking() {
+        const q = query(collection(db, "ranking"), where("centerId", "==", currentCenter), where("status", "==", "approved"), orderBy("groupRank", "asc"));
+        onSnapshot(q, (snap) => {
+            players = []; snap.forEach(d => players.push({id: d.id, ...d.data()}));
+            renderRanking();
+        });
+    }
+
+    function loadLeaderboard() {
+        onSnapshot(query(collection(db, "ranking"), where("status", "==", "approved")), (snap) => {
+            const stats = {};
+            Object.keys(CENTERS).forEach(id => stats[id] = { name: CENTERS[id].name, score: 0 });
+            snap.forEach(d => {
+                const p = d.data();
+                if(stats[p.centerId]) {
+                    const wins = (p.recentGames || []).filter(g => g.res === '승').length;
+                    stats[p.centerId].score += (wins * 10) + ((p.recentGames || []).length * 2);
+                }
+            });
+            const sorted = Object.values(stats).sort((a,b) => b.score - a.score);
+            let h = `<table><tr><th>순위</th><th>센터</th><th>점수</th></tr>`;
+            sorted.forEach((s, i) => h += `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.score}</td></tr>`);
+            document.getElementById("leaderboard").innerHTML = h + "</table>";
+        });
+    }
+
+    function loadInfo() {
+        onSnapshot(doc(db, "centerInfo", currentCenter), (d) => {
+            if(d.exists()) {
+                const data = d.data();
+                document.getElementById("infoLoc").innerText = data.loc || "-";
+                document.getElementById("infoTel").innerText = data.tel || "-";
+                document.getElementById("infoNotice").innerText = data.notice || "반갑습니다!";
+            }
+        });
+    }
+
+    function loadGallery() {
+        const q = query(collection(db, "gallery"), where("centerId", "==", currentCenter), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snap) => {
+            let h = "";
+            snap.forEach(d => h += `<div class="photo-card"><img src="${d.data().url}"><div style="padding:5px; font-size:11px; text-align:center;">${d.data().title}</div></div>`);
+            document.getElementById("galleryArea").innerHTML = h || "<p style='grid-column:1/3; text-align:center;'>사진이 없습니다.</p>";
+        });
+    }
+
+    let chatUnsub = null;
+    function loadChat() {
+        if(chatUnsub) chatUnsub();
+        const q = query(collection(db, "chats"), where("centerId", "==", currentCenter), orderBy("createdAt", "desc"), limit(30));
+        chatUnsub = onSnapshot(q, (snap) => {
+            const display = document.getElementById("chatDisplay");
+            display.innerHTML = "";
+            let msgs = []; snap.forEach(d => msgs.push(d.data()));
+            msgs.reverse().forEach(m => {
+                const div = document.createElement("div");
+                div.className = `msg ${m.sender === '관리자' ? 'msg-me' : 'msg-other'}`;
+                div.innerText = m.text;
+                display.appendChild(div);
+            });
+            display.scrollTop = display.scrollHeight;
+        });
+    }
+
+    window.sendChat = async () => {
+        const input = document.getElementById("chatInput");
+        if(!input.value) return;
+        await addDoc(collection(db, "chats"), { centerId: currentCenter, text: input.value, sender: "회원", createdAt: serverTimestamp() });
+        input.value = "";
+    };
+
+    window.register = async () => {
+        const code = prompt("센터 인증번호");
+        if(code !== CENTERS[currentCenter].code) return alert("인증실패");
+        const name = document.getElementById("nameInput").value;
+        if(!name) return alert("이름입력");
+        await addDoc(collection(db, "ranking"), { centerId: currentCenter, name, status: "pending", groupRank: 999, recentGames: [], rankHistory: [999] });
+        alert("신청완료");
+    };
+
+    function renderRanking() {
+        let h = `<table><tr><th>순위</th><th>이름</th><th>승률</th></tr>`;
+        players.forEach(p => {
+            const win = (p.recentGames || []).filter(g => g.res === '승').length;
+            const rate = p.recentGames?.length ? Math.round((win/p.recentGames.length)*100) : 0;
+            h += `<tr><td>${p.groupRank}위</td><td><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td><td>${rate}%</td></tr>`;
+        });
+        document.getElementById("rankingListArea").innerHTML = h + "</table>";
+    }
+
+    loadRanking(); loadLeaderboard();
+</script>
+</body>
+</html>
