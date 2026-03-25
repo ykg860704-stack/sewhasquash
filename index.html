@@ -122,7 +122,11 @@
                 <input id="infoName" placeholder="상호명">
                 <input id="infoAddr" placeholder="상세 주소">
                 <input id="infoFee" placeholder="일일입장료">
-                <div style="display:flex; gap:8px;"><input id="courtFull" type="number" placeholder="정식 코트" style="flex:1;"><input id="courtSemi" type="number" placeholder="세미 코트" style="flex:1;"></div>
+                <div style="display:flex; gap:5px;">
+                    <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
+                    <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
+                    <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
+                </div>
                 <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
             </div>
         </div>
@@ -191,7 +195,7 @@
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
-    let allCenters = []; // 전체 센터 데이터를 담아둘 변수
+    let allCenters = [];
 
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
@@ -200,11 +204,10 @@
         renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
-    // 센터정보 실시간 감시 (필터링 로직 통합)
     onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
         allCenters = [];
         snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
-        renderInfoList(); // 데이터가 들어오면 렌더링 호출
+        renderInfoList();
     });
 
     window.renderInfoList = () => {
@@ -221,7 +224,7 @@
                 <p>${data.addr}<br>입장료: ${data.fee} / 코트: ${data.court}</p>
                 <div class="map-btn-group">
                     <a href="https://map.naver.com/v5/search/${searchAddr}" target="_blank" class="btn-map naver-bg">네이버 지도</a>
-                    <a href="https://www.google.com/maps/search/${searchAddr}" target="_blank" class="btn-map google-bg">구글 지도</a>
+                    <a href="https://www.google.com/maps/search/$${searchAddr}" target="_blank" class="btn-map google-bg">구글 지도</a>
                 </div>
             </div>`;
         });
@@ -238,17 +241,22 @@
         const name = document.getElementById("infoName").value.trim();
         const addr = document.getElementById("infoAddr").value.trim();
         if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
+        
+        const full = document.getElementById("courtFull").value || 0;
+        const dbl = document.getElementById("courtDouble").value || 0;
+        const semi = document.getElementById("courtSemi").value || 0;
+
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
             name, addr, fee: document.getElementById("infoFee").value,
-            court: `정식 ${document.getElementById("courtFull").value || 0} / 세미 ${document.getElementById("courtSemi").value || 0}`,
+            court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
             status: "pending", createdAt: serverTimestamp()
         });
         alert("신청 완료! 관리자 승인 후 표시됩니다.");
         document.getElementById("infoName").value = ""; document.getElementById("infoAddr").value = "";
+        document.getElementById("courtFull").value = ""; document.getElementById("courtDouble").value = ""; document.getElementById("courtSemi").value = "";
     };
 
-    /* 이하 기존 랭킹/채팅 로직 유지 */
     window.submitMatch = async () => {
         const title = document.getElementById("matchTitle").value.trim();
         if(!title) return;
