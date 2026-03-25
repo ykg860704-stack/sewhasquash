@@ -2,25 +2,27 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>플랫폼 통합 관리자</title>
+    <title>통합 관리자</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; }
         button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-bottom: 5px; }
         .btn-blue { background: #3182ce; }
         .btn-green { background: #48bb78; }
-        .btn-red { background: #f56565; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
-    <h1>🛠️ 통합 관리 도구</h1>
+    <h1>🛠️ 통합 관리자</h1>
     
     <div class="card">
-        <h3>🏢 관리할 센터 선택</h3>
-        <select id="adminCenterSelect" onchange="switchAdmin()"></select>
+        <h3>🏢 관리 센터 선택</h3>
+        <select id="adminCenterSelect" onchange="switchAdmin()" style="width:100%; padding:10px;"></select>
+    </div>
+
+    <div class="card">
+        <h3>⏳ 승인 대기 명단</h3>
+        <div id="pendingList">승인을 기다리는 회원이 없습니다.</div>
     </div>
 
     <div class="card">
@@ -32,32 +34,23 @@
     </div>
 
     <div class="card">
-        <h3>📸 사진 업로드</h3>
+        <h3>📸 사진 추가</h3>
         <input id="photoUrl" placeholder="이미지 URL 주소">
         <input id="photoTitle" placeholder="사진 제목">
-        <button class="btn-green" onclick="uploadPhoto()">갤러리 추가</button>
-    </div>
-
-    <div class="card">
-        <h3>⏳ 승인 대기 명단</h3>
-        <div id="pendingList"></div>
-    </div>
-
-    <div class="card">
-        <h3>✅ 등록 선수 관리</h3>
-        <div id="activeList"></div>
+        <button class="btn-green" onclick="uploadPhoto()">갤러리 등록</button>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, where, updateDoc, doc, setDoc, addDoc, serverTimestamp, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, where, updateDoc, doc, setDoc, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const CENTERS = { "sehwa": "세화 스쿼시", "chan": "찬스쿼시", "sq3": "스쿼시 3", "sq4": "스쿼시 4", "sq5": "스쿼시 5" };
-    const firebaseConfig = { /* 원장님 키값 */ };
+    const firebaseConfig = { /* 키값 */ };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let currentAdminCenter = "sehwa";
 
+    // 셀렉트 박스
     const sel = document.getElementById("adminCenterSelect");
     Object.keys(CENTERS).forEach(id => {
         const opt = document.createElement("option"); opt.value = id; opt.innerText = CENTERS[id];
@@ -69,48 +62,37 @@
         loadAdminData();
     };
 
+    // 기존 승인 로직
+    function loadAdminData() {
+        onSnapshot(query(collection(db, "ranking"), where("centerId", "==", currentAdminCenter), where("status", "==", "pending")), (snap) => {
+            let h = "";
+            snap.forEach(d => h += `<div>${d.data().name} <button onclick="approve('${d.id}')">승인</button></div>`);
+            document.getElementById("pendingList").innerHTML = h || "대기자 없음";
+        });
+    }
+
+    window.approve = async (id) => {
+        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 1 });
+        alert("승인 완료");
+    };
+
+    // 신규 관리 로직
     window.updateInfo = async () => {
         await setDoc(doc(db, "centerInfo", currentAdminCenter), {
             loc: document.getElementById("infoLoc").value,
             tel: document.getElementById("infoTel").value,
             notice: document.getElementById("infoNotice").value
         });
-        alert("수정 완료");
+        alert("정보 수정됨");
     };
 
     window.uploadPhoto = async () => {
         const url = document.getElementById("photoUrl").value;
-        if(!url) return alert("URL 입력 필수");
+        if(!url) return alert("URL 입력!");
         await addDoc(collection(db, "gallery"), {
             centerId: currentAdminCenter, url, title: document.getElementById("photoTitle").value, createdAt: serverTimestamp()
         });
-        alert("사진 추가됨");
-    };
-
-    function loadAdminData() {
-        onSnapshot(query(collection(db, "ranking"), where("centerId", "==", currentAdminCenter), orderBy("groupRank", "asc")), (snap) => {
-            let pList = "<table><tr><th>이름</th><th>승인</th></tr>";
-            let aList = "<table><tr><th>순위</th><th>이름</th><th>제거</th></tr>";
-            snap.forEach(d => {
-                const p = d.data();
-                if(p.status === 'pending') {
-                    pList += `<tr><td>${p.name}</td><td><button class="btn-green" onclick="approve('${d.id}')">승인</button></td></tr>`;
-                } else {
-                    aList += `<tr><td>${p.groupRank}</td><td>${p.name}</td><td><button class="btn-red" onclick="remove('${d.id}')">제외</button></td></tr>`;
-                }
-            });
-            document.getElementById("pendingList").innerHTML = pList + "</table>";
-            document.getElementById("activeList").innerHTML = aList + "</table>";
-        });
-    }
-
-    window.approve = async (id) => {
-        await updateDoc(doc(db, "ranking", id), { status: "approved", groupRank: 1 });
-        alert("승인됨");
-    };
-
-    window.remove = async (id) => {
-        if(confirm("삭제하시겠습니까?")) await deleteDoc(doc(db, "ranking", id));
+        alert("사진 등록됨");
     };
 
     switchAdmin();
