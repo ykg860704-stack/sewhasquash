@@ -9,7 +9,7 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 20px; background: #f8f9fa; display: none; max-width: 900px; margin: auto; }
         
-        /* 로그인 섹션 (반반 나누기) */
+        /* 로그인 섹션 */
         .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
         .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
         @media (max-width: 600px) { .login-grid { flex-direction: column; } }
@@ -45,6 +45,9 @@
         .login-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center; font-size:15px; }
         .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
         .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
+
+        /* 수정 모드용 입력창 스타일 */
+        .global-edit-box { background: #f0f7ff; padding: 10px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; }
     </style>
 </head>
 <body>
@@ -154,6 +157,8 @@
     let currentCenterId = "";
     let players = [];
     let tempRecords = [];
+    let centers = [];
+    let matches = [];
 
     // 통합 관리자 탭 전환
     window.switchGlobalTab = (tabId, btn) => {
@@ -221,13 +226,16 @@
     function startGlobalListening() {
         // 센터 등록 정보 감시
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
+            centers = [];
             let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>상태/관리</th></tr>";
             snap.forEach(d => {
                 const c = {id: d.id, ...d.data()};
-                html += `<tr>
+                centers.push(c);
+                html += `<tr id="crow-${c.id}">
                     <td style="text-align:left;"><b>${c.sido}</b><br>${c.name}</td>
                     <td>${c.contact || '-'}</td>
                     <td>
+                        <button class="btn-edit" onclick="toggleCenterEdit('${c.id}')">수정</button>
                         ${c.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
                         <button class="btn-del" onclick="removeData('infoRequests', '${c.id}')">삭제</button>
                     </td>
@@ -238,13 +246,16 @@
 
         // 대회 정보 감시
         onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
+            matches = [];
             let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
             snap.forEach(d => {
                 const m = {id: d.id, ...d.data()};
-                html += `<tr>
+                matches.push(m);
+                html += `<tr id="mrow-${m.id}">
                     <td style="text-align:left;">${m.title}</td>
                     <td>${m.date}</td>
                     <td>
+                        <button class="btn-edit" onclick="toggleMatchEdit('${m.id}')">수정</button>
                         ${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}
                         <button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">삭제</button>
                     </td>
@@ -253,7 +264,7 @@
             document.getElementById("matchManageList").innerHTML = html + "</table>";
         });
 
-        // 채팅 내역 감시 (삭제 관리용)
+        // 채팅 내역 감시
         onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc")), (snap) => {
             let html = "<table><tr><th>센터</th><th>내용</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -267,6 +278,59 @@
             document.getElementById("chatManageList").innerHTML = html + "</table>";
         });
     }
+
+    // ==========================================
+    // 센터 및 대회 정보 수정용 함수
+    // ==========================================
+    window.toggleCenterEdit = (id) => {
+        const c = centers.find(x => x.id === id);
+        const row = document.getElementById(`crow-${id}`);
+        row.innerHTML = `<td colspan="2">
+            <div class="global-edit-box">
+                지역:<input id="ce-sido-${id}" class="edit-input" style="width:70px;" value="${c.sido || ''}"> 
+                상호:<input id="ce-name-${id}" class="edit-input" style="width:120px;" value="${c.name || ''}"><br>
+                주소:<input id="ce-addr-${id}" class="edit-input" style="width:90%;" value="${c.addr || ''}"><br>
+                연락처:<input id="ce-contact-${id}" class="edit-input" style="width:120px;" value="${c.contact || ''}">
+                입장료:<input id="ce-fee-${id}" class="edit-input" style="width:80px;" value="${c.fee || ''}">
+            </div>
+        </td>
+        <td><button class="btn-save" onclick="saveCenterEdit('${id}')">저장</button></td>`;
+    };
+
+    window.saveCenterEdit = async (id) => {
+        await updateDoc(doc(db, "infoRequests", id), {
+            sido: document.getElementById(`ce-sido-${id}`).value,
+            name: document.getElementById(`ce-name-${id}`).value,
+            addr: document.getElementById(`ce-addr-${id}`).value,
+            contact: document.getElementById(`ce-contact-${id}`).value,
+            fee: document.getElementById(`ce-fee-${id}`).value
+        });
+        alert("센터 정보가 수정되었습니다.");
+    };
+
+    window.toggleMatchEdit = (id) => {
+        const m = matches.find(x => x.id === id);
+        const row = document.getElementById(`mrow-${id}`);
+        row.innerHTML = `<td colspan="2">
+            <div class="global-edit-box">
+                대회명:<input id="me-title-${id}" class="edit-input" style="width:200px;" value="${m.title || ''}"><br>
+                날짜:<input id="me-date-${id}" type="date" class="edit-input" style="width:140px;" value="${m.date || ''}"><br>
+                장소:<input id="me-loc-${id}" class="edit-input" style="width:200px;" value="${m.loc || ''}"><br>
+                링크:<input id="me-link-${id}" class="edit-input" style="width:90%;" value="${m.link || ''}">
+            </div>
+        </td>
+        <td><button class="btn-save" onclick="saveMatchEdit('${id}')">저장</button></td>`;
+    };
+
+    window.saveMatchEdit = async (id) => {
+        await updateDoc(doc(db, "matchRequests", id), {
+            title: document.getElementById(`me-title-${id}`).value,
+            date: document.getElementById(`me-date-${id}`).value,
+            loc: document.getElementById(`me-loc-${id}`).value,
+            link: document.getElementById(`me-link-${id}`).value
+        });
+        alert("대회 정보가 수정되었습니다.");
+    };
 
     // ==========================================
     // 공통 및 센터 관리자용 함수들
