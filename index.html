@@ -64,6 +64,7 @@
         .btn-map { flex: 1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-align: center; text-decoration: none; color: white; }
         .naver-bg { background: #03C75A; }
         .google-bg { background: #4285F4; }
+        .call-bg { background: #2d3748; }
 
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
@@ -121,6 +122,8 @@
                 </select>
                 <input id="infoName" placeholder="상호명">
                 <input id="infoAddr" placeholder="상세 주소">
+                <input id="infoPhone" placeholder="전화번호 (예: 02-123-4567)">
+                <input id="infoTime" placeholder="영업시간 (예: 평일 06-23시 / 주말 휴무)">
                 <input id="infoFee" placeholder="일일입장료">
                 <div style="display:flex; gap:5px;">
                     <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
@@ -210,6 +213,7 @@
         renderInfoList();
     });
 
+    // 센터 목록 렌더링 (연락처/영업시간 표시 보완)
     window.renderInfoList = () => {
         const filter = document.getElementById("filterSido").value;
         let html = "";
@@ -219,12 +223,16 @@
             const searchAddr = encodeURIComponent(data.addr);
             html += `
             <div class="info-card">
-                <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold;">${data.sido || '지역미지정'}</span><br>
-                <b>${data.name}</b>
-                <p>${data.addr}<br>입장료: ${data.fee} / 코트: ${data.court}</p>
+                <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#4a5568;">${data.sido || '지역미지정'}</span><br>
+                <b style="font-size:17px;">${data.name}</b>
+                <p style="color:#2d3748; margin-top:6px; font-weight:600;">⏰ 영업시간: <span style="font-weight:400; color:#718096;">${data.time || '정보 없음'}</span></p>
+                <p>📞 연락처: ${data.phone || '정보 없음'}</p>
+                <p>📍 주소: ${data.addr}</p>
+                <p>💸 입장료: ${data.fee || '정보 없음'} / 🎾 코트: ${data.court}</p>
                 <div class="map-btn-group">
                     <a href="https://map.naver.com/v5/search/${searchAddr}" target="_blank" class="btn-map naver-bg">네이버 지도</a>
-                    <a href="https://www.google.com/maps/search/$${searchAddr}" target="_blank" class="btn-map google-bg">구글 지도</a>
+                    <a href="tel:${data.phone}" class="btn-map call-bg">전화하기</a>
+                    <a href="https://www.google.com/maps/search/${searchAddr}" target="_blank" class="btn-map google-bg">구글 지도</a>
                 </div>
             </div>`;
         });
@@ -237,9 +245,12 @@
         document.getElementById("match-list").innerHTML = html || "승인된 대회정보가 없습니다.";
     });
 
+    // 센터 정보 신청 (전화번호/영업시간 추가)
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
         const addr = document.getElementById("infoAddr").value.trim();
+        const phone = document.getElementById("infoPhone").value.trim();
+        const time = document.getElementById("infoTime").value.trim();
         if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
         
         const full = document.getElementById("courtFull").value || 0;
@@ -248,13 +259,16 @@
 
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name, addr, fee: document.getElementById("infoFee").value,
+            name, addr, phone, time,
+            fee: document.getElementById("infoFee").value,
             court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
             status: "pending", createdAt: serverTimestamp()
         });
         alert("신청 완료! 관리자 승인 후 표시됩니다.");
-        document.getElementById("infoName").value = ""; document.getElementById("infoAddr").value = "";
-        document.getElementById("courtFull").value = ""; document.getElementById("courtDouble").value = ""; document.getElementById("courtSemi").value = "";
+        // 필드 초기화
+        ["infoName", "infoAddr", "infoPhone", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => {
+            document.getElementById(id).value = "";
+        });
     };
 
     window.submitMatch = async () => {
