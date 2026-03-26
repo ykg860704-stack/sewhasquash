@@ -53,6 +53,10 @@
         .global-edit-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; font-size: 12px; }
         .edit-label { display: inline-block; width: 70px; font-weight: bold; color: #2b6cb0; margin-bottom: 5px; }
         .court-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #fff; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e0; margin-top: 5px; }
+
+        /* 게스트 관리 스타일 */
+        .guest-manage-card { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .admin-comment-sec { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -101,6 +105,7 @@
         <div class="admin-tabs">
             <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
             <button class="tab-btn" onclick="switchGlobalTab('gtab-matches', this)">🎾 대회 관리</button>
+            <button class="tab-btn" onclick="switchGlobalTab('gtab-guests', this)">🤝 게스트 관리</button>
             <button class="tab-btn" onclick="switchGlobalTab('gtab-chats', this)">💬 채팅 관리</button>
             <button class="tab-btn" onclick="switchGlobalTab('gtab-market', this)">💰 용품/장터</button>
             <button class="tab-btn" onclick="switchGlobalTab('gtab-board', this)">📋 게시판</button>
@@ -112,6 +117,9 @@
         <div id="gtab-matches" class="tab-content">
             <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 등록 요청 및 관리</h2><div id="matchManageList">데이터 로딩 중...</div></div>
         </div>
+        <div id="gtab-guests" class="tab-content">
+            <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">🤝 게스트 모집글 및 댓글 관리</h2><div id="guestManageList">데이터 로딩 중...</div></div>
+        </div>
         <div id="gtab-chats" class="tab-content">
             <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 통합 채팅 관리</h2><div id="chatManageList">데이터 로딩 중...</div></div>
         </div>
@@ -119,7 +127,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -134,7 +142,7 @@
     const db = getFirestore(app);
 
     const codeMap = { 'sewha123': { id: 'sehwa', name: '세화 스쿼시' }, 'chan123': { id: 'chan', name: '찬 스쿼시' } };
-    let players = [], centers = [], matches = [], currentCenterId = "", tempRecords = [];
+    let players = [], centers = [], matches = [], guestPosts = [], currentCenterId = "", tempRecords = [];
 
     window.switchGlobalTab = (tabId, btn) => {
         document.querySelectorAll('#globalAdminPanel .tab-content').forEach(c => c.classList.remove('active'));
@@ -254,7 +262,78 @@
             });
             document.getElementById("chatManageList").innerHTML = html + "</table>";
         });
+
+        // 게스트 관리 리스너 추가
+        onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "desc")), (snap) => {
+            guestPosts = []; let html = "<table><tr><th>날짜/센터</th><th>모집자</th><th>관리</th></tr>";
+            snap.forEach(d => {
+                const g = {id: d.id, ...d.data()}; guestPosts.push(g);
+                html += `<tr id="grow-${g.id}"><td style="text-align:left;"><b>${g.date}</b><br>${g.center}</td><td>${g.name}</td><td><div class="action-btns"><button class="btn-edit" onclick="toggleGuestEdit('${g.id}')">수정</button><button class="btn-del" onclick="removeGuestPost('${g.id}')">삭제</button></div></td></tr>`;
+            });
+            document.getElementById("guestManageList").innerHTML = html + "</table>";
+        });
     }
+
+    // 게스트 모집글 수정 모드
+    window.toggleGuestEdit = async (id) => {
+        const g = guestPosts.find(x => x.id === id); const row = document.getElementById(`grow-${id}`);
+        
+        // 해당 글의 댓글 가져오기
+        const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
+        let commentHtml = "";
+        cSnap.forEach(cd => {
+            const cdata = cd.data();
+            commentHtml += `<div class="log-row"><span><b>${cdata.userName}:</b> ${cdata.text}</span><button class="mini-del" onclick="removeData('guestComments', '${cd.id}')">삭제</button></div>`;
+        });
+
+        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+            <div><span class="edit-label">센터명</span><input id="ge-center-${id}" class="edit-input" style="width:70%;" value="${g.center || ''}"></div>
+            <div style="margin-top:5px;">
+                <span class="edit-label">날짜/시간</span>
+                <input id="ge-date-${id}" type="date" class="edit-input" style="width:130px;" value="${g.date || ''}">
+                <input id="ge-time-${id}" class="edit-input" style="width:100px;" value="${g.time || ''}">
+            </div>
+            <div style="margin-top:5px;">
+                <span class="edit-label">모집자</span><input id="ge-name-${id}" class="edit-input" style="width:100px;" value="${g.name || ''}">
+                <span class="edit-label" style="width:50px; margin-left:10px;">등급</span>
+                <select id="ge-level-${id}" class="edit-input" style="width:60px;">
+                    <option value="S1" ${g.level==='S1'?'selected':''}>S1</option>
+                    <option value="S2" ${g.level==='S2'?'selected':''}>S2</option>
+                    <option value="S3" ${g.level==='S3'?'selected':''}>S3</option>
+                </select>
+            </div>
+            <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
+                <div style="font-weight:bold; color:#e53e3e; margin-bottom:5px;">💬 등록된 댓글 관리</div>
+                ${commentHtml || '<p style="color:#999; font-size:11px;">댓글이 없습니다.</p>'}
+            </div>
+        </div></td>
+        <td><div class="action-btns"><button class="btn-save" onclick="saveGuestEdit('${id}')">저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button></div></td>`;
+    };
+
+    window.saveGuestEdit = async (id) => {
+        try {
+            await updateDoc(doc(db, "guestPosts", id), {
+                center: document.getElementById(`ge-center-${id}`).value,
+                date: document.getElementById(`ge-date-${id}`).value,
+                time: document.getElementById(`ge-time-${id}`).value,
+                name: document.getElementById(`ge-name-${id}`).value,
+                level: document.getElementById(`ge-level-${id}`).value
+            });
+            alert("모집글 수정 완료");
+            startGlobalListening();
+        } catch(e) { alert("수정 오류: " + e.message); }
+    };
+
+    window.removeGuestPost = async (id) => {
+        if(confirm("이 게시글과 관련된 모든 댓글이 삭제됩니다. 계속하시겠습니까?")) {
+            // 1. 관련 댓글 삭제
+            const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
+            cSnap.forEach(async (c) => { await deleteDoc(doc(db, "guestComments", c.id)); });
+            // 2. 게시글 삭제
+            await deleteDoc(doc(db, "guestPosts", id));
+            alert("삭제되었습니다.");
+        }
+    };
 
     window.toggleCenterEdit = (id) => {
         const c = centers.find(x => x.id === id); const row = document.getElementById(`crow-${id}`);
@@ -297,7 +376,6 @@
         } catch(e) { console.error(e); alert("수정 오류"); }
     };
 
-    // [중요] 대회 정보 모든 필드 수정 기능 추가
     window.toggleMatchEdit = (id) => {
         const m = matches.find(x => x.id === id); const row = document.getElementById(`mrow-${id}`);
         row.innerHTML = `<td colspan="2"><div class="global-edit-box">
