@@ -119,7 +119,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -258,7 +258,6 @@
 
     window.toggleCenterEdit = (id) => {
         const c = centers.find(x => x.id === id); const row = document.getElementById(`crow-${id}`);
-        // 코트 정보 파싱 (정식 0 / 복식 0 / 세미 0 형태 대응)
         const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
         
         row.innerHTML = `<td colspan="2"><div class="global-edit-box">
@@ -289,8 +288,8 @@
                 name: document.getElementById(`ce-name-${id}`).value,
                 addr: document.getElementById(`ce-addr-${id}`).value,
                 contact: document.getElementById(`ce-contact-${id}`).value,
-                time: document.getElementById(`ce-time-${id}`).value, // 필드명 통일: hours -> time
-                court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`, // 필드명 통일 및 구조 통합
+                time: document.getElementById(`ce-time-${id}`).value,
+                court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`,
                 fee: document.getElementById(`ce-fee-${id}`).value
             });
             alert("센터 정보 수정 완료");
@@ -298,12 +297,26 @@
         } catch(e) { console.error(e); alert("수정 오류"); }
     };
 
+    // [중요] 대회 정보 모든 필드 수정 기능 추가
     window.toggleMatchEdit = (id) => {
         const m = matches.find(x => x.id === id); const row = document.getElementById(`mrow-${id}`);
         row.innerHTML = `<td colspan="2"><div class="global-edit-box">
             <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
-            <div><span class="edit-label">대회날짜</span><input id="me-date-${id}" type="date" class="edit-input" style="width:140px;" value="${m.date || ''}"></div>
-            <div><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
+            <div style="margin-top:5px;">
+                <span class="edit-label">유형/지역</span>
+                <select id="me-type-${id}" class="edit-input" style="width:80px;">
+                    <option value="전국" ${m.type==='전국'?'selected':''}>전국</option>
+                    <option value="지역" ${m.type==='지역'?'selected':''}>지역</option>
+                </select>
+                <input id="me-sido-${id}" class="edit-input" style="width:100px;" value="${m.sido || ''}">
+            </div>
+            <div style="margin-top:5px;">
+                <span class="edit-label">대회날짜</span><input id="me-date-${id}" type="date" class="edit-input" style="width:135px;" value="${m.date || ''}">
+                <span class="edit-label" style="width:60px; margin-left:10px;">마감일</span><input id="me-deadline-${id}" type="date" class="edit-input" style="width:135px;" value="${m.deadline || ''}">
+            </div>
+            <div style="margin-top:5px;"><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
+            <div style="margin-top:5px;"><span class="edit-label">참가비</span><input id="me-fee-${id}" class="edit-input" style="width:80%;" value="${m.fee || ''}"></div>
+            <div style="margin-top:5px;"><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}" placeholder="http://..."></div>
         </div></td>
         <td><div class="action-btns"><button class="btn-save" onclick="saveMatchEdit('${id}')">저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button></div></td>`;
     };
@@ -312,12 +325,17 @@
         try {
             await updateDoc(doc(db, "matchRequests", id), {
                 title: document.getElementById(`me-title-${id}`).value,
+                type: document.getElementById(`me-type-${id}`).value,
+                sido: document.getElementById(`me-sido-${id}`).value,
                 date: document.getElementById(`me-date-${id}`).value,
-                loc: document.getElementById(`me-loc-${id}`).value
+                deadline: document.getElementById(`me-deadline-${id}`).value,
+                loc: document.getElementById(`me-loc-${id}`).value,
+                fee: document.getElementById(`me-fee-${id}`).value,
+                link: document.getElementById(`me-link-${id}`).value
             });
             alert("대회 정보 수정 완료");
             startGlobalListening();
-        } catch(e) { alert("수정 오류"); }
+        } catch(e) { alert("수정 오류: " + e.message); }
     };
 
     window.updateStatus = async (col, id, status) => { if(confirm("승인하시겠습니까?")) await updateDoc(doc(db, col, id), { status }); };
