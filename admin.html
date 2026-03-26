@@ -228,7 +228,6 @@
     window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("전적 삭제됨 (저장을 눌러야 반영됩니다)"); };
 
     function startGlobalListening() {
-        // 센터 정보
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
             centers = []; let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -238,7 +237,6 @@
             document.getElementById("centerManageList").innerHTML = html + "</table>";
         });
 
-        // 대회 정보
         onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
             matches = []; let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -248,7 +246,6 @@
             document.getElementById("matchManageList").innerHTML = html + "</table>";
         });
 
-        // 통합 채팅
         onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc")), (snap) => {
             let html = "<table><tr><th>작성자</th><th>내용</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -261,16 +258,19 @@
 
     window.toggleCenterEdit = (id) => {
         const c = centers.find(x => x.id === id); const row = document.getElementById(`crow-${id}`);
+        // 코트 정보 파싱 (정식 0 / 복식 0 / 세미 0 형태 대응)
+        const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
+        
         row.innerHTML = `<td colspan="2"><div class="global-edit-box">
                 <div><span class="edit-label">지역/상호</span><input id="ce-sido-${id}" class="edit-input" style="width:60px;" value="${c.sido || ''}"> <input id="ce-name-${id}" class="edit-input" style="width:150px;" value="${c.name || ''}"></div>
                 <div><span class="edit-label">상세주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
                 <div><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:130px;" value="${c.contact || ''}"></div>
-                <div><span class="edit-label">영업시간</span><input id="ce-hours-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.hours || ''}"></div>
+                <div><span class="edit-label">영업시간</span><input id="ce-time-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.time || ''}"></div>
                 <div><span class="edit-label">시설현황</span>
                     <div class="court-grid">
-                        <div>정식: <input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:40px;" value="${c.courtReg || 0}">면</div>
-                        <div>세미: <input id="ce-court-semi-${id}" type="number" class="edit-input" style="width:40px;" value="${c.courtSemi || 0}">면</div>
-                        <div>복식: <input id="ce-court-dub-${id}" type="number" class="edit-input" style="width:40px;" value="${c.courtDub || 0}">면</div>
+                        <div>정식: <input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:40px;" value="${courtMatch[0] || 0}">면</div>
+                        <div>복식: <input id="ce-court-dub-${id}" type="number" class="edit-input" style="width:40px;" value="${courtMatch[1] || 0}">면</div>
+                        <div>세미: <input id="ce-court-semi-${id}" type="number" class="edit-input" style="width:40px;" value="${courtMatch[2] || 0}">면</div>
                     </div>
                 </div>
                 <div style="margin-top:5px;"><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:130px;" value="${c.fee || ''}"></div>
@@ -279,26 +279,23 @@
     };
 
     window.saveCenterEdit = async (id) => {
+        const reg = document.getElementById(`ce-court-reg-${id}`).value || 0;
+        const dub = document.getElementById(`ce-court-dub-${id}`).value || 0;
+        const semi = document.getElementById(`ce-court-semi-${id}`).value || 0;
+        
         try {
-            // 저장할 필드명을 인덱스 페이지에서 사용하는 것과 100% 일치하도록 수정
             await updateDoc(doc(db, "infoRequests", id), {
                 sido: document.getElementById(`ce-sido-${id}`).value,
                 name: document.getElementById(`ce-name-${id}`).value,
                 addr: document.getElementById(`ce-addr-${id}`).value,
                 contact: document.getElementById(`ce-contact-${id}`).value,
-                hours: document.getElementById(`ce-hours-${id}`).value,
-                courtReg: Number(document.getElementById(`ce-court-reg-${id}`).value),
-                courtSemi: Number(document.getElementById(`ce-court-semi-${id}`).value),
-                courtDub: Number(document.getElementById(`ce-court-dub-${id}`).value),
+                time: document.getElementById(`ce-time-${id}`).value, // 필드명 통일: hours -> time
+                court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`, // 필드명 통일 및 구조 통합
                 fee: document.getElementById(`ce-fee-${id}`).value
             });
             alert("센터 정보 수정 완료");
-            // 수정 후 리스트 즉시 갱신
             startGlobalListening();
-        } catch(e) { 
-            console.error(e);
-            alert("수정 중 오류가 발생했습니다."); 
-        }
+        } catch(e) { console.error(e); alert("수정 오류"); }
     };
 
     window.toggleMatchEdit = (id) => {
