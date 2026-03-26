@@ -228,6 +228,7 @@
     window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("전적 삭제됨 (저장을 눌러야 반영됩니다)"); };
 
     function startGlobalListening() {
+        // 센터 정보
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
             centers = []; let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -237,6 +238,7 @@
             document.getElementById("centerManageList").innerHTML = html + "</table>";
         });
 
+        // 대회 정보
         onSnapshot(query(collection(db, "matchRequests"), orderBy("createdAt", "desc")), (snap) => {
             matches = []; let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
             snap.forEach(d => {
@@ -244,6 +246,16 @@
                 html += `<tr id="mrow-${m.id}"><td style="text-align:left;">${m.title}</td><td>${m.date}</td><td><div class="action-btns"><button class="btn-edit" onclick="toggleMatchEdit('${m.id}')">수정</button>${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">승인됨</span>'}<button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">삭제</button></div></td></tr>`;
             });
             document.getElementById("matchManageList").innerHTML = html + "</table>";
+        });
+
+        // 통합 채팅
+        onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc")), (snap) => {
+            let html = "<table><tr><th>작성자</th><th>내용</th><th>관리</th></tr>";
+            snap.forEach(d => {
+                const chat = {id: d.id, ...d.data()};
+                html += `<tr><td>${chat.name || '익명'}</td><td style="text-align:left;">${chat.text}</td><td><button class="btn-del" onclick="removeData('globalChats', '${chat.id}')">삭제</button></td></tr>`;
+            });
+            document.getElementById("chatManageList").innerHTML = html + "</table>";
         });
     }
 
@@ -267,13 +279,43 @@
     };
 
     window.saveCenterEdit = async (id) => {
-        await updateDoc(doc(db, "infoRequests", id), {
-            sido: document.getElementById(`ce-sido-${id}`).value, name: document.getElementById(`ce-name-${id}`).value,
-            addr: document.getElementById(`ce-addr-${id}`).value, contact: document.getElementById(`ce-contact-${id}`).value,
-            hours: document.getElementById(`ce-hours-${id}`).value, courtReg: Number(document.getElementById(`ce-court-reg-${id}`).value),
-            courtSemi: Number(document.getElementById(`ce-court-semi-${id}`).value), courtDub: Number(document.getElementById(`ce-court-dub-${id}`).value),
-            fee: document.getElementById(`ce-fee-${id}`).value
-        }); alert("센터 정보 수정 완료");
+        try {
+            await updateDoc(doc(db, "infoRequests", id), {
+                sido: document.getElementById(`ce-sido-${id}`).value,
+                name: document.getElementById(`ce-name-${id}`).value,
+                addr: document.getElementById(`ce-addr-${id}`).value,
+                contact: document.getElementById(`ce-contact-${id}`).value,
+                hours: document.getElementById(`ce-hours-${id}`).value,
+                courtReg: Number(document.getElementById(`ce-court-reg-${id}`).value),
+                courtSemi: Number(document.getElementById(`ce-court-semi-${id}`).value),
+                courtDub: Number(document.getElementById(`ce-court-dub-${id}`).value),
+                fee: document.getElementById(`ce-fee-${id}`).value
+            });
+            alert("센터 정보 수정 완료");
+            startGlobalListening();
+        } catch(e) { alert("수정 오류"); }
+    };
+
+    window.toggleMatchEdit = (id) => {
+        const m = matches.find(x => x.id === id); const row = document.getElementById(`mrow-${id}`);
+        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+            <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
+            <div><span class="edit-label">대회날짜</span><input id="me-date-${id}" type="date" class="edit-input" style="width:140px;" value="${m.date || ''}"></div>
+            <div><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
+        </div></td>
+        <td><div class="action-btns"><button class="btn-save" onclick="saveMatchEdit('${id}')">저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">취소</button></div></td>`;
+    };
+
+    window.saveMatchEdit = async (id) => {
+        try {
+            await updateDoc(doc(db, "matchRequests", id), {
+                title: document.getElementById(`me-title-${id}`).value,
+                date: document.getElementById(`me-date-${id}`).value,
+                loc: document.getElementById(`me-loc-${id}`).value
+            });
+            alert("대회 정보 수정 완료");
+            startGlobalListening();
+        } catch(e) { alert("수정 오류"); }
     };
 
     window.updateStatus = async (col, id, status) => { if(confirm("승인하시겠습니까?")) await updateDoc(doc(db, col, id), { status }); };
