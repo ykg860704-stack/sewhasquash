@@ -42,7 +42,7 @@
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         
-        select, input, textarea { 
+        select, input { 
             width: 100%; 
             padding: 14px; 
             border-radius: 12px; 
@@ -52,7 +52,7 @@
             -webkit-appearance: none;
             appearance: none;
         }
-        input[type="date"], input[type="time"] { position: relative; min-height: 48px; }
+        input[type="date"] { position: relative; min-height: 48px; }
 
         .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; cursor: pointer; }
         
@@ -77,20 +77,22 @@
         .dday-soon { background: #fff5f5; border: 1px solid #feb2b2; padding: 2px 6px; border-radius: 4px; animation: blink 1.5s infinite; }
         @keyframes blink { 50% { opacity: 0.6; } }
 
-        /* 함께운동 스타일 */
-        .meetup-card { border-left: 5px solid #48bb78; cursor: pointer; transition: transform 0.1s; }
-        .meetup-card:active { transform: scale(0.98); }
-        .skill-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f0fff4; color: #2f855a; border: 1px solid #c6f6d5; font-weight: bold; }
-        .purpose-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; font-weight: bold; margin-left: 4px; }
-        .comment-box { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 12px; }
-        .comment-item { padding: 5px 0; border-bottom: 1px solid #edf2f7; }
+        /* 게스트 모집 스타일 */
+        .guest-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; position: relative; }
+        .guest-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .level-badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; color: white; }
+        .lv-s1 { background: #e53e3e; } .lv-s2 { background: #3182ce; } .lv-s3 { background: #38a169; }
+        .guest-info { font-size: 14px; color: #4a5568; margin-top: 5px; }
+        .comment-sec { background: #f8f9fa; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 13px; }
+        .comment-item { padding: 5px 0; border-bottom: 1px solid #edf2f7; display: flex; justify-content: space-between; }
+        .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
     </style>
 </head>
 <body>
 
 <div class="top-nav-bar">
     <button class="nav-item active" onclick="showTab('rank')">🏆 랭킹/기록</button>
-    <button class="nav-item" onclick="showTab('meetup')">🤝 함께운동</button>
+    <button class="nav-item" onclick="showTab('guest')">🎾 게스트 모집</button>
     <button class="nav-item" onclick="showTab('info')">🏢 센터정보</button>
     <button class="nav-item" onclick="showTab('match')">🎾 대회정보</button>
     <button class="nav-item" onclick="showTab('market')">💰 용품정보</button>
@@ -149,40 +151,33 @@
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
-    <div id="tab-meetup" class="tab-content">
+    <div id="tab-guest" class="tab-content">
         <div class="section">
-            <h2 class="blue-h2">🤝 방문 예정 등록 (운동 파트너 찾기)</h2>
+            <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
             <div class="input-group">
-                <input id="meetupName" placeholder="본인 이름(혹은 닉네임)">
-                <select id="meetupCenter">
-                    <option value="">방문할 센터 선택</option>
-                    <option value="sehwa">세화 스쿼시</option>
-                    <option value="chan">찬 스쿼시</option>
-                    <option value="squash3">스쿼시 3</option>
-                    <option value="squash4">스쿼시 4</option>
-                    <option value="squash5">스쿼시 5</option>
-                </select>
+                <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
+                <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
+                <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
+                <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
+                <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
                 <div style="display:flex; gap:8px;">
-                    <input id="meetupDate" type="date" style="flex:1;">
-                    <input id="meetupTime" type="time" style="flex:1;">
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <select id="meetupSkill" style="flex:1;">
-                        <option value="초보(S3)">초보(S3)</option>
-                        <option value="중수(S2)">중수(S2)</option>
-                        <option value="고수(S1이상)">고수(S1이상)</option>
+                    <select id="guestLevel">
+                        <option value="S3">초보 (S3)</option>
+                        <option value="S2">중수 (S2)</option>
+                        <option value="S1">고수 (S1 이상)</option>
                     </select>
-                    <select id="meetupPurpose" style="flex:1;">
-                        <option value="게임위주">게임 위주</option>
-                        <option value="훈련/연습">훈련/연습</option>
-                        <option value="자율운동">자율 운동</option>
+                    <select id="guestType">
+                        <option value="게임">게임 위주</option>
+                        <option value="훈련">연습/훈련</option>
+                        <option value="상관없음">상관없음</option>
                     </select>
                 </div>
-                <textarea id="meetupMemo" placeholder="간단한 메모 (예: 2명 방문합니다. 살살 쳐주실 분!)" rows="2"></textarea>
-                <button class="btn-battle" onclick="submitMeetup()">방문 계획 등록</button>
+                <input id="guestName" placeholder="본인 이름/닉네임">
+                <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
+                <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
             </div>
         </div>
-        <div id="meetup-list"></div>
+        <div id="guest-list"></div>
     </div>
 
     <div id="tab-info" class="tab-content">
@@ -257,11 +252,12 @@
                 <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
             </div>
         </div>
+        <div class="section" style="background: #f1f3f5; padding: 15px;"><select id="filterMatchSido" onchange="renderMatchList()"><option value="전체">🌏 전체 지역</option><option value="전국">🌍 전국 대회만 보기</option></select></div>
         <div id="match-list"></div>
     </div>
 
     <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
-    <div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
+    <div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
     <div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
     <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
 </div>
@@ -270,7 +266,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, arrayUnion } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -288,9 +284,11 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('tab-' + tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+        const target = Array.from(document.querySelectorAll('.nav-item')).find(btn => btn.innerText.includes(tabId==='rank'?'랭킹':tabId==='guest'?'게스트':tabId==='info'?'센터':tabId==='match'?'대회':''));
+        if(target) target.classList.add('active');
     };
 
+    // 기존 랭킹 및 인포 로직
     const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '스쿼시 3', 'squash4': '스쿼시 4', 'squash5': '스쿼시 5' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
@@ -298,99 +296,122 @@
     let allCenters = [];
     let allMatches = [];
 
-    // --- 함께운동 기능 로직 ---
-    window.submitMeetup = async () => {
-        const name = document.getElementById("meetupName").value.trim();
-        const center = document.getElementById("meetupCenter").value;
-        const date = document.getElementById("meetupDate").value;
-        const time = document.getElementById("meetupTime").value;
-        if(!name || !center || !date) return alert("이름, 센터, 날짜는 필수 입력사항입니다.");
-        
-        await addDoc(collection(db, "meetups"), {
-            name, center, centerName: centerNames[center], date, time,
-            skill: document.getElementById("meetupSkill").value,
-            purpose: document.getElementById("meetupPurpose").value,
-            memo: document.getElementById("meetupMemo").value,
-            comments: [],
-            createdAt: serverTimestamp()
-        });
-        alert("계획 등록 완료!");
-        ["meetupName", "meetupCenter", "meetupDate", "meetupTime", "meetupMemo"].forEach(id => document.getElementById(id).value = "");
-    };
-
-    onSnapshot(query(collection(db, "meetups"), orderBy("date", "asc")), (snap) => {
-        let html = "";
-        snap.forEach(d => {
-            const data = d.id ? {id: d.id, ...d.data()} : d.data();
-            html += `
-            <div class="info-card meetup-card" onclick="openMeetupDetail('${data.id}')">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <b>${data.centerName} 방문 예정</b>
-                    <span style="font-size:12px; color:#e74c3c; font-weight:800;">${data.date} ${data.time}</span>
-                </div>
-                <p>👤 <b>작성자:</b> ${data.name}</p>
-                <div style="margin:8px 0;">
-                    <span class="skill-tag">${data.skill}</span>
-                    <span class="purpose-tag">${data.purpose}</span>
-                </div>
-                <p style="color:#4a5568;">"${data.memo || '함께 운동해요!'}"</p>
-                <div style="font-size:11px; margin-top:8px; color:#718096;">💬 댓글 ${data.comments ? data.comments.length : 0}개</div>
-            </div>`;
-        });
-        document.getElementById("meetup-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>등록된 방문 계획이 없습니다.</p>";
-    });
-
-    window.openMeetupDetail = async (id) => {
-        // 상세 모달 로직 (showLog 재활용 혹은 별도 구성 가능하나 여기서는 showLog 스타일 활용)
-        const snap = await getDocs(query(collection(db, "meetups")));
-        const data = snap.docs.find(d => d.id === id).data();
-        
-        let commHtml = (data.comments || []).map(c => `<div class="comment-item"><b>${c.user}:</b> ${c.text} <small style="color:#ccc; float:right;">${c.dt||''}</small></div>`).join('');
-        
-        document.getElementById("modalBody").innerHTML = `
-            <h3>🤝 ${data.centerName} 조인 상세</h3>
-            <div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:15px;">
-                <p>📅 <b>일시:</b> ${data.date} ${data.time}</p>
-                <p>💪 <b>실력:</b> ${data.skill} / 🎾 <b>목적:</b> ${data.purpose}</p>
-                <p>💬 <b>메모:</b> ${data.memo || '-'}</p>
-            </div>
-            <h4>💬 댓글 소통</h4>
-            <div id="meetupComments" style="max-height:150px; overflow-y:auto; margin-bottom:10px;">${commHtml || '첫 댓글을 남겨보세요!'}</div>
-            <div style="display:flex; gap:5px;">
-                <input id="commUser" placeholder="이름" style="width:70px; padding:8px; font-size:12px;">
-                <input id="commText" placeholder="댓글을 입력하세요" style="flex:1; padding:8px; font-size:12px;">
-                <button class="btn-battle" style="width:50px; padding:0; font-size:12px;" onclick="addComment('${id}')">등록</button>
-            </div>
-        `;
-        document.getElementById("modalOverlay").style.display = "flex";
-        document.getElementById("rankChart").style.display = "none"; // 차트 숨김
-    };
-
-    window.addComment = async (id) => {
-        const user = document.getElementById("commUser").value.trim();
-        const text = document.getElementById("commText").value.trim();
-        if(!user || !text) return alert("이름과 내용을 입력하세요.");
-        const dt = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
-        await updateDoc(doc(db, "meetups", id), {
-            comments: arrayUnion({ user, text, dt })
-        });
-        openMeetupDetail(id); // 리프레시
-    };
-
-    // --- 기존 기능 유지 ---
+    // [랭킹]
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
-        players = [];
-        snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
+        players = []; snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
         renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
+    // [센터정보/게스트센터연동]
     onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
         allCenters = [];
         snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
         renderInfoList();
+        updateGuestCenterSelect();
     });
 
+    function updateGuestCenterSelect() {
+        const select = document.getElementById("guestCenter");
+        if(allCenters.length === 0) {
+            select.innerHTML = "<option value=''>센터 정보를 먼저 등록하세요</option>";
+        } else {
+            select.innerHTML = "<option value=''>방문 예정 센터 선택</option>" + 
+                allCenters.map(c => `<option value="${c.name}">${c.name} (${c.sido})</option>`).join('');
+        }
+    }
+
+    // [게스트 모집 로직]
+    window.submitGuest = async () => {
+        const center = document.getElementById("guestCenter").value;
+        const date = document.getElementById("guestDate").value;
+        const name = document.getElementById("guestName").value.trim();
+        const pw = document.getElementById("guestPw").value.trim();
+        if(!center || !date || !name || !pw) return alert("모든 항목과 비밀번호를 입력해주세요.");
+
+        await addDoc(collection(db, "guestMatches"), {
+            center, date, 
+            time: document.getElementById("guestTime").value,
+            duration: document.getElementById("guestDuration").value,
+            level: document.getElementById("guestLevel").value,
+            type: document.getElementById("guestType").value,
+            name, pw, comments: [], createdAt: serverTimestamp()
+        });
+        alert("모집글이 등록되었습니다!");
+        ["guestDate", "guestTime", "guestDuration", "guestName", "guestPw"].forEach(id => document.getElementById(id).value = "");
+    };
+
+    onSnapshot(query(collection(db, "guestMatches"), orderBy("date", "asc")), (snap) => {
+        let html = "";
+        snap.forEach(d => {
+            const data = d.data();
+            const id = d.id;
+            const lvClass = data.level === 'S1' ? 'lv-s1' : data.level === 'S2' ? 'lv-s2' : 'lv-s3';
+            html += `
+            <div class="guest-card">
+                <div class="guest-header">
+                    <div>
+                        <b style="font-size:16px;">${data.center}</b>
+                        <div class="guest-info">📅 ${data.date} | ⏰ ${data.time} (${data.duration})</div>
+                    </div>
+                    <span class="level-badge ${lvClass}">${data.level}</span>
+                </div>
+                <div style="font-size:13px; color:#2d3748;">
+                    🙋‍♂️ 모집자: <b>${data.name}</b> | 🎾 목적: ${data.type}
+                    <button class="btn-del" onclick="deleteGuest('${id}')">삭제</button>
+                </div>
+                <div class="comment-sec" id="comm-${id}">
+                    ${(data.comments || []).map((c, idx) => `
+                        <div class="comment-item">
+                            <span><b>${c.user}:</b> ${c.text}</span>
+                            <button class="btn-del" onclick="deleteComment('${id}', ${idx})">x</button>
+                        </div>
+                    `).join('')}
+                    <div style="display:flex; gap:5px; margin-top:8px;">
+                        <input id="in-c-n-${id}" placeholder="이름" style="width:60px; padding:5px; font-size:11px;">
+                        <input id="in-c-t-${id}" placeholder="같이 가요!" style="flex:1; padding:5px; font-size:11px;">
+                        <input id="in-c-p-${id}" type="password" placeholder="비번" style="width:50px; padding:5px; font-size:11px;">
+                        <button onclick="addComment('${id}')" style="background:#2d3748; color:white; border:none; border-radius:4px; padding:0 8px; font-size:11px;">등록</button>
+                    </div>
+                </div>
+            </div>`;
+        });
+        document.getElementById("guest-list").innerHTML = html || "<p style='text-align:center; padding:40px; color:#999;'>등록된 모집글이 없습니다.</p>";
+    });
+
+    window.addComment = async (id) => {
+        const user = document.getElementById(`in-c-n-${id}`).value.trim();
+        const text = document.getElementById(`in-c-t-${id}`).value.trim();
+        const pw = document.getElementById(`in-c-p-${id}`).value.trim();
+        if(!user || !text || !pw) return alert("내용과 비밀번호를 입력하세요.");
+        
+        const docRef = doc(db, "guestMatches", id);
+        const snap = await getDocs(query(collection(db, "guestMatches"))); 
+        const currentData = snap.docs.find(d => d.id === id).data();
+        const newComments = [...(currentData.comments || []), { user, text, pw }];
+        await updateDoc(docRef, { comments: newComments });
+    };
+
+    window.deleteGuest = async (id) => {
+        const pw = prompt("등록 시 설정한 비밀번호를 입력하세요.");
+        const snap = await getDocs(query(collection(db, "guestMatches")));
+        const data = snap.docs.find(d => d.id === id).data();
+        if(data.pw === pw) { if(confirm("삭제하시겠습니까?")) await deleteDoc(doc(db, "guestMatches", id)); }
+        else alert("비밀번호가 틀립니다.");
+    };
+
+    window.deleteComment = async (id, idx) => {
+        const pw = prompt("댓글 비밀번호를 입력하세요.");
+        const docRef = doc(db, "guestMatches", id);
+        const snap = await getDocs(query(collection(db, "guestMatches")));
+        const data = snap.docs.find(d => d.id === id).data();
+        if(data.comments[idx].pw === pw) {
+            const newComments = data.comments.filter((_, i) => i !== idx);
+            await updateDoc(docRef, { comments: newComments });
+        } else alert("비밀번호가 틀립니다.");
+    };
+
+    // [기존 함수들]
     window.renderInfoList = () => {
         const filter = document.getElementById("filterSido").value;
         let html = "";
@@ -398,50 +419,86 @@
         filtered.forEach(data => {
             const searchKeyword = encodeURIComponent(data.name + " " + data.addr);
             const callNumber = data.contact ? data.contact.replace(/[^0-9]/g, "") : "";
-            html += `<div class="info-card"><span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#4a5568;">${data.sido || '지역미지정'}</span><br>
-                <b style="font-size:17px;">${data.name}</b><p>📍 주소: ${data.addr}</p>
-                <div class="map-btn-group"><a href="https://www.google.com/maps/search/$${searchKeyword}" target="_blank" class="btn-map google-bg">구글 지도</a><a href="tel:${callNumber}" class="btn-map call-bg">전화 걸기</a></div></div>`;
+            html += `<div class="info-card"><span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold;">${data.sido}</span><br><b>${data.name}</b><p>📞 연락처: ${data.contact}</p><p>⏰ 영업시간: ${data.time}</p><p>📍 주소: ${data.addr}</p><p>💸 입장료: ${data.fee} / 🎾 코트: ${data.court}</p><div class="map-btn-group"><a href="https://www.google.com/maps/search/${searchKeyword}" target="_blank" class="btn-map google-bg">구글 지도</a><a href="tel:${callNumber}" class="btn-map call-bg">전화 걸기</a></div></div>`;
         });
-        document.getElementById("info-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>등록된 센터가 없습니다.</p>";
+        document.getElementById("info-list").innerHTML = html || "<p style='text-align:center; padding:20px;'>센터가 없습니다.</p>";
     };
 
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
         const addr = document.getElementById("infoAddr").value.trim();
         if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
-        await addDoc(collection(db, "infoRequests"), {
-            sido: document.getElementById("infoSido").value, name, addr, status: "pending", createdAt: serverTimestamp()
-        });
-        alert("신청 완료!");
+        await addDoc(collection(db, "infoRequests"), { sido: document.getElementById("infoSido").value, name, contact: document.getElementById("infoContact").value, addr, time: document.getElementById("infoTime").value, fee: document.getElementById("infoFee").value, court: `정식 ${document.getElementById("courtFull").value||0}/복식 ${document.getElementById("courtDouble").value||0}/세미 ${document.getElementById("courtSemi").value||0}`, status: "pending", createdAt: serverTimestamp() });
+        alert("신청 완료! 승인 후 표시됩니다.");
     };
 
+    // 대회 정보
     onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
-        allMatches = [];
-        snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
+        allMatches = []; snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
         renderMatchList();
     });
 
     window.renderMatchList = () => {
+        const filter = document.getElementById("filterMatchSido").value;
+        let filtered = filter === "전국" ? allMatches.filter(m => m.type === "전국") : (filter === "전체" ? allMatches : allMatches.filter(m => m.sido === filter));
         let html = "";
-        allMatches.forEach(m => {
-            html += `<div class="info-card"><b>${m.title}</b><p>📅 일시: ${m.date}</p><p>📍 장소: ${m.loc}</p></div>`;
-        });
-        document.getElementById("match-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>대회 정보가 없습니다.</p>";
+        filtered.forEach(m => { html += `<div class="info-card"><span class="match-badge ${m.type==='전국'?'badge-national':'badge-local'}">${m.type}</span><b>${m.title}</b><p>📅 대회일: ${m.date}</p><p>🚩 장소: ${m.loc}</p></div>`; });
+        document.getElementById("match-list").innerHTML = html || "<p style='text-align:center; padding:20px;'>대회 정보가 없습니다.</p>";
+    };
+
+    window.submitMatch = async () => {
+        const title = document.getElementById("matchTitle").value.trim();
+        if(!title) return;
+        await addDoc(collection(db, "matchRequests"), { title, type: document.getElementById("matchType").value, sido: document.getElementById("matchSido").value, date: document.getElementById("matchDate").value, deadline: document.getElementById("matchDeadline").value, loc: document.getElementById("matchLoc").value, fee: document.getElementById("matchFee").value, link: document.getElementById("matchLink").value, status: "pending", createdAt: serverTimestamp() });
+        alert("신청 완료!");
     };
 
     function renderUI() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        const list = centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언');
-        document.getElementById("integratedRank").innerHTML = renderTableHtml(list);
+        const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
+        document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
+        let fullHtml = "";
+        groups.forEach(g => { const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); });
+        document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
     }
 
     function renderTableHtml(list) {
         list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
+        const femaleOnly = list.filter(p => p.gender === '여');
         let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
         list.forEach(p => {
-            html += `<tr><td><strong>${p.groupRank}위</strong></td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a></td></tr>`;
+            let arrow = '<span class="keep">-</span>';
+            if (p.rankHistory && p.rankHistory.length >= 2) { 
+                const cur = p.rankHistory[p.rankHistory.length - 1], pre = p.rankHistory[p.rankHistory.length - 2];
+                if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
+            }
+            const recentBadges = (p.recentGames || []).slice(0, 5).map(v => `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`).join('');
+            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${p.gender==='여'?'<span class="female-tag">여성 '+(femaleOnly.findIndex(f=>f.id===p.id)+1)+'위</span>':""}<div class="recent-box">${recentBadges}</div></td></tr>`;
         });
         return html + "</table>";
+    }
+
+    async function updateCenterRanking() {
+        const centerRankList = document.getElementById("centerRankList");
+        if (!centerRankList) return;
+        const centerStats = {};
+        Object.keys(centerNames).forEach(id => { centerStats[id] = { name: centerNames[id], wins: 0, totalGames: 0, highRankWins: 0, members: 0 }; });
+        players.forEach(p => {
+            const cId = p.centerId || 'sehwa';
+            if (centerStats[cId]) {
+                centerStats[cId].members += 1;
+                const games = p.recentGames || [];
+                centerStats[cId].totalGames += games.length;
+                games.forEach(g => { if (g.res === '승') { centerStats[cId].wins += 1; if (g.oppRank && Number(g.oppRank) <= 5) centerStats[cId].highRankWins += 1; } });
+            }
+        });
+        const totalPlayers = players.length;
+        const sortedCenters = Object.keys(centerStats).map(id => {
+            const s = centerStats[id];
+            const finalScore = (((s.totalGames>0?s.wins/s.totalGames:0)*0.6) + ((s.wins>0?s.highRankWins/s.wins:0)*0.2) + ((totalPlayers>0?s.members/totalPlayers:0)*0.2)) * 100;
+            return { name: s.name, score: finalScore.toFixed(2) };
+        }).sort((a, b) => b.score - a.score);
+        centerRankList.innerHTML = sortedCenters.map((c, i) => `<div class="center-rank-item"><span>${i + 1}위 ${c.name}</span><span style="font-weight:800;">${c.score}점</span></div>`).join('');
     }
 
     window.register = async () => {
@@ -451,14 +508,55 @@
         alert("신청 완료!");
     };
 
+    function updateIndividualAwards() {
+        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        if(centerPlayers.length === 0) return;
+        let bestW = {name: '-', count: 0}, bestA = {name: '-', count: 0};
+        centerPlayers.forEach(p => {
+            const wins = (p.recentGames || []).filter(g => g.res === '승').length;
+            const total = (p.recentGames || []).length;
+            if(wins > bestW.count) bestW = {name: p.name, count: wins};
+            if(total > bestA.count) bestA = {name: p.name, count: total};
+        });
+        document.getElementById("bestWinner").innerText = bestW.name; document.getElementById("bestWinCount").innerText = bestW.count + "승";
+        document.getElementById("bestActive").innerText = bestA.name; document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
+    }
+
+    window.setResult = (r) => { challengerResult = r; document.getElementById("resWin").style.background = r==='승'?'#ebf8ff':'white'; document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; };
+    window.battleRecord = async () => {
+        const cId = document.getElementById("challengerSelect").value, dId = document.getElementById("defenderSelect").value;
+        if(!cId || !dId || !challengerResult) return alert("선택 필수!");
+        const c = players.find(p => p.id === cId), d = players.find(p => p.id === dId);
+        const dt = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
+        let uC = { recentGames: [{res: challengerResult, opp: d.name, oppRank: d.groupRank, dt, sc: document.getElementById("scoreInput").value}, ...(c.recentGames || [])].slice(0, 10) };
+        let uD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: c.name, oppRank: c.groupRank, dt, sc: document.getElementById("scoreInput").value}, ...(d.recentGames || [])].slice(0, 10) };
+        if (challengerResult === '승') { uC.groupRank = Number(d.groupRank); uD.groupRank = Number(c.groupRank); }
+        uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
+        uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
+        await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD);
+        alert("기록 성공!");
+    };
+
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 상세 전적</h3>`;
+        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 상세 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
         document.getElementById("modalOverlay").style.display = "flex";
-        document.getElementById("rankChart").style.display = "block";
+        const ctx = document.getElementById('rankChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => (i+1)+'회'), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true, ticks: { stepSize: 1 } } } } });
     };
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
+    window.filterOpponents = () => {
+        const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
+        if(!c) return;
+        const targets = players.filter(p => p.centerId === c.centerId && p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
+        document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
+    };
+    function updateChallengerList() {
+        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
+    }
 
     window.sendChat = async () => {
         const msg = document.getElementById("chatInput").value.trim();
@@ -466,21 +564,12 @@
         await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
         document.getElementById("chatInput").value = "";
     };
-
     onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(50)), (snap) => {
         const chatDisplay = document.getElementById("chatDisplay");
         let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
         rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
         chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
-
-    // 초기화용 더미함수들
-    function updateCenterRanking() {}
-    function updateChallengerList() {}
-    function updateIndividualAwards() {}
-    window.setResult = (r) => { challengerResult = r; };
-    window.battleRecord = async () => {};
-    window.filterOpponents = () => {};
 </script>
 </body>
 </html>
