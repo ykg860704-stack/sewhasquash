@@ -69,6 +69,14 @@
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
         #chatDisplay { height: 300px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 10px; }
         .chat-msg { margin-bottom: 8px; font-size: 13px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #eee; }
+
+        /* 대회 정보 관련 추가 스타일 */
+        .match-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 4px; }
+        .badge-national { background: #ebf8ff; color: #3182ce; border: 1px solid #bee3f8; }
+        .badge-local { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7e2; }
+        .dday-tag { font-weight: 800; color: #e53e3e; }
+        .dday-soon { background: #fff5f5; border: 1px solid #feb2b2; padding: 2px 6px; border-radius: 4px; animation: blink 1.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.6; } }
     </style>
 </head>
 <body>
@@ -177,12 +185,47 @@
         <div class="section">
             <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
             <div class="input-group">
+                <select id="matchType">
+                    <option value="전국">🌍 전국 대회</option>
+                    <option value="지역">📍 지역 대회</option>
+                </select>
+                <select id="matchSido">
+                    <option value="전체">개최 지역 선택</option>
+                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+                </select>
                 <input id="matchTitle" placeholder="대회명">
-                <input id="matchDate" type="date">
-                <input id="matchLoc" placeholder="대회 장소">
-                <input id="matchLink" placeholder="공고 링크 (URL)">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
+                    <input id="matchDate" type="date">
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
+                    <input id="matchDeadline" type="date">
+                </div>
+                <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
+                <input id="matchFee" placeholder="참가비 (예: 30,000원)">
+                <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
                 <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
             </div>
+        </div>
+
+        <div class="section" style="background: #f1f3f5; padding: 15px;">
+            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
+            <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
+                <option value="전체">🌏 전체 지역</option>
+                <option value="전국">🌍 전국 대회만 보기</option>
+                <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+                <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+                <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+                <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+                <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+                <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+            </select>
         </div>
         <div id="match-list"></div>
     </div>
@@ -223,6 +266,7 @@
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
     let allCenters = [];
+    let allMatches = []; // 대회 정보 저장용
 
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
@@ -255,7 +299,7 @@
                 <p>📍 주소: ${data.addr}</p>
                 <p>💸 입장료: ${data.fee || '정보 없음'} / 🎾 코트: ${data.court}</p>
                 <div class="map-btn-group">
-                    <a href="https://www.google.com/maps/search/?api=1&query=${searchKeyword}" target="_blank" class="btn-map google-bg">구글 지도</a>
+                    <a href="https://www.google.com/maps/search/${searchKeyword}" target="_blank" class="btn-map google-bg">구글 지도</a>
                     <a href="tel:${callNumber}" class="btn-map call-bg">전화 걸기</a>
                 </div>
             </div>`;
@@ -285,19 +329,82 @@
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
+    // 대회 정보 로직 수정
     window.submitMatch = async () => {
         const title = document.getElementById("matchTitle").value.trim();
-        if(!title) return;
-        await addDoc(collection(db, "matchRequests"), { title, date: document.getElementById("matchDate").value, loc: document.getElementById("matchLoc").value, link: document.getElementById("matchLink").value, status: "pending", createdAt: serverTimestamp() });
-        alert("대회 정보 신청 완료!"); document.getElementById("matchTitle").value = "";
+        if(!title) return alert("대회명을 입력해주세요.");
+        
+        try {
+            await addDoc(collection(db, "matchRequests"), { 
+                title, 
+                type: document.getElementById("matchType").value,
+                sido: document.getElementById("matchSido").value,
+                date: document.getElementById("matchDate").value, 
+                deadline: document.getElementById("matchDeadline").value,
+                loc: document.getElementById("matchLoc").value, 
+                fee: document.getElementById("matchFee").value,
+                link: document.getElementById("matchLink").value, 
+                status: "pending", 
+                createdAt: serverTimestamp() 
+            });
+            alert("대회 정보 신청 완료! 승인 후 목록에 표시됩니다.");
+            ["matchTitle", "matchDate", "matchDeadline", "matchLoc", "matchFee", "matchLink"].forEach(id => document.getElementById(id).value = "");
+        } catch(e) {
+            alert("저장 중 오류 발생: " + e.message);
+        }
     };
 
     onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
-        let html = "";
-        snap.forEach(d => { if(d.data().status === "approved") html += `<div class="info-card" style="border-left: 5px solid #e74c3c;"><b>${d.data().title}</b><p>날짜: ${d.data().date}<br>장소: ${d.data().loc}<br><a href="${d.data().link}" target="_blank" style="color:#3182ce;">[공고 상세보기]</a></p></div>`; });
-        document.getElementById("match-list").innerHTML = html || "승인된 대회정보가 없습니다.";
+        allMatches = [];
+        snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
+        renderMatchList();
     });
 
+    window.renderMatchList = () => {
+        const filter = document.getElementById("filterMatchSido").value;
+        let filtered = allMatches;
+        if(filter === "전국") filtered = allMatches.filter(m => m.type === "전국");
+        else if(filter !== "전체") filtered = allMatches.filter(m => m.sido === filter);
+
+        let html = "";
+        const now = new Date();
+
+        filtered.forEach(m => {
+            const mDate = new Date(m.date);
+            const dDate = new Date(m.deadline);
+            
+            const getDday = (target) => {
+                const diff = target.setHours(0,0,0,0) - now.setHours(0,0,0,0);
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                return days === 0 ? "Day" : days > 0 ? `-${days}` : `+${Math.abs(days)}`;
+            };
+
+            const ddayDeadline = getDday(dDate);
+            const ddayMatch = getDday(mDate);
+            
+            // 30일 이내 강조 로직
+            const isDeadlineSoon = ddayDeadline.startsWith('-') && parseInt(ddayDeadline.replace('-','')) <= 30;
+            const isMatchSoon = ddayMatch.startsWith('-') && parseInt(ddayMatch.replace('-','')) <= 30;
+
+            html += `
+            <div class="info-card" style="border-left: 5px solid ${m.type === '전국' ? '#3182ce' : '#e74c3c'};">
+                <div style="margin-bottom:8px;">
+                    <span class="match-badge ${m.type === '전국' ? 'badge-national' : 'badge-local'}">${m.type}</span>
+                    <span style="font-size:10px; color:#718096;">${m.sido}</span>
+                </div>
+                <b style="font-size:17px; display:block; margin-bottom:10px;">${m.title}</b>
+                <p>🚩 <b>장소:</b> ${m.loc || '추후 공지'}</p>
+                <p>💰 <b>참가비:</b> ${m.fee || '정보 없음'}</p>
+                <p>📅 <b>대회일:</b> ${m.date} <span class="dday-tag ${isMatchSoon ? 'dday-soon' : ''}">D${ddayMatch}</span></p>
+                <p>⏰ <b>접수마감:</b> ${m.deadline} <span class="dday-tag ${isDeadlineSoon ? 'dday-soon' : ''}">D${ddayDeadline}</span></p>
+                
+                ${m.link ? `<a href="${m.link}" target="_blank" class="btn-battle" style="display:block; text-align:center; text-decoration:none; margin-top:15px; padding:10px; background:#edf2f7; color:#2d3748; font-size:13px;">🔗 대회 공고 상세보기</a>` : ''}
+            </div>`;
+        });
+        document.getElementById("match-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>등록된 대회 정보가 없습니다.</p>";
+    };
+
+    // 기존 랭킹 및 UI 로직 유지
     function renderUI() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
         const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
@@ -418,4 +525,3 @@
 </script>
 </body>
 </html>
-
