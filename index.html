@@ -189,7 +189,7 @@
                     <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                     <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
                     <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시의">울산광역시</option>
                     <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
                 </select>
                 <input id="infoName" placeholder="상호명">
@@ -279,7 +279,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -318,6 +318,7 @@
         allCenters = [];
         snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
         renderInfoList();
+        updateGuestCenterOptions(); // 게스트 모집 센터 선택지 업데이트
     });
 
     window.renderInfoList = () => {
@@ -561,6 +562,85 @@
         rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
         chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
+
+    // --- 게스트 모집 연동 로직 추가 ---
+
+    window.submitGuest = async () => {
+        const center = document.getElementById("guestCenter").value;
+        const name = document.getElementById("guestName").value.trim();
+        const date = document.getElementById("guestDate").value;
+        const pw = document.getElementById("guestPw").value;
+
+        if(!center || !name || !date || !pw) return alert("빈칸(센터, 날짜, 이름, 비밀번호)을 모두 채워주세요.");
+
+        try {
+            await addDoc(collection(db, "guestPosts"), {
+                center,
+                date,
+                time: document.getElementById("guestTime").value,
+                duration: document.getElementById("guestDuration").value,
+                level: document.getElementById("guestLevel").value,
+                type: document.getElementById("guestType").value,
+                name,
+                pw,
+                createdAt: serverTimestamp()
+            });
+            alert("모집글이 등록되었습니다.");
+            ["guestTime", "guestDuration", "guestName", "guestPw", "guestDate"].forEach(id => document.getElementById(id).value = "");
+        } catch(e) { alert("오류 발생: " + e.message); }
+    };
+
+    onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "asc")), (snap) => {
+        const listDiv = document.getElementById("guest-list");
+        let html = "";
+        snap.forEach(d => {
+            const data = d.data();
+            const postId = d.id;
+            html += `
+            <div class="guest-card">
+                <div class="guest-header">
+                    <div>
+                        <span class="level-badge lv-${data.level.toLowerCase()}">${data.level}</span>
+                        <b style="margin-left:5px;">${data.center}</b>
+                    </div>
+                    <button class="btn-del" onclick="deleteGuest('${postId}', '${data.pw}')">삭제</button>
+                </div>
+                <div class="guest-info">
+                    📅 <b>날짜:</b> ${data.date} | ⏰ <b>시간:</b> ${data.time} (${data.duration})<br>
+                    👤 <b>모집자:</b> ${data.name} | 🎯 <b>성향:</b> ${data.type}
+                </div>
+            </div>`;
+        });
+        listDiv.innerHTML = html || "<p style='text-align:center; padding:40px; color:#999;'>등록된 모집글이 없습니다.</p>";
+    });
+
+    window.deleteGuest = async (id, correctPw) => {
+        const inputPw = prompt("등록 시 설정한 비밀번호를 입력하세요.");
+        if(inputPw === correctPw) {
+            try {
+                await deleteDoc(doc(db, "guestPosts", id));
+                alert("삭제되었습니다.");
+            } catch(e) { alert("삭제 실패: " + e.message); }
+        } else if(inputPw !== null) {
+            alert("비밀번호가 일치하지 않습니다.");
+        }
+    };
+
+    function updateGuestCenterOptions() {
+        const select = document.getElementById("guestCenter");
+        let options = '<option value="">방문 예정 센터 선택</option>';
+        // 기본 하드코딩 센터들 추가
+        Object.values(centerNames).forEach(name => {
+            options += `<option value="${name}">${name}</option>`;
+        });
+        // 승인된 신규 신청 센터들 추가
+        allCenters.forEach(c => {
+            if(!Object.values(centerNames).includes(c.name)) {
+                options += `<option value="${c.name}">${c.name}</option>`;
+            }
+        });
+        select.innerHTML = options;
+    }
 </script>
 </body>
 </html>
