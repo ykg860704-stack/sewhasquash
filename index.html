@@ -65,11 +65,6 @@
         .google-bg { background: #4285F4; }
         .call-bg { background: #34A853; }
 
-        /* D-Day Styles */
-        .dday-badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; margin-right: 5px; }
-        .dday-red { background: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
-        .dday-blue { background: #ebf8ff; color: #3182ce; border: 1px solid #90cdf4; }
-
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
         #chatDisplay { height: 300px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 10px; }
@@ -182,34 +177,12 @@
         <div class="section">
             <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
             <div class="input-group">
-                <select id="matchSido">
-                    <option value="전국">전국단위</option>
-                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="경상북도">경상북도</option>
-                    <option value="충청남도">충청남도</option><option value="전라북도">전라북도</option>
-                </select>
-                <input id="matchTitle" placeholder="대회명 (예: 제7회 황악산 전국대회)">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span style="font-size:12px; width:60px;">대회일:</span><input id="matchDate" type="date" style="flex:1;">
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span style="font-size:12px; width:60px; color:#e53e3e;">접수마감:</span><input id="matchCloseDate" type="date" style="flex:1;">
-                </div>
+                <input id="matchTitle" placeholder="대회명">
+                <input id="matchDate" type="date">
                 <input id="matchLoc" placeholder="대회 장소">
-                <input id="matchFee" placeholder="참가비 (예: 개인 3만 / 복식 5만)">
-                <input id="matchAward" placeholder="시상 (예: 1위 라켓, 2위 신발)">
-                <input id="matchLink" placeholder="공고 링크 (네이버 폼 등 URL)">
+                <input id="matchLink" placeholder="공고 링크 (URL)">
                 <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
             </div>
-        </div>
-
-        <div class="section" style="background: #f1f3f5; padding: 15px;">
-            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 지역 필터</label>
-            <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
-                <option value="전체">🌏 전체 대회</option>
-                <option value="전국">전국단위</option>
-                <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="경상북도">경상북도</option>
-                <option value="충청남도">충청남도</option><option value="전라북도">전라북도</option>
-            </select>
         </div>
         <div id="match-list"></div>
     </div>
@@ -238,7 +211,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 공통 탭 스위칭
     window.showTab = (tabId) => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -250,9 +222,8 @@
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
-    let allCenters = [], allMatches = [];
+    let allCenters = [];
 
-    // 랭킹 리스너
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
         snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
@@ -260,120 +231,72 @@
         renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
-    // 센터정보 리스너
     onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
         allCenters = [];
         snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
         renderInfoList();
     });
 
-    // 대회정보 리스너 및 렌더링
-    onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
-        allMatches = [];
-        snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
-        renderMatchList();
-    });
-
-    // D-Day 계산기
-    function getDDay(targetDate) {
-        if(!targetDate) return "";
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const target = new Date(targetDate);
-        target.setHours(0,0,0,0);
-        const diff = target - today;
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        if(days === 0) return "D-Day";
-        if(days < 0) return "종료";
-        return `D-${days}`;
-    }
-
-    window.renderMatchList = () => {
-        const filter = document.getElementById("filterMatchSido").value;
-        const filtered = filter === "전체" ? allMatches : allMatches.filter(m => m.sido === filter);
-        let html = "";
-        
-        filtered.forEach(m => {
-            const ddayMatch = getDDay(m.date);
-            const ddayClose = getDDay(m.closeDate);
-            
-            html += `
-            <div class="info-card" style="border-left: 5px solid #e74c3c;">
-                <div style="margin-bottom:8px;">
-                    <span class="dday-badge dday-blue">대회 ${ddayMatch}</span>
-                    <span class="dday-badge dday-red">마감 ${ddayClose}</span>
-                    <span style="font-size:11px; color:#718096; font-weight:bold;">#${m.sido}</span>
-                </div>
-                <b style="font-size:17px;">${m.title}</b>
-                <p style="margin-top:8px;">📅 <b>대회일:</b> ${m.date || '미정'}</p>
-                <p>⏰ <b>접수마감:</b> ${m.closeDate || '미정'}</p>
-                <p>📍 <b>장소:</b> ${m.loc || '미정'}</p>
-                <p>💰 <b>참가비:</b> ${m.fee || '정보없음'}</p>
-                <p>🎁 <b>시상:</b> ${m.award || '정보없음'}</p>
-                <div class="map-btn-group">
-                    <a href="${m.link}" target="_blank" class="btn-map" style="background:#e74c3c;">📄 상세 요강 / 참가 신청</a>
-                </div>
-            </div>`;
-        });
-        document.getElementById("match-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>등록된 대회 정보가 없습니다.</p>";
-    };
-
-    window.submitMatch = async () => {
-        const title = document.getElementById("matchTitle").value.trim();
-        const date = document.getElementById("matchDate").value;
-        const closeDate = document.getElementById("matchCloseDate").value;
-        const loc = document.getElementById("matchLoc").value.trim();
-        const link = document.getElementById("matchLink").value.trim();
-        const sido = document.getElementById("matchSido").value;
-        const fee = document.getElementById("matchFee").value.trim();
-        const award = document.getElementById("matchAward").value.trim();
-
-        if(!title || !date || !link) return alert("대회명, 대회일, 링크는 필수입니다.");
-
-        await addDoc(collection(db, "matchRequests"), { 
-            title, date, closeDate, loc, link, sido, fee, award,
-            status: "pending", createdAt: serverTimestamp() 
-        });
-        
-        alert("대회 등록 신청 완료! 관리자 승인 후 표시됩니다.");
-        ["matchTitle", "matchDate", "matchCloseDate", "matchLoc", "matchLink", "matchFee", "matchAward"].forEach(id => document.getElementById(id).value = "");
-    };
-
-    // --- 기존 랭킹 및 채팅 로직 (수정 없이 그대로 유지) ---
     window.renderInfoList = () => {
         const filter = document.getElementById("filterSido").value;
         let html = "";
         const filtered = filter === "전체" ? allCenters : allCenters.filter(c => c.sido === filter);
+        
         filtered.forEach(data => {
             const searchKeyword = encodeURIComponent(data.name + " " + data.addr);
             const callNumber = data.contact ? data.contact.replace(/[^0-9]/g, "") : "";
-            html += `<div class="info-card">
+            
+            html += `
+            <div class="info-card">
                 <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#4a5568;">${data.sido || '지역미지정'}</span><br>
                 <b style="font-size:17px;">${data.name}</b>
-                <p>📞 연락처: ${data.contact || '정보 없음'}</p>
+                <p style="color:#2d3748; margin-top:6px; font-weight:600;">📞 연락처: <span style="font-weight:400; color:#718096;">${data.contact || '정보 없음'}</span></p>
+                <p style="color:#2d3748; margin-top:2px; font-weight:600;">⏰ 영업시간: <span style="font-weight:400; color:#718096;">${data.time || '정보 없음'}</span></p>
                 <p>📍 주소: ${data.addr}</p>
+                <p>💸 입장료: ${data.fee || '정보 없음'} / 🎾 코트: ${data.court}</p>
                 <div class="map-btn-group">
-                    <a href="https://www.google.com/maps/search/?api=1&query=${searchKeyword}" target="_blank" class="btn-map google-bg">지도 보기</a>
+                    <a href="https://www.google.com/maps/search/?api=1&query=${searchKeyword}" target="_blank" class="btn-map google-bg">구글 지도</a>
                     <a href="tel:${callNumber}" class="btn-map call-bg">전화 걸기</a>
                 </div>
             </div>`;
         });
-        document.getElementById("info-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>검색 결과가 없습니다.</p>";
+        document.getElementById("info-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>해당 지역에 등록된 센터가 없습니다.</p>";
     };
 
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
+        const contact = document.getElementById("infoContact").value.trim(); 
         const addr = document.getElementById("infoAddr").value.trim();
+        const time = document.getElementById("infoTime").value.trim();
+        const fee = document.getElementById("infoFee").value.trim();
         if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
+        
+        const full = document.getElementById("courtFull").value || 0;
+        const dbl = document.getElementById("courtDouble").value || 0;
+        const semi = document.getElementById("courtSemi").value || 0;
+
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name, contact: document.getElementById("infoContact").value, addr, 
-            time: document.getElementById("infoTime").value, fee: document.getElementById("infoFee").value,
-            court: `정식 ${document.getElementById("courtFull").value || 0} / 복식 ${document.getElementById("courtDouble").value || 0} / 세미 ${document.getElementById("courtSemi").value || 0}`,
+            name, contact, addr, time, fee, 
+            court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
             status: "pending", createdAt: serverTimestamp()
         });
-        alert("신청 완료!");
+        alert("신청 완료! 관리자 승인 후 표시됩니다.");
+        ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
+
+    window.submitMatch = async () => {
+        const title = document.getElementById("matchTitle").value.trim();
+        if(!title) return;
+        await addDoc(collection(db, "matchRequests"), { title, date: document.getElementById("matchDate").value, loc: document.getElementById("matchLoc").value, link: document.getElementById("matchLink").value, status: "pending", createdAt: serverTimestamp() });
+        alert("대회 정보 신청 완료!"); document.getElementById("matchTitle").value = "";
+    };
+
+    onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
+        let html = "";
+        snap.forEach(d => { if(d.data().status === "approved") html += `<div class="info-card" style="border-left: 5px solid #e74c3c;"><b>${d.data().title}</b><p>날짜: ${d.data().date}<br>장소: ${d.data().loc}<br><a href="${d.data().link}" target="_blank" style="color:#3182ce;">[공고 상세보기]</a></p></div>`; });
+        document.getElementById("match-list").innerHTML = html || "승인된 대회정보가 없습니다.";
+    });
 
     function renderUI() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
@@ -427,8 +350,22 @@
         const name = document.getElementById("nameInput").value.trim();
         if(!name) return;
         await addDoc(collection(db, "ranking"), { centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] });
-        alert("신청 완료!");
+        alert("신청 완료!"); document.getElementById("nameInput").value = "";
     };
+
+    function updateIndividualAwards() {
+        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        if(centerPlayers.length === 0) return;
+        let bestW = {name: '-', count: 0}, bestA = {name: '-', count: 0};
+        centerPlayers.forEach(p => {
+            const wins = (p.recentGames || []).filter(g => g.res === '승').length;
+            const total = (p.recentGames || []).length;
+            if(wins > bestW.count) bestW = {name: p.name, count: wins};
+            if(total > bestA.count) bestA = {name: p.name, count: total};
+        });
+        document.getElementById("bestWinner").innerText = bestW.name; document.getElementById("bestWinCount").innerText = bestW.count + "승";
+        document.getElementById("bestActive").innerText = bestA.name; document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
+    }
 
     window.setResult = (r) => { challengerResult = r; document.getElementById("resWin").style.background = r==='승'?'#ebf8ff':'white'; document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; };
     window.battleRecord = async () => {
@@ -465,19 +402,6 @@
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
         document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     }
-    function updateIndividualAwards() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        if(centerPlayers.length === 0) return;
-        let bestW = {name: '-', count: 0}, bestA = {name: '-', count: 0};
-        centerPlayers.forEach(p => {
-            const wins = (p.recentGames || []).filter(g => g.res === '승').length;
-            const total = (p.recentGames || []).length;
-            if(wins > bestW.count) bestW = {name: p.name, count: wins};
-            if(total > bestA.count) bestA = {name: p.name, count: total};
-        });
-        document.getElementById("bestWinner").innerText = bestW.name; document.getElementById("bestWinCount").innerText = bestW.count + "승";
-        document.getElementById("bestActive").innerText = bestA.name; document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
-    }
 
     window.sendChat = async () => {
         const msg = document.getElementById("chatInput").value.trim();
@@ -494,3 +418,4 @@
 </script>
 </body>
 </html>
+
