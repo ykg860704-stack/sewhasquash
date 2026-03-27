@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -114,10 +114,10 @@
         <div class="center-selector-bar">
             <label style="font-size:13px; font-weight:700;">📍 센터</label>
             <select id="centerSelectMain" onchange="location.search='?center='+this.value">
-                <option value="sehwa">세화 스쿼시</option>
-                <option value="chan">찬 스쿼시</option>
-                <option value="squash3">스쿼시 3</option>
-                <option value="squash4">스쿼시 4</option>
+                <option value="sehwa">세화스쿼시</option>
+                <option value="chan">찬스쿼시</option>
+                <option value="squash3">와이드짐</option>
+                <option value="squash4">용인 HIPP스쿼시</option>
                 <option value="squash5">스쿼시 5</option>
             </select>
         </div>
@@ -308,7 +308,7 @@
         event.currentTarget.classList.add('active');
     };
 
-    const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '스쿼시 3', 'squash4': '스쿼시 4', 'squash5': '스쿼시 5' };
+    const centerNames = { 'sehwa': '세화스쿼시', 'chan': '찬스쿼시', 'wide': '와이드짐', 'squash4': '용인 HIPP스쿼시', 'squash5': '스쿼시 5' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
