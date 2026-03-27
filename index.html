@@ -385,7 +385,10 @@
 
     window.renderMatchList = () => {
         const filter = document.getElementById("filterMatchSido").value;
-        let filtered = allMatches;
+        
+        const today = new Date().toISOString().split('T')[0];
+        let filtered = allMatches.filter(m => m.date >= today);
+
         if(filter === "전국") filtered = allMatches.filter(m => m.type === "전국");
         else if(filter !== "전체") filtered = allMatches.filter(m => m.sido === filter);
         let html = "";
@@ -602,7 +605,10 @@
         const listDiv = document.getElementById("guest-list");
         if(!listDiv) return;
         let html = "";
-        guestPostsData.forEach(data => {
+    const today = new Date().toISOString().split('T')[0];
+    const activePosts = guestPostsData.filter(data => data.date >= today);
+
+        activePosts.forEach(data => { 
             const postId = data.id;
             const comments = guestCommentsData[postId] || [];
             let commentHtml = comments.map(c => `
