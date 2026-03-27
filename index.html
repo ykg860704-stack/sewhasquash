@@ -553,7 +553,7 @@
         await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
         document.getElementById("chatInput").value = "";
     };
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(7)), (snap) => {
+    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
         const chatDisplay = document.getElementById("chatDisplay");
         let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
         rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
