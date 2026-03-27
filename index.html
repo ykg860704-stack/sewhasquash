@@ -139,142 +139,33 @@
         <div class="section"><h2 class="blue-h2">🥇 그룹별 랭킹</h2><div id="rankContainer"></div></div>
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
----
 
----
+
 <div id="tab-guest" class="tab-content">
     <div class="section">
-        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)
-            <button class="refresh-btn" onclick="loadGuestData()">🔄 새로고침</button>
-        </h2>
+        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
+        <div class="input-group">
+            <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
+            <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
+            <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
+            <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
+            <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
+            <div style="display:flex; gap:8px;">
+                <select id="guestLevel">
+                    <option value="S3">초보 (S3)</option>
+                    <option value="S2">중수 (S2)</option>
+                    <option value="S1">고수 (S1 이상)</option>
+                </select>
+                <select id="guestType">
+                    <option value="게임">게임 위주</option>
+                    <option value="훈련">연습/훈련</option>
+                    <option value="상관없음">상관없음</option>
+                </select>
+            </div>
+            <input id="guestName" placeholder="본인 이름/닉네임">
+            <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
+            <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
         </div>
-    <div id="guest-list"></div>
-</div>
-        // ─── 게스트 모집 (getDocs 방식) ───
-
-// 데이터 저장 변수
-let guestPostsData = [];
-let guestCommentsData = {};
-
-// 게스트 데이터 통합 로드 함수
-window.loadGuestData = async () => {
-    try {
-        // 1. 게시글 가져오기
-        const postSnap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc")));
-        guestPostsData = postSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        // 2. 댓글 가져오기
-        const commentSnap = await getDocs(query(collection(db, "guestComments"), orderBy("createdAt", "asc")));
-        guestCommentsData = {};
-        commentSnap.forEach(d => {
-            const data = d.data();
-            if(!guestCommentsData[data.postId]) guestCommentsData[data.postId] = [];
-            guestCommentsData[data.postId].push({ id: d.id, ...data });
-        });
-
-        renderGuestList();
-    } catch(e) {
-        console.error("게스트 데이터 로드 오류:", e);
-    }
-};
-
-// 초기 로드 실행
-loadGuestData();
-
-// 게스트 모집글 등록
-window.submitGuest = async () => {
-    const center = document.getElementById("guestCenter").value;
-    const name = document.getElementById("guestName").value.trim();
-    const date = document.getElementById("guestDate").value;
-    const pw = document.getElementById("guestPw").value;
-    
-    if(!center || !name || !date || !pw) return alert("필수 정보를 모두 입력해주세요.");
-
-    try {
-        await addDoc(collection(db, "guestPosts"), {
-            center, date, time: document.getElementById("guestTime").value,
-            duration: document.getElementById("guestDuration").value,
-            level: document.getElementById("guestLevel").value,
-            type: document.getElementById("guestType").value,
-            name, pw, createdAt: serverTimestamp()
-        });
-        alert("모집글이 등록되었습니다.");
-        ["guestTime", "guestDuration", "guestName", "guestPw", "guestDate"].forEach(id => document.getElementById(id).value = "");
-        
-        // 등록 후 목록 새로고침
-        loadGuestData();
-    } catch(e) { alert("오류 발생: " + e.message); }
-};
-
-// 댓글 등록
-window.submitComment = async (postId) => {
-    const user = document.getElementById(`cmtUser-${postId}`).value.trim();
-    const text = document.getElementById(`cmtText-${postId}`).value.trim();
-    if(!user || !text) return alert("닉네임과 내용을 모두 입력해주세요.");
-
-    try {
-        await addDoc(collection(db, "guestComments"), {
-            postId, userName: user, text, createdAt: serverTimestamp()
-        });
-        document.getElementById(`cmtText-${postId}`).value = "";
-        
-        // 댓글 등록 후 해당 글의 업데이트를 위해 다시 로드
-        loadGuestData();
-    } catch(e) { alert("댓글 등록 실패: " + e.message); }
-};
-
-// 게스트 모집글 삭제
-window.deleteGuest = async (id, correctPw) => {
-    const inputPw = prompt("등록 시 설정한 비밀번호를 입력하세요.");
-    if(inputPw === correctPw) {
-        try { 
-            await deleteDoc(doc(db, "guestPosts", id)); 
-            alert("삭제되었습니다."); 
-            loadGuestData(); // 삭제 후 목록 새로고침
-        }
-        catch(e) { alert("삭제 실패: " + e.message); }
-    } else if(inputPw !== null) { 
-        alert("비밀번호가 일치하지 않습니다."); 
-    }
-};
-
-// 렌더링 함수
-function renderGuestList() {
-    const listDiv = document.getElementById("guest-list");
-    if(!listDiv) return;
-    
-    let html = "";
-    guestPostsData.forEach(data => {
-        const postId = data.id;
-        const comments = guestCommentsData[postId] || [];
-        let commentHtml = comments.map(c => `
-            <div class="comment-item">
-                <span class="comment-user">${c.userName}:</span>
-                <span class="comment-text">${c.text}</span>
-            </div>
-        `).join('');
-
-        html += `<div class="guest-card">
-            <div class="guest-header">
-                <div><span class="level-badge lv-${data.level.toLowerCase()}">${data.level}</span><b style="margin-left:5px;">${data.center}</b></div>
-                <button class="btn-del" onclick="deleteGuest('${postId}', '${data.pw}')">삭제</button>
-            </div>
-            <div class="guest-info">
-                📅 <b>날짜:</b> ${data.date} | ⏰ <b>시간:</b> ${data.time} (${data.duration})<br>
-                👤 <b>모집자:</b> ${data.name} | 🎯 <b>목적:</b> ${data.type}
-            </div>
-            <div class="comment-sec">
-                <div id="comments-${postId}">${commentHtml || '<p style="color:#ccc; margin:0;">댓글이 없습니다.</p>'}</div>
-                <div class="comment-input-box">
-                    <input id="cmtUser-${postId}" placeholder="닉네임" style="width:70px;">
-                    <input id="cmtText-${postId}" placeholder="댓글을 입력하세요..." style="flex:1;">
-                    <button class="btn-comment" onclick="submitComment('${postId}')">등록</button>
-                </div>
-            </div>
-        </div>`;
-    });
-    listDiv.innerHTML = html || "<p style='text-align:center; padding:40px; color:#999;'>등록된 모집글이 없습니다.</p>";
-}
     </div>
     <div id="guest-list"></div>
 </div>
@@ -375,9 +266,6 @@ function renderGuestList() {
 <div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
 <div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
 <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
-
----
-
 
 
 </div>
@@ -776,5 +664,3 @@ function renderGuestList() {
 
 </body>
 </html>
-
-v2
