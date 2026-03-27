@@ -139,11 +139,17 @@
         <div class="section"><h2 class="blue-h2">🥇 그룹별 랭킹</h2><div id="rankContainer"></div></div>
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
+---
 
 ---
 <div id="tab-guest" class="tab-content">
     <div class="section">
-        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
+        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)
+            <button class="refresh-btn" onclick="loadGuestData()">🔄 새로고침</button>
+        </h2>
+        </div>
+    <div id="guest-list"></div>
+</div>
         <div class="input-group">
             <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
             <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
