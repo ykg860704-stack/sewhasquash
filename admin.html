@@ -141,7 +141,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const codeMap = { 'sewha123': { id: 'sehwa', name: '세화 스쿼시' }, 'chan123': { id: 'chan', name: '찬 스쿼시' }, 'wide123': { id: 'squash3', name: '와이드짐'}, 'hipp123': { id: 'squash4', name: '용인 HIPP 스쿼시'} };
+       const codeMap = { 
+        'sewha123': { id: 'sehwa', name: '세화 스쿼시' },
+        'chan123': { id: 'chan', name: '찬 스쿼시' },
+        'sq3': { id: 'squash3', name: '와이드짐' },
+        'sq4': { id: 'squash4', name: '용인 HIPP 스쿼시' },
+        'sq5': { id: 'squash5', name: '스쿼시 5센터' }
+    };
     let players = [], centers = [], matches = [], guestPosts = [], currentCenterId = "", tempRecords = [];
 
     window.switchGlobalTab = (tabId, btn) => {
