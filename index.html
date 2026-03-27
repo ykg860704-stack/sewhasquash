@@ -1,4 +1,5 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
+
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -27,8 +28,8 @@
         .name-link { color: #2d3748; text-decoration: none; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block; }
         .recent-box { display: flex; gap: 4px; margin-top: 6px; justify-content: flex-start; }
         .res-badge { width: 20px; height: 20px; line-height: 20px; border-radius: 5px; font-size: 10px; font-weight: 800; color: white; text-align: center; }
-        .win-bg { background-color: #feb2b2; } 
-        .loss-bg { background-color: #90cdf4; } 
+        .win-bg { background-color: #feb2b2; }
+        .loss-bg { background-color: #90cdf4; }
         .up { color: #e53e3e; font-size: 11px; margin-left: 3px; vertical-align: middle; }
         .down { color: #3182ce; font-size: 11px; margin-left: 3px; vertical-align: middle; }
         .keep { color: #cbd5e0; font-size: 11px; margin-left: 3px; }
@@ -41,50 +42,31 @@
         .inter-center-rank { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; padding: 20px; border-radius: 20px; margin-bottom: 40px; }
         .center-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .input-group { display: flex; flex-direction: column; gap: 12px; }
-        
-        select, input { 
-            width: 100%; 
-            padding: 14px; 
-            border-radius: 12px; 
-            border: 1px solid #e2e8f0; 
-            font-size: 15px; 
-            background: #fff;
-            -webkit-appearance: none;
-            appearance: none;
-        }
+        select, input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 15px; background: #fff; -webkit-appearance: none; appearance: none; }
         input[type="date"] { position: relative; min-height: 48px; }
-
         .btn-battle { width: 100%; padding: 16px; border-radius: 12px; background: #2d3748; color: white; border: none; font-weight: 800; cursor: pointer; }
-        
         .info-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .info-card b { font-size: 16px; color: #2d3748; }
         .info-card p { margin: 5px 0 0 0; font-size: 13px; color: #718096; }
-        
         .map-btn-group { display: flex; gap: 8px; margin-top: 10px; }
         .btn-map { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; text-align: center; text-decoration: none; color: white; border: none; }
         .google-bg { background: #4285F4; }
         .call-bg { background: #34A853; }
-
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; padding: 25px; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
         #chatDisplay { height: 300px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 10px; }
         .chat-msg { margin-bottom: 8px; font-size: 13px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #eee; }
-
         .match-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 4px; }
         .badge-national { background: #ebf8ff; color: #3182ce; border: 1px solid #bee3f8; }
         .badge-local { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7e2; }
         .dday-tag { font-weight: 800; color: #e53e3e; }
         .dday-soon { background: #fff5f5; border: 1px solid #feb2b2; padding: 2px 6px; border-radius: 4px; animation: blink 1.5s infinite; }
         @keyframes blink { 50% { opacity: 0.6; } }
-
-        /* 게스트 모집 스타일 */
         .guest-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; position: relative; }
         .guest-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .level-badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; color: white; }
         .lv-s1 { background: #e53e3e; } .lv-s2 { background: #3182ce; } .lv-s3 { background: #38a169; }
         .guest-info { font-size: 14px; color: #4a5568; margin-top: 5px; }
-        
-        /* 댓글 영역 스타일 */
         .comment-sec { background: #f8f9fa; border-radius: 10px; padding: 10px; margin-top: 15px; font-size: 13px; border: 1px solid #edf2f7; }
         .comment-item { padding: 6px 0; border-bottom: 1px solid #edf2f7; }
         .comment-item:last-child { border-bottom: none; }
@@ -92,21 +74,23 @@
         .comment-text { color: #4a5568; }
         .comment-input-box { display: flex; gap: 5px; margin-top: 10px; }
         .comment-input-box input { padding: 8px; border-radius: 8px; font-size: 12px; }
-        .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; }
+        .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
+        /* 새로고침 버튼 스타일 */
+        .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
     </style>
 </head>
 <body>
 
 <div class="top-nav-bar">
-    <button class="nav-item active" onclick="showTab('rank')">🏆 랭킹/기록</button>
-    <button class="nav-item" onclick="showTab('guest')">🤝 게스트 모집</button>
-    <button class="nav-item" onclick="showTab('info')">🏢 센터정보</button>
-    <button class="nav-item" onclick="showTab('match')">🎾 대회정보</button>
-    <button class="nav-item" onclick="showTab('market')">💰 용품정보</button>
-    <button class="nav-item" onclick="showTab('chat')">💬 통합채팅</button>
-    <button class="nav-item" onclick="showTab('board')">📋 게시판</button>
-    <button class="nav-item" onclick="showTab('gallery')">📸 사진첩</button>
+    <button class="nav-item active" onclick="showTab('rank', this)">🏆 랭킹/기록</button>
+    <button class="nav-item" onclick="showTab('guest', this)">🤝 게스트 모집</button>
+    <button class="nav-item" onclick="showTab('info', this)">🏢 센터정보</button>
+    <button class="nav-item" onclick="showTab('match', this)">🎾 대회정보</button>
+    <button class="nav-item" onclick="showTab('market', this)">💰 용품정보</button>
+    <button class="nav-item" onclick="showTab('chat', this)">💬 통합채팅</button>
+    <button class="nav-item" onclick="showTab('board', this)">📋 게시판</button>
+    <button class="nav-item" onclick="showTab('gallery', this)">📸 사진첩</button>
 </div>
 
 <div class="container">
@@ -126,7 +110,6 @@
             <div class="award-card"><div class="award-title">🥇 이달의 다승왕</div><div class="award-name" id="bestWinner">-</div><div class="award-val" id="bestWinCount">0승</div></div>
             <div class="award-card" style="border-color: #63b3ed;"><div class="award-title" style="color: #3182ce;">🔥 이달의 열정왕</div><div class="award-name" id="bestActive">-</div><div class="award-val" id="bestActiveCount">0경기</div></div>
         </div>
-        
         <div class="section">
             <h2 class="blue-h2">👤 신규 회원 등록</h2>
             <div class="input-group">
@@ -139,7 +122,6 @@
                 <button class="btn-battle" onclick="register()">신청 완료</button>
             </div>
         </div>
-
         <div class="section" style="background: #fffcf0;">
             <h2>⚔️ 경기 결과 기록</h2>
             <div class="input-group">
@@ -153,70 +135,46 @@
                 <button class="btn-battle" onclick="battleRecord()">결과 저장</button>
             </div>
         </div>
-
         <div class="section" style="border: 2px solid #e74c3c;"><h2>🏆 실시간 통합 랭킹</h2><div id="integratedRank"></div></div>
         <div class="section"><h2 class="blue-h2">🥇 그룹별 랭킹</h2><div id="rankContainer"></div></div>
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
-    <div id="tab-guest" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
-            <div class="input-group">
-                <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
-                <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
-                <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
-                <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
-                <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
-                <div style="display:flex; gap:8px;">
-                    <select id="guestLevel">
-                        <option value="S3">초보 (S3)</option>
-                        <option value="S2">중수 (S2)</option>
-                        <option value="S1">고수 (S1 이상)</option>
-                    </select>
-                    <select id="guestType">
-                        <option value="게임">게임 위주</option>
-                        <option value="훈련">연습/훈련</option>
-                        <option value="상관없음">상관없음</option>
-                    </select>
-                </div>
-                <input id="guestName" placeholder="본인 이름/닉네임">
-                <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
-                <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
-            </div>
-        </div>
-        <div id="guest-list"></div>
-    </div>
-
-    <div id="tab-info" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
-            <div class="input-group">
-                <select id="infoSido">
-                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
-                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
-                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
-                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시의">울산광역시</option>
-                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+```
+<div id="tab-guest" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
+        <div class="input-group">
+            <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
+            <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
+            <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
+            <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
+            <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
+            <div style="display:flex; gap:8px;">
+                <select id="guestLevel">
+                    <option value="S3">초보 (S3)</option>
+                    <option value="S2">중수 (S2)</option>
+                    <option value="S1">고수 (S1 이상)</option>
                 </select>
-                <input id="infoName" placeholder="상호명">
-                <input id="infoContact" placeholder="전화번호 (예: 02-123-4567)"> <input id="infoAddr" placeholder="상세 주소">
-                <input id="infoTime" placeholder="영업시간 (예: 평일 06:00~23:00 / 주말 휴무)">
-                <input id="infoFee" placeholder="일일입장료 (예: 15,000원)">
-                <div style="display:flex; gap:5px;">
-                    <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
-                    <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
-                    <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
-                </div>
-                <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
+                <select id="guestType">
+                    <option value="게임">게임 위주</option>
+                    <option value="훈련">연습/훈련</option>
+                    <option value="상관없음">상관없음</option>
+                </select>
             </div>
+            <input id="guestName" placeholder="본인 이름/닉네임">
+            <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
+            <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
         </div>
-        
-        <div class="section" style="background: #f1f3f5; padding: 15px;">
-            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
-            <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
-                <option value="전체">🌏 전체 지역</option>
+    </div>
+    <div id="guest-list"></div>
+</div>
+
+<div id="tab-info" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
+        <div class="input-group">
+            <select id="infoSido">
                 <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
                 <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                 <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
@@ -224,48 +182,46 @@
                 <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
                 <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
             </select>
-        </div>
-        <div id="info-list"></div>
-    </div>
-
-    <div id="tab-match" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
-            <div class="input-group">
-                <select id="matchType">
-                    <option value="전국">🌍 전국 대회</option>
-                    <option value="지역">📍 지역 대회</option>
-                </select>
-                <select id="matchSido">
-                    <option value="전체">개최 지역 선택</option>
-                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
-                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
-                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
-                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
-                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
-                </select>
-                <input id="matchTitle" placeholder="대회명">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
-                    <input id="matchDate" type="date">
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
-                    <input id="matchDeadline" type="date">
-                </div>
-                <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
-                <input id="matchFee" placeholder="참가비 (예: 30,000원)">
-                <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
-                <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
+            <input id="infoName" placeholder="상호명">
+            <input id="infoContact" placeholder="전화번호 (예: 02-123-4567)">
+            <input id="infoAddr" placeholder="상세 주소">
+            <input id="infoTime" placeholder="영업시간 (예: 평일 06:00~23:00 / 주말 휴무)">
+            <input id="infoFee" placeholder="일일입장료 (예: 15,000원)">
+            <div style="display:flex; gap:5px;">
+                <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
+                <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
+                <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
             </div>
+            <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
         </div>
+    </div>
+    <div class="section" style="background: #f1f3f5; padding: 15px;">
+        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
+        <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
+            <option value="전체">🌏 전체 지역</option>
+            <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+            <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+            <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+            <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+            <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+            <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+        </select>
+        <!-- ✅ 개선: getDocs로 변경 후 수동 새로고침 버튼 추가 -->
+        <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
+    </div>
+    <div id="info-list"></div>
+</div>
 
-        <div class="section" style="background: #f1f3f5; padding: 15px;">
-            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
-            <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
-                <option value="전체">🌏 전체 지역</option>
-                <option value="전국">🌍 전국 대회만 보기</option>
+<div id="tab-match" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
+        <div class="input-group">
+            <select id="matchType">
+                <option value="전국">🌍 전국 대회</option>
+                <option value="지역">📍 지역 대회</option>
+            </select>
+            <select id="matchSido">
+                <option value="전체">개최 지역 선택</option>
                 <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
                 <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                 <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
@@ -273,14 +229,45 @@
                 <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
                 <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
             </select>
+            <input id="matchTitle" placeholder="대회명">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
+                <input id="matchDate" type="date">
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
+                <input id="matchDeadline" type="date">
+            </div>
+            <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
+            <input id="matchFee" placeholder="참가비 (예: 30,000원)">
+            <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
+            <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
         </div>
-        <div id="match-list"></div>
     </div>
+    <div class="section" style="background: #f1f3f5; padding: 15px;">
+        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
+        <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
+            <option value="전체">🌏 전체 지역</option>
+            <option value="전국">🌍 전국 대회만 보기</option>
+            <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+            <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+            <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+            <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+            <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+            <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+        </select>
+        <!-- ✅ 개선: getDocs로 변경 후 수동 새로고침 버튼 추가 -->
+        <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
+    </div>
+    <div id="match-list"></div>
+</div>
 
-    <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
-    <div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
-    <div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
-    <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
+<div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
+<div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
+<div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
+<div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
+```
+
 </div>
 
 <div id="modalOverlay" onclick="if(event.target===this) closeModal()"><div class="modal-content"><div id="modalBody"></div><div style="height:200px; margin-top:15px;"><canvas id="rankChart"></canvas></div><button onclick="closeModal()" class="btn-battle" style="background:#eee; color:#333; margin-top:20px;">닫기</button></div></div>
@@ -301,11 +288,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.showTab = (tabId) => {
+    // ✅ 개선: showTab에 btn 매개변수를 받아서 event 의존성 제거 (기존 버그 수정)
+    window.showTab = (tabId, btn) => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('tab-' + tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+        if (btn) btn.classList.add('active');
     };
 
     const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP 스쿼시', 'squash5': '스쿼시 5' };
@@ -314,8 +302,12 @@
     let players = [], challengerResult = null, myChart = null;
     let allCenters = [];
     let allMatches = [];
-    let guestComments = {}; // 게시글별 댓글 저장용
 
+    // ✅ 게스트 데이터를 모듈 레벨에서 관리 (이중 렌더링 버그 수정)
+    let guestPostsData = [];
+    let guestCommentsData = {};
+
+    // ─── 랭킹: 실시간 유지 (경기 결과가 즉시 반영되어야 하므로 onSnapshot 유지) ───
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
         snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
@@ -323,12 +315,18 @@
         renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
     });
 
-    onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
-        allCenters = [];
-        snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
-        renderInfoList();
-        updateGuestCenterOptions();
-    });
+    // ✅ 개선: 센터정보 → onSnapshot 제거, getDocs(1회 읽기)로 변경
+    // 자주 바뀌지 않는 데이터이므로 실시간 연결 불필요 → Firestore 읽기 횟수 대폭 절감
+    window.loadInfoData = async () => {
+        try {
+            const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
+            allCenters = [];
+            snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
+            renderInfoList();
+            updateGuestCenterOptions();
+        } catch(e) { console.error("센터정보 로드 오류:", e); }
+    };
+    loadInfoData(); // 초기 1회 로드
 
     window.renderInfoList = () => {
         const filter = document.getElementById("filterSido").value;
@@ -355,7 +353,7 @@
 
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
-        const contact = document.getElementById("infoContact").value.trim(); 
+        const contact = document.getElementById("infoContact").value.trim();
         const addr = document.getElementById("infoAddr").value.trim();
         const time = document.getElementById("infoTime").value.trim();
         const fee = document.getElementById("infoFee").value.trim();
@@ -365,7 +363,7 @@
         const semi = document.getElementById("courtSemi").value || 0;
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name, contact, addr, time, fee, 
+            name, contact, addr, time, fee,
             court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
             status: "pending", createdAt: serverTimestamp()
         });
@@ -373,32 +371,17 @@
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
-    window.submitMatch = async () => {
-        const title = document.getElementById("matchTitle").value.trim();
-        if(!title) return alert("대회명을 입력해주세요.");
+    // ✅ 개선: 대회정보 → onSnapshot 제거, getDocs(1회 읽기)로 변경
+    // 대회 일정은 실시간 변경 빈도가 낮음 → 불필요한 연결 제거
+    window.loadMatchData = async () => {
         try {
-            await addDoc(collection(db, "matchRequests"), { 
-                title, 
-                type: document.getElementById("matchType").value,
-                sido: document.getElementById("matchSido").value,
-                date: document.getElementById("matchDate").value, 
-                deadline: document.getElementById("matchDeadline").value,
-                loc: document.getElementById("matchLoc").value, 
-                fee: document.getElementById("matchFee").value,
-                link: document.getElementById("matchLink").value, 
-                status: "pending", 
-                createdAt: serverTimestamp() 
-            });
-            alert("대회 정보 신청 완료! 승인 후 목록에 표시됩니다.");
-            ["matchTitle", "matchDate", "matchDeadline", "matchLoc", "matchFee", "matchLink"].forEach(id => document.getElementById(id).value = "");
-        } catch(e) { alert("저장 중 오류 발생: " + e.message); }
+            const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
+            allMatches = [];
+            snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
+            renderMatchList();
+        } catch(e) { console.error("대회정보 로드 오류:", e); }
     };
-
-    onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
-        allMatches = [];
-        snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
-        renderMatchList();
-    });
+    loadMatchData(); // 초기 1회 로드
 
     window.renderMatchList = () => {
         const filter = document.getElementById("filterMatchSido").value;
@@ -411,7 +394,9 @@
             const mDate = new Date(m.date);
             const dDate = new Date(m.deadline);
             const getDday = (target) => {
-                const diff = target.setHours(0,0,0,0) - now.setHours(0,0,0,0);
+                const t = new Date(target); t.setHours(0,0,0,0);
+                const n = new Date(); n.setHours(0,0,0,0);
+                const diff = t - n;
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                 return days === 0 ? "Day" : days > 0 ? `-${days}` : `+${Math.abs(days)}`;
             };
@@ -432,6 +417,27 @@
         document.getElementById("match-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>등록된 대회 정보가 없습니다.</p>";
     };
 
+    window.submitMatch = async () => {
+        const title = document.getElementById("matchTitle").value.trim();
+        if(!title) return alert("대회명을 입력해주세요.");
+        try {
+            await addDoc(collection(db, "matchRequests"), {
+                title,
+                type: document.getElementById("matchType").value,
+                sido: document.getElementById("matchSido").value,
+                date: document.getElementById("matchDate").value,
+                deadline: document.getElementById("matchDeadline").value,
+                loc: document.getElementById("matchLoc").value,
+                fee: document.getElementById("matchFee").value,
+                link: document.getElementById("matchLink").value,
+                status: "pending",
+                createdAt: serverTimestamp()
+            });
+            alert("대회 정보 신청 완료! 승인 후 목록에 표시됩니다.");
+            ["matchTitle", "matchDate", "matchDeadline", "matchLoc", "matchFee", "matchLink"].forEach(id => document.getElementById(id).value = "");
+        } catch(e) { alert("저장 중 오류 발생: " + e.message); }
+    };
+
     function renderUI() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
         const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
@@ -447,7 +453,7 @@
         let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
         list.forEach(p => {
             let arrow = '<span class="keep">-</span>';
-            if (p.rankHistory && p.rankHistory.length >= 2) { 
+            if (p.rankHistory && p.rankHistory.length >= 2) {
                 const cur = p.rankHistory[p.rankHistory.length - 1], pre = p.rankHistory[p.rankHistory.length - 2];
                 if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
             }
@@ -537,20 +543,21 @@
         document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     }
 
+    // ✅ 개선: 채팅 limit 50 → 30 으로 줄여 읽기 횟수 절감
     window.sendChat = async () => {
         const msg = document.getElementById("chatInput").value.trim();
         if(!msg) return;
         await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
         document.getElementById("chatInput").value = "";
     };
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(50)), (snap) => {
+    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
         const chatDisplay = document.getElementById("chatDisplay");
         let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
         rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
         chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
 
-    // --- 게스트 모집 및 댓글 로직 ---
+    // ─── 게스트 모집 ───
 
     window.submitGuest = async () => {
         const center = document.getElementById("guestCenter").value;
@@ -571,40 +578,39 @@
         } catch(e) { alert("오류 발생: " + e.message); }
     };
 
-    // 댓글 실시간 리스너 추가
+    // ✅ 개선: 게스트 댓글 onSnapshot은 유지하되, 별도로 데이터만 저장하고 렌더링은 guestPostsData 기준으로만 실행
+    // → 기존에는 댓글 업데이트 시 + 게시글 업데이트 시 둘 다 renderGuestList를 호출해 이중 렌더링 발생하던 버그 수정
     onSnapshot(query(collection(db, "guestComments"), orderBy("createdAt", "asc")), (snap) => {
-        guestComments = {};
+        guestCommentsData = {};
         snap.forEach(d => {
             const data = d.data();
-            if(!guestComments[data.postId]) guestComments[data.postId] = [];
-            guestComments[data.postId].push(data);
+            if(!guestCommentsData[data.postId]) guestCommentsData[data.postId] = [];
+            guestCommentsData[data.postId].push(data);
         });
-        renderGuestList(); // 댓글 로딩 후 목록 갱신
+        // 게시글 데이터가 이미 로드된 경우에만 렌더링
+        if(guestPostsData.length > 0) renderGuestList();
     });
 
+    // 게스트 게시글: 실시간 유지 (커뮤니티 기능이므로 onSnapshot 적합)
     onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "asc")), (snap) => {
-        renderGuestList(snap);
+        guestPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderGuestList();
     });
 
-    function renderGuestList(snapshot) {
+    // ✅ 개선: renderGuestList는 항상 guestPostsData를 사용 (snapshot 인자 제거로 단순화)
+    function renderGuestList() {
         const listDiv = document.getElementById("guest-list");
-        if(!snapshot && !listDiv.dataset.lastItems) return;
-        const items = snapshot ? snapshot.docs : JSON.parse(listDiv.dataset.lastItems);
-        if(snapshot) listDiv.dataset.lastItems = JSON.stringify(items.map(d => ({id:d.id, ...d.data()})));
-
+        if(!listDiv) return;
         let html = "";
-        const dataList = snapshot ? items.map(d => ({id:d.id, ...d.data()})) : items;
-
-        dataList.forEach(data => {
+        guestPostsData.forEach(data => {
             const postId = data.id;
-            const comments = guestComments[postId] || [];
+            const comments = guestCommentsData[postId] || [];
             let commentHtml = comments.map(c => `
                 <div class="comment-item">
                     <span class="comment-user">${c.userName}:</span>
                     <span class="comment-text">${c.text}</span>
                 </div>
             `).join('');
-
             html += `<div class="guest-card">
                 <div class="guest-header">
                     <div><span class="level-badge lv-${data.level.toLowerCase()}">${data.level}</span><b style="margin-left:5px;">${data.center}</b></div>
@@ -655,5 +661,6 @@
         select.innerHTML = options;
     }
 </script>
+
 </body>
 </html>
