@@ -274,7 +274,11 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { 
+  getFirestore, collection, addDoc, query, onSnapshot, orderBy, 
+  updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc,
+  where   // 🔥 이거 추가
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -553,12 +557,53 @@
         await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
         document.getElementById("chatInput").value = "";
     };
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
-        const chatDisplay = document.getElementById("chatDisplay");
-        let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
-        rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
-        chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
+    let lastChatTime = null;
+
+async function loadChats() {
+    const chatDisplay = document.getElementById("chatDisplay");
+
+    let q;
+    if (lastChatTime) {
+        q = query(
+            collection(db, "globalChats"),
+            where("createdAt", ">", lastChatTime),
+            orderBy("createdAt", "asc")
+        );
+    } else {
+        q = query(
+            collection(db, "globalChats"),
+            orderBy("createdAt", "desc"),
+            limit(20)
+        );
+    }
+
+    const snap = await getDocs(q);
+    let newChats = [];
+
+    snap.forEach(d => {
+        const data = d.data();
+        newChats.push(data);
+        if (!lastChatTime || data.createdAt.toMillis() > lastChatTime.toMillis()) {
+    lastChatTime = data.createdAt;
+}
     });
+
+    if (!chatDisplay.dataset.init) {
+        newChats.reverse();
+        chatDisplay.innerHTML = "";
+        chatDisplay.dataset.init = "true";
+    }
+
+    newChats.forEach(data => {
+        chatDisplay.innerHTML += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`;
+    });
+
+    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+}
+
+// 🔥 핵심: polling
+setInterval(loadChats, 3000);
+loadChats();
 
     // ─── 게스트 모집 ───
 
@@ -583,7 +628,15 @@
 
     // ✅ 개선: 게스트 댓글 onSnapshot은 유지하되, 별도로 데이터만 저장하고 렌더링은 guestPostsData 기준으로만 실행
     // → 기존에는 댓글 업데이트 시 + 게시글 업데이트 시 둘 다 renderGuestList를 호출해 이중 렌더링 발생하던 버그 수정
-    onSnapshot(query(collection(db, "guestComments"), orderBy("createdAt", "asc")), (snap) => {
+    async function loadComments(postId) {
+    const snap = await getDocs(
+        query(
+            collection(db, "guestPosts", postId, "comments"),
+            orderBy("createdAt", "asc")
+        )
+    );
+    return snap.docs.map(d => d.data());
+}
         guestCommentsData = {};
         snap.forEach(d => {
             const data = d.data();
@@ -595,7 +648,16 @@
     });
 
     // 게스트 게시글: 실시간 유지 (커뮤니티 기능이므로 onSnapshot 적합)
-    onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "asc")), (snap) => {
+    const today = new Date().toISOString().split('T')[0];
+
+onSnapshot(
+    query(
+        collection(db, "guestPosts"),
+        where("date", ">=", today),
+        orderBy("date", "asc"),
+        limit(20)
+    ),
+    (snap) => {
         guestPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderGuestList();
     });
@@ -610,7 +672,7 @@
 
         activePosts.forEach(data => { 
             const postId = data.id;
-            const comments = guestCommentsData[postId] || [];
+            const comments = await loadComments(postId);
             let commentHtml = comments.map(c => `
                 <div class="comment-item">
                     <span class="comment-user">${c.userName}:</span>
@@ -644,9 +706,11 @@
         const text = document.getElementById(`cmtText-${postId}`).value.trim();
         if(!user || !text) return alert("닉네임과 내용을 모두 입력해주세요.");
         try {
-            await addDoc(collection(db, "guestComments"), {
-                postId, userName: user, text, createdAt: serverTimestamp()
-            });
+            await addDoc(collection(db, "guestPosts", postId, "comments"), {
+    userName: user,
+    text,
+    createdAt: serverTimestamp()
+});
             document.getElementById(`cmtText-${postId}`).value = "";
         } catch(e) { alert("댓글 등록 실패: " + e.message); }
     };
