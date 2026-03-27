@@ -308,7 +308,7 @@
         event.currentTarget.classList.add('active');
     };
 
-    const centerNames = { 'sehwa': '세화스쿼시', 'chan': '찬스쿼시', 'wide': '와이드짐', 'squash4': '용인 HIPP스쿼시', 'squash5': '스쿼시 5' };
+    const centerNames = { 'sehwa': '세화스쿼시', 'chan': '찬스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP스쿼시', 'squash5': '스쿼시 5' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
