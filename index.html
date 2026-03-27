@@ -76,71 +76,79 @@
         .comment-input-box input { padding: 8px; border-radius: 8px; font-size: 12px; }
         .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
-        /* 새로고침 버튼 스타일 */
+        .btn-toggle-comments { background: none; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; color: #4a5568; cursor: pointer; margin-top: 10px; width: 100%; }
+        .btn-toggle-comments:hover { background: #f7fafc; }
         .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
+        .filter-bar { background: #f1f3f5; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .filter-bar label { font-size: 13px; font-weight: 700; color: #4a5568; }
+        .filter-bar select { background: white; border: 2px solid #2d3748; flex: 1; min-width: 120px; }
     </style>
 </head>
 <body>
 
 <div class="top-nav-bar">
-    <button class="nav-item active" onclick="showTab('rank', this)">🏆 랭킹/기록_v2</button>
+    <button class="nav-item active" onclick="showTab('rank', this)">🏆 랭킹/기록</button>
     <button class="nav-item" onclick="showTab('guest', this)">🤝 게스트 모집</button>
     <button class="nav-item" onclick="showTab('info', this)">🏢 센터정보</button>
     <button class="nav-item" onclick="showTab('match', this)">🎾 대회정보</button>
     <button class="nav-item" onclick="showTab('market', this)">💰 용품정보</button>
-    <button class="nav-item" onclick="showTab('chat', this)">💬 통합채팅</button>
+    <button class="nav-item" onclick="showTab('chat', this)">💬 채팅</button>
     <button class="nav-item" onclick="showTab('board', this)">📋 게시판</button>
     <button class="nav-item" onclick="showTab('gallery', this)">📸 사진첩</button>
 </div>
 
 <div class="container">
-    <div id="tab-rank" class="tab-content active">
-        <div class="center-selector-bar">
-            <label style="font-size:13px; font-weight:700;">📍 센터</label>
-            <select id="centerSelectMain" onchange="location.search='?center='+this.value">
-                <option value="sehwa">세화 스쿼시</option>
-                <option value="chan">찬 스쿼시</option>
-                <option value="squash3">와이드짐</option>
-                <option value="squash4">용인 HIPP 스쿼시</option>
-                <option value="squash5">스쿼시 5</option>
-            </select>
-        </div>
-        <h1 id="mainTitle">로딩 중...</h1>
-        <div class="award-section" id="awardDisplay">
-            <div class="award-card"><div class="award-title">🥇 이달의 다승왕</div><div class="award-name" id="bestWinner">-</div><div class="award-val" id="bestWinCount">0승</div></div>
-            <div class="award-card" style="border-color: #63b3ed;"><div class="award-title" style="color: #3182ce;">🔥 이달의 열정왕</div><div class="award-name" id="bestActive">-</div><div class="award-val" id="bestActiveCount">0경기</div></div>
-        </div>
-        <div class="section">
-            <h2 class="blue-h2">👤 신규 회원 등록</h2>
-            <div class="input-group">
-                <input id="nameInput" placeholder="이름을 입력하세요">
-                <div style="display:flex; gap:8px;">
-                    <select id="timeGroup"><option value="오후">오후</option><option value="오전">오전</option></select>
-                    <select id="gender"><option value="남">남성</option><option value="여">여성</option></select>
-                    <select id="league"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select>
-                </div>
-                <button class="btn-battle" onclick="register()">신청 완료</button>
-            </div>
-        </div>
-        <div class="section" style="background: #fffcf0;">
-            <h2>⚔️ 경기 결과 기록</h2>
-            <div class="input-group">
-                <select id="challengerSelect" onchange="filterOpponents()"><option value="">도전자 선택</option></select>
-                <select id="defenderSelect"><option value="">방어자 선택</option></select>
-                <div style="display:flex; gap:10px;">
-                    <button id="resWin" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('승')">도전자 승</button>
-                    <button id="resLoss" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('패')">도전자 패</button>
-                </div>
-                <input id="scoreInput" placeholder="점수 입력 (예: 11:9)">
-                <button class="btn-battle" onclick="battleRecord()">결과 저장</button>
-            </div>
-        </div>
-        <div class="section" style="border: 2px solid #e74c3c;"><h2>🏆 실시간 통합 랭킹</h2><div id="integratedRank"></div></div>
-        <div class="section"><h2 class="blue-h2">🥇 그룹별 랭킹</h2><div id="rankContainer"></div></div>
-        <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
-    </div>
 
 ```
+<!-- ===== 랭킹/기록 탭 ===== -->
+<div id="tab-rank" class="tab-content active">
+    <div class="center-selector-bar">
+        <label style="font-size:13px; font-weight:700;">📍 센터</label>
+        <select id="centerSelectMain" onchange="location.search='?center='+this.value">
+            <option value="sehwa">세화 스쿼시</option>
+            <option value="chan">찬 스쿼시</option>
+            <option value="squash3">와이드짐</option>
+            <option value="squash4">용인 HIPP 스쿼시</option>
+            <option value="squash5">스쿼시 5</option>
+        </select>
+        <button class="refresh-btn" onclick="loadRankData()">🔄 새로고침</button>
+    </div>
+    <h1 id="mainTitle">로딩 중...</h1>
+    <div class="award-section" id="awardDisplay">
+        <div class="award-card"><div class="award-title">🥇 이달의 다승왕</div><div class="award-name" id="bestWinner">-</div><div class="award-val" id="bestWinCount">0승</div></div>
+        <div class="award-card" style="border-color: #63b3ed;"><div class="award-title" style="color: #3182ce;">🔥 이달의 열정왕</div><div class="award-name" id="bestActive">-</div><div class="award-val" id="bestActiveCount">0경기</div></div>
+    </div>
+    <div class="section">
+        <h2 class="blue-h2">👤 신규 회원 등록</h2>
+        <div class="input-group">
+            <input id="nameInput" placeholder="이름을 입력하세요">
+            <div style="display:flex; gap:8px;">
+                <select id="timeGroup"><option value="오후">오후</option><option value="오전">오전</option></select>
+                <select id="gender"><option value="남">남성</option><option value="여">여성</option></select>
+                <select id="league"><option value="챔피언">A그룹</option><option value="챌린저">B그룹</option></select>
+            </div>
+            <button class="btn-battle" onclick="register()">신청 완료</button>
+        </div>
+    </div>
+    <div class="section" style="background: #fffcf0;">
+        <h2>⚔️ 경기 결과 기록</h2>
+        <div class="input-group">
+            <select id="challengerSelect" onchange="filterOpponents()"><option value="">도전자 선택</option></select>
+            <select id="defenderSelect"><option value="">방어자 선택</option></select>
+            <div style="display:flex; gap:10px;">
+                <button id="resWin" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('승')">도전자 승</button>
+                <button id="resLoss" style="flex:1; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:white;" onclick="setResult('패')">도전자 패</button>
+            </div>
+            <input id="scoreInput" placeholder="점수 입력 (예: 11:9)">
+            <button class="btn-battle" onclick="battleRecord()">결과 저장</button>
+        </div>
+    </div>
+    <div class="section" style="border: 2px solid #e74c3c;"><h2>🏆 실시간 통합 랭킹</h2><div id="integratedRank"></div></div>
+    <div class="section"><h2 class="blue-h2">🥇 그룹별 랭킹</h2><div id="rankContainer"></div></div>
+    <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
+</div>
+
+<!-- ===== 게스트 모집 탭 ===== -->
 <div id="tab-guest" class="tab-content">
     <div class="section">
         <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
@@ -167,9 +175,13 @@
             <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
         </div>
     </div>
+    <div style="text-align:right; margin-bottom:10px;">
+        <button class="refresh-btn" onclick="loadGuestData()">🔄 새로고침</button>
+    </div>
     <div id="guest-list"></div>
 </div>
 
+<!-- ===== 센터정보 탭 ===== -->
 <div id="tab-info" class="tab-content">
     <div class="section">
         <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
@@ -195,9 +207,9 @@
             <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
         </div>
     </div>
-    <div class="section" style="background: #f1f3f5; padding: 15px;">
-        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
-        <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
+    <div class="filter-bar">
+        <label>🔍 지역별로 보기</label>
+        <select id="filterSido" onchange="renderInfoList()">
             <option value="전체">🌏 전체 지역</option>
             <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
             <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
@@ -206,12 +218,12 @@
             <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
             <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
         </select>
-        <!-- ✅ 개선: getDocs로 변경 후 수동 새로고침 버튼 추가 -->
         <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
     </div>
     <div id="info-list"></div>
 </div>
 
+<!-- ===== 대회정보 탭 ===== -->
 <div id="tab-match" class="tab-content">
     <div class="section">
         <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
@@ -244,9 +256,9 @@
             <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
         </div>
     </div>
-    <div class="section" style="background: #f1f3f5; padding: 15px;">
-        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
-        <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
+    <div class="filter-bar">
+        <label>🔍 대회 필터</label>
+        <select id="filterMatchSido" onchange="renderMatchList()" style="border-color: #e74c3c;">
             <option value="전체">🌏 전체 지역</option>
             <option value="전국">🌍 전국 대회만 보기</option>
             <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
@@ -256,25 +268,46 @@
             <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
             <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
         </select>
-        <!-- ✅ 개선: getDocs로 변경 후 수동 새로고침 버튼 추가 -->
         <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
     </div>
     <div id="match-list"></div>
 </div>
 
+<!-- ===== 기타 탭들 ===== -->
 <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
-<div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
+
+<div id="tab-chat" class="tab-content">
+    <div class="section">
+        <h2>💬 채팅 <span style="font-size:11px; font-weight:400; color:#a0aec0;">(최근 10개)</span>
+            <button class="refresh-btn" onclick="loadChatData()">🔄 새로고침</button>
+        </h2>
+        <div id="chatDisplay">로딩 중...</div>
+        <div style="display:flex; gap:5px;">
+            <input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
+            <button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button>
+        </div>
+    </div>
+</div>
+
 <div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
 <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
 ```
 
 </div>
 
-<div id="modalOverlay" onclick="if(event.target===this) closeModal()"><div class="modal-content"><div id="modalBody"></div><div style="height:200px; margin-top:15px;"><canvas id="rankChart"></canvas></div><button onclick="closeModal()" class="btn-battle" style="background:#eee; color:#333; margin-top:20px;">닫기</button></div></div>
+<!-- 모달 -->
+
+<div id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal-content">
+        <div id="modalBody"></div>
+        <div style="height:200px; margin-top:15px;"><canvas id="rankChart"></canvas></div>
+        <button onclick="closeModal()" class="btn-battle" style="background:#eee; color:#333; margin-top:20px;">닫기</button>
+    </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -288,7 +321,19 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ✅ 개선: showTab에 btn 매개변수를 받아서 event 의존성 제거 (기존 버그 수정)
+    // ─── 공통 상수 ───
+    const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP 스쿼시', 'squash5': '스쿼시 5' };
+    let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
+    document.getElementById("centerSelectMain").value = currentCenter;
+
+    let players = [];
+    let allCenters = [];
+    let allMatches = [];
+    let guestPostsData = [];
+    let challengerResult = null;
+    let myChart = null;
+
+    // ─── 탭 전환 ───
     window.showTab = (tabId, btn) => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -296,42 +341,178 @@
         if (btn) btn.classList.add('active');
     };
 
-    const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP 스쿼시', 'squash5': '스쿼시 5' };
-    let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
-    document.getElementById("centerSelectMain").value = currentCenter;
-    let players = [], challengerResult = null, myChart = null;
-    let allCenters = [];
-    let allMatches = [];
+    // ═══════════════════════════════════════════════════
+    // 1. 랭킹 데이터 (getDocs)
+    // ═══════════════════════════════════════════════════
+    window.loadRankData = async () => {
+        try {
+            const snap = await getDocs(query(collection(db, "ranking"), orderBy("groupRank", "asc")));
+            players = [];
+            snap.forEach(d => { if (d.data().status === "approved") players.push({ id: d.id, ...d.data() }); });
+            document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
+            renderRankUI();
+            updateCenterRanking();
+            updateChallengerList();
+            updateIndividualAwards();
+        } catch (e) { console.error("랭킹 로드 오류:", e); }
+    };
+    loadRankData();
 
-    // ✅ 게스트 데이터를 모듈 레벨에서 관리 (이중 렌더링 버그 수정)
-    let guestPostsData = [];
-    let guestCommentsData = {};
+    function renderRankUI() {
+        const cp = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        const groups = [
+            { t: '오후', l: '챔피언', n: '🌇 오후 A그룹' },
+            { t: '오후', l: '챌린저', n: '🌇 오후 B그룹' },
+            { t: '오전', l: '챔피언', n: '🌅 오전 A그룹' },
+            { t: '오전', l: '챌린저', n: '🌅 오전 B그룹' }
+        ];
+        document.getElementById("integratedRank").innerHTML = renderTableHtml(cp.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
+        let fullHtml = "";
+        groups.forEach(g => {
+            const list = cp.filter(p => p.timeGroup === g.t && p.league === g.l);
+            if (list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list);
+        });
+        document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
+    }
 
-    // ─── 랭킹: 실시간 유지 (경기 결과가 즉시 반영되어야 하므로 onSnapshot 유지) ───
-    onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
-        players = [];
-        snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
-        document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
-        renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
-    });
+    function renderTableHtml(list) {
+        list.sort((a, b) => Number(a.groupRank) - Number(b.groupRank));
+        const femaleOnly = list.filter(p => p.gender === '여');
+        let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
+        list.forEach(p => {
+            let arrow = '<span class="keep">-</span>';
+            if (p.rankHistory && p.rankHistory.length >= 2) {
+                const cur = p.rankHistory[p.rankHistory.length - 1], pre = p.rankHistory[p.rankHistory.length - 2];
+                if (cur < pre) arrow = '<span class="up">▲</span>';
+                else if (cur > pre) arrow = '<span class="down">▼</span>';
+            }
+            const recentBadges = (p.recentGames || []).slice(0, 5).map(v => `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`).join('');
+            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${p.gender === '여' ? '<span class="female-tag">여성 ' + (femaleOnly.findIndex(f => f.id === p.id) + 1) + '위</span>' : ""}<div class="recent-box">${recentBadges}</div></td></tr>`;
+        });
+        return html + "</table>";
+    }
 
-    // ✅ 개선: 센터정보 → onSnapshot 제거, getDocs(1회 읽기)로 변경
-    // 자주 바뀌지 않는 데이터이므로 실시간 연결 불필요 → Firestore 읽기 횟수 대폭 절감
+    function updateCenterRanking() {
+        const el = document.getElementById("centerRankList");
+        if (!el) return;
+        const stats = {};
+        Object.keys(centerNames).forEach(id => { stats[id] = { name: centerNames[id], wins: 0, totalGames: 0, highRankWins: 0, members: 0 }; });
+        players.forEach(p => {
+            const cId = p.centerId || 'sehwa';
+            if (!stats[cId]) return;
+            stats[cId].members += 1;
+            (p.recentGames || []).forEach(g => {
+                stats[cId].totalGames += 1;
+                if (g.res === '승') { stats[cId].wins += 1; if (g.oppRank && Number(g.oppRank) <= 5) stats[cId].highRankWins += 1; }
+            });
+        });
+        const total = players.length;
+        const sorted = Object.keys(stats).map(id => {
+            const s = stats[id];
+            const score = (((s.totalGames > 0 ? s.wins / s.totalGames : 0) * 0.6) + ((s.wins > 0 ? s.highRankWins / s.wins : 0) * 0.2) + ((total > 0 ? s.members / total : 0) * 0.2)) * 100;
+            return { name: s.name, score: score.toFixed(2) };
+        }).sort((a, b) => b.score - a.score);
+        el.innerHTML = sorted.map((c, i) => `<div class="center-rank-item"><span>${i + 1}위 ${c.name}</span><span style="font-weight:800;">${c.score}점</span></div>`).join('');
+    }
+
+    function updateIndividualAwards() {
+        const cp = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        if (cp.length === 0) return;
+        let bestW = { name: '-', count: 0 }, bestA = { name: '-', count: 0 };
+        cp.forEach(p => {
+            const wins = (p.recentGames || []).filter(g => g.res === '승').length;
+            const total = (p.recentGames || []).length;
+            if (wins > bestW.count) bestW = { name: p.name, count: wins };
+            if (total > bestA.count) bestA = { name: p.name, count: total };
+        });
+        document.getElementById("bestWinner").innerText = bestW.name;
+        document.getElementById("bestWinCount").innerText = bestW.count + "승";
+        document.getElementById("bestActive").innerText = bestA.name;
+        document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
+    }
+
+    function updateChallengerList() {
+        const cp = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + cp.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
+    }
+
+    window.register = async () => {
+        const name = document.getElementById("nameInput").value.trim();
+        if (!name) return;
+        await addDoc(collection(db, "ranking"), {
+            centerId: currentCenter, name,
+            timeGroup: document.getElementById("timeGroup").value,
+            gender: document.getElementById("gender").value,
+            league: document.getElementById("league").value,
+            groupRank: 999, status: "pending", recentGames: [], rankHistory: [999]
+        });
+        alert("신청 완료!");
+        document.getElementById("nameInput").value = "";
+    };
+
+    window.setResult = (r) => {
+        challengerResult = r;
+        document.getElementById("resWin").style.background = r === '승' ? '#ebf8ff' : 'white';
+        document.getElementById("resLoss").style.background = r === '패' ? '#fff5f5' : 'white';
+    };
+
+    window.battleRecord = async () => {
+        const cId = document.getElementById("challengerSelect").value;
+        const dId = document.getElementById("defenderSelect").value;
+        if (!cId || !dId || !challengerResult) return alert("선택 필수!");
+        const c = players.find(p => p.id === cId), d = players.find(p => p.id === dId);
+        const dt = new Date().toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+        const sc = document.getElementById("scoreInput").value;
+        let uC = { recentGames: [{ res: challengerResult, opp: d.name, oppRank: d.groupRank, dt, sc }, ...(c.recentGames || [])].slice(0, 10) };
+        let uD = { recentGames: [{ res: challengerResult === '승' ? '패' : '승', opp: c.name, oppRank: c.groupRank, dt, sc }, ...(d.recentGames || [])].slice(0, 10) };
+        if (challengerResult === '승') { uC.groupRank = Number(d.groupRank); uD.groupRank = Number(c.groupRank); }
+        uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
+        uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
+        await updateDoc(doc(db, "ranking", c.id), uC);
+        await updateDoc(doc(db, "ranking", d.id), uD);
+        alert("기록 성공! 새로고침하면 반영됩니다.");
+        await loadRankData();
+    };
+
+    window.filterOpponents = () => {
+        const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
+        if (!c) return;
+        const targets = players.filter(p => p.centerId === c.centerId && p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
+        document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
+    };
+
+    window.showLog = (id) => {
+        const p = players.find(x => x.id === id);
+        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 상세 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc || ''}</div>`).join('');
+        document.getElementById("modalOverlay").style.display = "flex";
+        const ctx = document.getElementById('rankChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: (p.rankHistory || []).map((_, i) => (i + 1) + '회'), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] },
+            options: { scales: { y: { reverse: true, ticks: { stepSize: 1 } } } }
+        });
+    };
+    window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
+
+    // ═══════════════════════════════════════════════════
+    // 2. 센터정보 (getDocs)
+    // ═══════════════════════════════════════════════════
     window.loadInfoData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
             allCenters = [];
-            snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
+            snap.forEach(d => { if (d.data().status === "approved") allCenters.push(d.data()); });
             renderInfoList();
             updateGuestCenterOptions();
-        } catch(e) { console.error("센터정보 로드 오류:", e); }
+        } catch (e) { console.error("센터정보 로드 오류:", e); }
     };
-    loadInfoData(); // 초기 1회 로드
+    loadInfoData();
 
     window.renderInfoList = () => {
         const filter = document.getElementById("filterSido").value;
-        let html = "";
         const filtered = filter === "전체" ? allCenters : allCenters.filter(c => c.sido === filter);
+        let html = "";
         filtered.forEach(data => {
             const searchKeyword = encodeURIComponent(data.name + " " + data.addr);
             const callNumber = data.contact ? data.contact.replace(/[^0-9]/g, "") : "";
@@ -353,57 +534,51 @@
 
     window.submitInfo = async () => {
         const name = document.getElementById("infoName").value.trim();
-        const contact = document.getElementById("infoContact").value.trim();
         const addr = document.getElementById("infoAddr").value.trim();
-        const time = document.getElementById("infoTime").value.trim();
-        const fee = document.getElementById("infoFee").value.trim();
-        if(!name || !addr) return alert("상호명과 주소는 필수입니다.");
-        const full = document.getElementById("courtFull").value || 0;
-        const dbl = document.getElementById("courtDouble").value || 0;
-        const semi = document.getElementById("courtSemi").value || 0;
+        if (!name || !addr) return alert("상호명과 주소는 필수입니다.");
         await addDoc(collection(db, "infoRequests"), {
             sido: document.getElementById("infoSido").value,
-            name, contact, addr, time, fee,
-            court: `정식 ${full} / 복식 ${dbl} / 세미 ${semi}`,
+            name,
+            contact: document.getElementById("infoContact").value.trim(),
+            addr, time: document.getElementById("infoTime").value.trim(),
+            fee: document.getElementById("infoFee").value.trim(),
+            court: `정식 ${document.getElementById("courtFull").value || 0} / 복식 ${document.getElementById("courtDouble").value || 0} / 세미 ${document.getElementById("courtSemi").value || 0}`,
             status: "pending", createdAt: serverTimestamp()
         });
         alert("신청 완료! 관리자 승인 후 표시됩니다.");
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
-    // ✅ 개선: 대회정보 → onSnapshot 제거, getDocs(1회 읽기)로 변경
-    // 대회 일정은 실시간 변경 빈도가 낮음 → 불필요한 연결 제거
+    // ═══════════════════════════════════════════════════
+    // 3. 대회정보 (getDocs)
+    // ═══════════════════════════════════════════════════
     window.loadMatchData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
             allMatches = [];
-            snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
+            snap.forEach(d => { if (d.data().status === "approved") allMatches.push(d.data()); });
             renderMatchList();
-        } catch(e) { console.error("대회정보 로드 오류:", e); }
+        } catch (e) { console.error("대회정보 로드 오류:", e); }
     };
-    loadMatchData(); // 초기 1회 로드
+    loadMatchData();
 
     window.renderMatchList = () => {
         const filter = document.getElementById("filterMatchSido").value;
         let filtered = allMatches;
-        if(filter === "전국") filtered = allMatches.filter(m => m.type === "전국");
-        else if(filter !== "전체") filtered = allMatches.filter(m => m.sido === filter);
+        if (filter === "전국") filtered = allMatches.filter(m => m.type === "전국");
+        else if (filter !== "전체") filtered = allMatches.filter(m => m.sido === filter);
+        const getDday = (target) => {
+            const t = new Date(target); t.setHours(0, 0, 0, 0);
+            const n = new Date(); n.setHours(0, 0, 0, 0);
+            const days = Math.floor((t - n) / (1000 * 60 * 60 * 24));
+            return days === 0 ? "Day" : days > 0 ? `-${days}` : `+${Math.abs(days)}`;
+        };
         let html = "";
-        const now = new Date();
         filtered.forEach(m => {
-            const mDate = new Date(m.date);
-            const dDate = new Date(m.deadline);
-            const getDday = (target) => {
-                const t = new Date(target); t.setHours(0,0,0,0);
-                const n = new Date(); n.setHours(0,0,0,0);
-                const diff = t - n;
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                return days === 0 ? "Day" : days > 0 ? `-${days}` : `+${Math.abs(days)}`;
-            };
-            const ddayDeadline = getDday(dDate);
-            const ddayMatch = getDday(mDate);
-            const isDeadlineSoon = ddayDeadline.startsWith('-') && parseInt(ddayDeadline.replace('-','')) <= 30;
-            const isMatchSoon = ddayMatch.startsWith('-') && parseInt(ddayMatch.replace('-','')) <= 30;
+            const ddayDeadline = getDday(m.deadline);
+            const ddayMatch = getDday(m.date);
+            const isDeadlineSoon = ddayDeadline.startsWith('-') && parseInt(ddayDeadline.replace('-', '')) <= 30;
+            const isMatchSoon = ddayMatch.startsWith('-') && parseInt(ddayMatch.replace('-', '')) <= 30;
             html += `<div class="info-card" style="border-left: 5px solid ${m.type === '전국' ? '#3182ce' : '#e74c3c'};">
                 <div style="margin-bottom:8px;"><span class="match-badge ${m.type === '전국' ? 'badge-national' : 'badge-local'}">${m.type}</span><span style="font-size:10px; color:#718096;">${m.sido}</span></div>
                 <b style="font-size:17px; display:block; margin-bottom:10px;">${m.title}</b>
@@ -419,198 +594,41 @@
 
     window.submitMatch = async () => {
         const title = document.getElementById("matchTitle").value.trim();
-        if(!title) return alert("대회명을 입력해주세요.");
+        if (!title) return alert("대회명을 입력해주세요.");
         try {
             await addDoc(collection(db, "matchRequests"), {
-                title,
-                type: document.getElementById("matchType").value,
+                title, type: document.getElementById("matchType").value,
                 sido: document.getElementById("matchSido").value,
                 date: document.getElementById("matchDate").value,
                 deadline: document.getElementById("matchDeadline").value,
                 loc: document.getElementById("matchLoc").value,
                 fee: document.getElementById("matchFee").value,
                 link: document.getElementById("matchLink").value,
-                status: "pending",
-                createdAt: serverTimestamp()
+                status: "pending", createdAt: serverTimestamp()
             });
             alert("대회 정보 신청 완료! 승인 후 목록에 표시됩니다.");
             ["matchTitle", "matchDate", "matchDeadline", "matchLoc", "matchFee", "matchLink"].forEach(id => document.getElementById(id).value = "");
-        } catch(e) { alert("저장 중 오류 발생: " + e.message); }
+        } catch (e) { alert("저장 중 오류 발생: " + e.message); }
     };
 
-    function renderUI() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
-        document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
-        let fullHtml = "";
-        groups.forEach(g => { const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); });
-        document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
-    }
-
-    function renderTableHtml(list) {
-        list.sort((a,b) => Number(a.groupRank) - Number(b.groupRank));
-        const femaleOnly = list.filter(p => p.gender === '여');
-        let html = `<table><tr><th width="20%">순위</th><th width="80%">이름 및 전적</th></tr>`;
-        list.forEach(p => {
-            let arrow = '<span class="keep">-</span>';
-            if (p.rankHistory && p.rankHistory.length >= 2) {
-                const cur = p.rankHistory[p.rankHistory.length - 1], pre = p.rankHistory[p.rankHistory.length - 2];
-                if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
-            }
-            const recentBadges = (p.recentGames || []).slice(0, 5).map(v => `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`).join('');
-            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${p.gender==='여'?'<span class="female-tag">여성 '+(femaleOnly.findIndex(f=>f.id===p.id)+1)+'위</span>':""}<div class="recent-box">${recentBadges}</div></td></tr>`;
-        });
-        return html + "</table>";
-    }
-
-    async function updateCenterRanking() {
-        const centerRankList = document.getElementById("centerRankList");
-        if (!centerRankList) return;
-        const centerStats = {};
-        Object.keys(centerNames).forEach(id => { centerStats[id] = { name: centerNames[id], wins: 0, totalGames: 0, highRankWins: 0, members: 0 }; });
-        players.forEach(p => {
-            const cId = p.centerId || 'sehwa';
-            if (centerStats[cId]) {
-                centerStats[cId].members += 1;
-                const games = p.recentGames || [];
-                centerStats[cId].totalGames += games.length;
-                games.forEach(g => { if (g.res === '승') { centerStats[cId].wins += 1; if (g.oppRank && Number(g.oppRank) <= 5) centerStats[cId].highRankWins += 1; } });
-            }
-        });
-        const totalPlayers = players.length;
-        const sortedCenters = Object.keys(centerStats).map(id => {
-            const s = centerStats[id];
-            const finalScore = (((s.totalGames>0?s.wins/s.totalGames:0)*0.6) + ((s.wins>0?s.highRankWins/s.wins:0)*0.2) + ((totalPlayers>0?s.members/totalPlayers:0)*0.2)) * 100;
-            return { name: s.name, score: finalScore.toFixed(2) };
-        }).sort((a, b) => b.score - a.score);
-        centerRankList.innerHTML = sortedCenters.map((c, i) => `<div class="center-rank-item"><span>${i + 1}위 ${c.name}</span><span style="font-weight:800;">${c.score}점</span></div>`).join('');
-    }
-
-    window.register = async () => {
-        const name = document.getElementById("nameInput").value.trim();
-        if(!name) return;
-        await addDoc(collection(db, "ranking"), { centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] });
-        alert("신청 완료!"); document.getElementById("nameInput").value = "";
-    };
-
-    function updateIndividualAwards() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        if(centerPlayers.length === 0) return;
-        let bestW = {name: '-', count: 0}, bestA = {name: '-', count: 0};
-        centerPlayers.forEach(p => {
-            const wins = (p.recentGames || []).filter(g => g.res === '승').length;
-            const total = (p.recentGames || []).length;
-            if(wins > bestW.count) bestW = {name: p.name, count: wins};
-            if(total > bestA.count) bestA = {name: p.name, count: total};
-        });
-        document.getElementById("bestWinner").innerText = bestW.name; document.getElementById("bestWinCount").innerText = bestW.count + "승";
-        document.getElementById("bestActive").innerText = bestA.name; document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
-    }
-
-    window.setResult = (r) => { challengerResult = r; document.getElementById("resWin").style.background = r==='승'?'#ebf8ff':'white'; document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; };
-    window.battleRecord = async () => {
-        const cId = document.getElementById("challengerSelect").value, dId = document.getElementById("defenderSelect").value;
-        if(!cId || !dId || !challengerResult) return alert("선택 필수!");
-        const c = players.find(p => p.id === cId), d = players.find(p => p.id === dId);
-        const dt = new Date().toLocaleDateString('ko-KR', {month:'numeric', day:'numeric'});
-        let uC = { recentGames: [{res: challengerResult, opp: d.name, oppRank: d.groupRank, dt, sc: document.getElementById("scoreInput").value}, ...(c.recentGames || [])].slice(0, 10) };
-        let uD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: c.name, oppRank: c.groupRank, dt, sc: document.getElementById("scoreInput").value}, ...(d.recentGames || [])].slice(0, 10) };
-        if (challengerResult === '승') { uC.groupRank = Number(d.groupRank); uD.groupRank = Number(c.groupRank); }
-        uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
-        uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
-        await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD);
-        alert("기록 성공!");
-    };
-
-    window.showLog = (id) => {
-        const p = players.find(x => x.id === id);
-        document.getElementById("modalBody").innerHTML = `<h3>${p.name} 상세 전적</h3>` + (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;">${g.dt} vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
-        document.getElementById("modalOverlay").style.display = "flex";
-        const ctx = document.getElementById('rankChart').getContext('2d');
-        if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'line', data: { labels: (p.rankHistory || []).map((_, i) => (i+1)+'회'), datasets: [{ label: '순위', data: p.rankHistory || [], borderColor: '#3182ce', tension: 0.1 }] }, options: { scales: { y: { reverse: true, ticks: { stepSize: 1 } } } } });
-    };
-
-    window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
-    window.filterOpponents = () => {
-        const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
-        if(!c) return;
-        const targets = players.filter(p => p.centerId === c.centerId && p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
-        document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
-    };
-    function updateChallengerList() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
-    }
-
-    // ✅ 개선: 채팅 limit 50 → 30 으로 줄여 읽기 횟수 절감
-    window.sendChat = async () => {
-        const msg = document.getElementById("chatInput").value.trim();
-        if(!msg) return;
-        await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
-        document.getElementById("chatInput").value = "";
-    };
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
-        const chatDisplay = document.getElementById("chatDisplay");
-        let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
-        rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
-        chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
-    });
-
-    // ─── 게스트 모집 ───
-
-    window.submitGuest = async () => {
-        const center = document.getElementById("guestCenter").value;
-        const name = document.getElementById("guestName").value.trim();
-        const date = document.getElementById("guestDate").value;
-        const pw = document.getElementById("guestPw").value;
-        if(!center || !name || !date || !pw) return alert("빈칸(센터, 날짜, 이름, 비밀번호)을 모두 채워주세요.");
+    // ═══════════════════════════════════════════════════
+    // 4. 게스트 모집 (getDocs + 댓글 lazy-load)
+    // ═══════════════════════════════════════════════════
+    window.loadGuestData = async () => {
         try {
-            await addDoc(collection(db, "guestPosts"), {
-                center, date, time: document.getElementById("guestTime").value,
-                duration: document.getElementById("guestDuration").value,
-                level: document.getElementById("guestLevel").value,
-                type: document.getElementById("guestType").value,
-                name, pw, createdAt: serverTimestamp()
-            });
-            alert("모집글이 등록되었습니다.");
-            ["guestTime", "guestDuration", "guestName", "guestPw", "guestDate"].forEach(id => document.getElementById(id).value = "");
-        } catch(e) { alert("오류 발생: " + e.message); }
+            const snap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc")));
+            guestPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderGuestList();
+        } catch (e) { console.error("게스트 로드 오류:", e); }
     };
+    loadGuestData();
 
-    // ✅ 개선: 게스트 댓글 onSnapshot은 유지하되, 별도로 데이터만 저장하고 렌더링은 guestPostsData 기준으로만 실행
-    // → 기존에는 댓글 업데이트 시 + 게시글 업데이트 시 둘 다 renderGuestList를 호출해 이중 렌더링 발생하던 버그 수정
-    onSnapshot(query(collection(db, "guestComments"), orderBy("createdAt", "asc")), (snap) => {
-        guestCommentsData = {};
-        snap.forEach(d => {
-            const data = d.data();
-            if(!guestCommentsData[data.postId]) guestCommentsData[data.postId] = [];
-            guestCommentsData[data.postId].push(data);
-        });
-        // 게시글 데이터가 이미 로드된 경우에만 렌더링
-        if(guestPostsData.length > 0) renderGuestList();
-    });
-
-    // 게스트 게시글: 실시간 유지 (커뮤니티 기능이므로 onSnapshot 적합)
-    onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "asc")), (snap) => {
-        guestPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderGuestList();
-    });
-
-    // ✅ 개선: renderGuestList는 항상 guestPostsData를 사용 (snapshot 인자 제거로 단순화)
     function renderGuestList() {
         const listDiv = document.getElementById("guest-list");
-        if(!listDiv) return;
+        if (!listDiv) return;
         let html = "";
         guestPostsData.forEach(data => {
             const postId = data.id;
-            const comments = guestCommentsData[postId] || [];
-            let commentHtml = comments.map(c => `
-                <div class="comment-item">
-                    <span class="comment-user">${c.userName}:</span>
-                    <span class="comment-text">${c.text}</span>
-                </div>
-            `).join('');
             html += `<div class="guest-card">
                 <div class="guest-header">
                     <div><span class="level-badge lv-${data.level.toLowerCase()}">${data.level}</span><b style="margin-left:5px;">${data.center}</b></div>
@@ -620,8 +638,9 @@
                     📅 <b>날짜:</b> ${data.date} | ⏰ <b>시간:</b> ${data.time} (${data.duration})<br>
                     👤 <b>모집자:</b> ${data.name} | 🎯 <b>목적:</b> ${data.type}
                 </div>
-                <div class="comment-sec">
-                    <div id="comments-${postId}">${commentHtml || '<p style="color:#ccc; margin:0;">댓글이 없습니다.</p>'}</div>
+                <button class="btn-toggle-comments" onclick="toggleComments('${postId}', this)">💬 댓글 보기</button>
+                <div class="comment-sec" id="comment-sec-${postId}" style="display:none;">
+                    <div id="comments-${postId}"><p style="color:#ccc; margin:0;">로딩 중...</p></div>
                     <div class="comment-input-box">
                         <input id="cmtUser-${postId}" placeholder="닉네임" style="width:70px;">
                         <input id="cmtText-${postId}" placeholder="댓글을 입력하세요..." style="flex:1;">
@@ -633,33 +652,114 @@
         listDiv.innerHTML = html || "<p style='text-align:center; padding:40px; color:#999;'>등록된 모집글이 없습니다.</p>";
     }
 
+    // 댓글 lazy-load: 버튼 클릭 시 해당 postId의 댓글만 가져옴
+    window.toggleComments = async (postId, btn) => {
+        const sec = document.getElementById(`comment-sec-${postId}`);
+        if (sec.style.display === 'none') {
+            sec.style.display = 'block';
+            btn.textContent = '💬 댓글 접기';
+            await loadCommentsForPost(postId);
+        } else {
+            sec.style.display = 'none';
+            btn.textContent = '💬 댓글 보기';
+        }
+    };
+
+    async function loadCommentsForPost(postId) {
+        const container = document.getElementById(`comments-${postId}`);
+        try {
+            const snap = await getDocs(query(
+                collection(db, "guestComments"),
+                where("postId", "==", postId),
+                orderBy("createdAt", "asc")
+            ));
+            let html = "";
+            snap.forEach(d => {
+                const c = d.data();
+                html += `<div class="comment-item"><span class="comment-user">${c.userName}:</span><span class="comment-text">${c.text}</span></div>`;
+            });
+            container.innerHTML = html || '<p style="color:#ccc; margin:0;">댓글이 없습니다.</p>';
+        } catch (e) {
+            container.innerHTML = '<p style="color:#e53e3e; margin:0;">댓글 로드 실패</p>';
+            console.error("댓글 로드 오류:", e);
+        }
+    }
+
     window.submitComment = async (postId) => {
         const user = document.getElementById(`cmtUser-${postId}`).value.trim();
         const text = document.getElementById(`cmtText-${postId}`).value.trim();
-        if(!user || !text) return alert("닉네임과 내용을 모두 입력해주세요.");
+        if (!user || !text) return alert("닉네임과 내용을 모두 입력해주세요.");
         try {
-            await addDoc(collection(db, "guestComments"), {
-                postId, userName: user, text, createdAt: serverTimestamp()
-            });
+            await addDoc(collection(db, "guestComments"), { postId, userName: user, text, createdAt: serverTimestamp() });
             document.getElementById(`cmtText-${postId}`).value = "";
-        } catch(e) { alert("댓글 등록 실패: " + e.message); }
+            await loadCommentsForPost(postId); // 댓글 등록 후 해당 게시글 댓글만 새로고침
+        } catch (e) { alert("댓글 등록 실패: " + e.message); }
+    };
+
+    window.submitGuest = async () => {
+        const center = document.getElementById("guestCenter").value;
+        const name = document.getElementById("guestName").value.trim();
+        const date = document.getElementById("guestDate").value;
+        const pw = document.getElementById("guestPw").value;
+        if (!center || !name || !date || !pw) return alert("빈칸(센터, 날짜, 이름, 비밀번호)을 모두 채워주세요.");
+        try {
+            await addDoc(collection(db, "guestPosts"), {
+                center, date, time: document.getElementById("guestTime").value,
+                duration: document.getElementById("guestDuration").value,
+                level: document.getElementById("guestLevel").value,
+                type: document.getElementById("guestType").value,
+                name, pw, createdAt: serverTimestamp()
+            });
+            alert("모집글이 등록되었습니다.");
+            ["guestTime", "guestDuration", "guestName", "guestPw", "guestDate"].forEach(id => document.getElementById(id).value = "");
+            await loadGuestData(); // 등록 후 자동 새로고침
+        } catch (e) { alert("오류 발생: " + e.message); }
     };
 
     window.deleteGuest = async (id, correctPw) => {
         const inputPw = prompt("등록 시 설정한 비밀번호를 입력하세요.");
-        if(inputPw === correctPw) {
-            try { await deleteDoc(doc(db, "guestPosts", id)); alert("삭제되었습니다."); }
-            catch(e) { alert("삭제 실패: " + e.message); }
-        } else if(inputPw !== null) { alert("비밀번호가 일치하지 않습니다."); }
+        if (inputPw === correctPw) {
+            try {
+                await deleteDoc(doc(db, "guestPosts", id));
+                alert("삭제되었습니다.");
+                await loadGuestData();
+            } catch (e) { alert("삭제 실패: " + e.message); }
+        } else if (inputPw !== null) { alert("비밀번호가 일치하지 않습니다."); }
     };
 
     function updateGuestCenterOptions() {
         const select = document.getElementById("guestCenter");
         let options = '<option value="">방문 예정 센터 선택</option>';
         Object.values(centerNames).forEach(name => { options += `<option value="${name}">${name}</option>`; });
-        allCenters.forEach(c => { if(!Object.values(centerNames).includes(c.name)) { options += `<option value="${c.name}">${c.name}</option>`; } });
+        allCenters.forEach(c => { if (!Object.values(centerNames).includes(c.name)) options += `<option value="${c.name}">${c.name}</option>`; });
         select.innerHTML = options;
     }
+
+    // ═══════════════════════════════════════════════════
+    // 5. 채팅 (getDocs, 최근 10개)
+    // ═══════════════════════════════════════════════════
+    window.loadChatData = async () => {
+        try {
+            const snap = await getDocs(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(10)));
+            const chatDisplay = document.getElementById("chatDisplay");
+            let rev = [];
+            snap.forEach(d => rev.push(d.data()));
+            rev.reverse();
+            let html = "";
+            rev.forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
+            chatDisplay.innerHTML = html || "<p style='color:#ccc; text-align:center;'>메시지가 없습니다.</p>";
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        } catch (e) { console.error("채팅 로드 오류:", e); }
+    };
+    loadChatData();
+
+    window.sendChat = async () => {
+        const msg = document.getElementById("chatInput").value.trim();
+        if (!msg) return;
+        await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
+        document.getElementById("chatInput").value = "";
+        await loadChatData(); // 전송 후 자동 새로고침
+    };
 </script>
 
 </body>
