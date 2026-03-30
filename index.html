@@ -460,14 +460,17 @@
             return pCenter === currentCenter;
         });
         
+        // ✅ 순서 변경: 오전 A, 오전 B, 오후 A, 오후 B
         const groups = [
-            {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, 
-            {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, 
             {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, 
-            {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}
+            {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}, 
+            {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, 
+            {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}
         ];
         
+        // 실시간 통합 랭킹 (오후 A만 표시)
         document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
+        
         let fullHtml = "";
         groups.forEach(g => { 
             const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); 
@@ -861,5 +864,3 @@
 
 </body>
 </html>
-
-수정4
