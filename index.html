@@ -77,17 +77,22 @@
         .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
         .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
-        #chartContainer { 
-            position: relative; 
-            height: 500px; 
-            width: 100%; 
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-        }
-    </style>
+
+```
+    /* 그래프 컨테이너 개선 */
+    #chartContainer { 
+        position: relative; 
+        height: 400px; 
+        width: 100%; 
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+```
+
 </head>
 <body>
 
@@ -97,7 +102,8 @@
     <button class="nav-item" onclick="showTab('info', this)">🏢 센터정보</button>
     <button class="nav-item" onclick="showTab('match', this)">🎾 대회정보</button>
     <button class="nav-item" onclick="showTab('market', this)">💰 용품정보</button>
-    <button class="nav-item" onclick="showTab('community', this)">💬 커뮤니티</button>
+    <button class="nav-item" onclick="showTab('chat', this)">💬 통합채팅</button>
+    <button class="nav-item" onclick="showTab('board', this)">📋 게시판</button>
     <button class="nav-item" onclick="showTab('gallery', this)">📸 사진첩</button>
 </div>
 
@@ -148,7 +154,6 @@
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
-```
 <div id="tab-guest" class="tab-content">
     <div class="section">
         <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
@@ -269,41 +274,9 @@
 </div>
 
 <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
-<div id="tab-community" class="tab-content">
-    <div class="section">
-        <h2 class="blue-h2">💬 커뮤니티 - 새 글 작성</h2>
-        <div class="input-group">
-            <select id="postType">
-                <option value="의견">💭 의견</option>
-                <option value="공지">📢 공지</option>
-                <option value="질문">❓ 질문</option>
-                <option value="팁">💡 팁/정보</option>
-                <option value="자유">🎭 자유주제</option>
-            </select>
-            <input id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
-            <textarea id="postContent" placeholder="내용을 입력하세요" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:'Pretendard', sans-serif; min-height:120px; resize:vertical;"></textarea>
-            <input id="postAuthor" placeholder="작성자명 (닉네임)">
-            <input id="postPassword" type="password" placeholder="비밀번호 (수정/삭제 시 필요)">
-            <button class="btn-battle" onclick="submitPost()">✍️ 글 올리기</button>
-        </div>
-    </div>
-    <div class="section">
-        <h2 class="blue-h2">📋 커뮤니티 글</h2>
-        <div style="margin-bottom:15px;">
-            <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
-                <option value="">🌏 전체 글</option>
-                <option value="의견">💭 의견</option>
-                <option value="공지">📢 공지</option>
-                <option value="질문">❓ 질문</option>
-                <option value="팁">💡 팁/정보</option>
-                <option value="자유">🎭 자유주제</option>
-            </select>
-        </div>
-        <div id="community-list"></div>
-    </div>
-</div>
+<div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
+<div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
 <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
-```
 
 </div>
 
@@ -341,6 +314,9 @@
     let guestPostsData = [];
     let guestCommentsData = {};
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🎯 랭킹 시스템 - 실시간 유지 (경기 결과가 즉시 반영)
+    // ═══════════════════════════════════════════════════════════════
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
         snap.forEach(d => { 
@@ -348,6 +324,7 @@
                 players.push({id: d.id, ...d.data()});
             }
         });
+        console.log('랭킹 업데이트:', players.length, '명');
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
         renderUI(); 
         updateCenterRanking(); 
@@ -355,6 +332,9 @@
         updateIndividualAwards();
     });
 
+    // ═══════════════════════════════════════════════════════════════
+    // 📍 센터정보 로드 (1회만)
+    // ═══════════════════════════════════════════════════════════════
     window.loadInfoData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
@@ -364,6 +344,7 @@
                     allCenters.push(d.data()); 
                 }
             });
+            console.log('센터 로드:', allCenters.length, '개');
             renderInfoList();
             updateGuestCenterOptions();
         } catch(e) { console.error("센터정보 로드 오류:", e); }
@@ -413,6 +394,9 @@
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🎾 대회정보 로드 (1회만)
+    // ═══════════════════════════════════════════════════════════════
     window.loadMatchData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
@@ -422,6 +406,7 @@
                     allMatches.push(d.data()); 
                 }
             });
+            console.log('대회 로드:', allMatches.length, '개');
             renderMatchList();
         } catch(e) { console.error("대회정보 로드 오류:", e); }
     };
@@ -484,23 +469,23 @@
         } catch(e) { alert("저장 중 오류 발생: " + e.message); }
     };
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🏆 랭킹 렌더링 함수들
+    // ═══════════════════════════════════════════════════════════════
     function renderUI() {
         const centerPlayers = players.filter(p => {
             const pCenter = p.centerId || 'sehwa';
             return pCenter === currentCenter;
         });
         
-        // ✅ 순서 변경: 오전 A, 오전 B, 오후 A, 오후 B
         const groups = [
-            {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, 
-            {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}, 
             {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, 
-            {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}
+            {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, 
+            {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, 
+            {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}
         ];
         
-        // 실시간 통합 랭킹 (오후 A만 표시)
         document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
-        
         let fullHtml = "";
         groups.forEach(g => { 
             const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); 
@@ -560,7 +545,7 @@
             groupRank: 999, 
             status: "pending", 
             recentGames: [], 
-            rankHistory: []
+            rankHistory: [999] 
         });
         alert("신청 완료!"); 
         document.getElementById("nameInput").value = "";
@@ -592,11 +577,17 @@
         document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; 
     };
 
+    /**
+     * ✅ 수정된 battleRecord 함수
+     * - dt 필드를 "2026.03.31" 형식으로 정확하게 저장
+     * - Admin에서 정확하게 파싱 가능
+     */
     window.battleRecord = async () => {
         const cId = document.getElementById("challengerSelect").value, dId = document.getElementById("defenderSelect").value;
         if(!cId || !dId || !challengerResult) return alert("선택 필수!");
         const c = players.find(p => p.id === cId), d = players.find(p => p.id === dId);
         
+        // ✅ 정확한 날짜 형식: "YYYY.MM.DD"
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -614,353 +605,22 @@
     };
 
     /**
-     * ✅ 업적 배지 계산 함수
+     * ✅ 개선된 showLog 함수
+     * - 그래프를 완벽하게 렌더링
+     * - 날짜별 순위 변화를 명확하게 표시
      */
-    function calculateAchievements(player) {
-        const achievements = [];
-        
-        if (!player) return achievements;
-        
-        const wins = (player.recentGames || []).filter(g => g.res === '승').length;
-        const totalGames = (player.recentGames || []).length;
-        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
-        
-        if (wins >= 5) achievements.push({ icon: '🥇', name: '5승 달성' });
-        if (wins >= 10) achievements.push({ icon: '🥈', name: '10승 달성' });
-        if (wins >= 20) achievements.push({ icon: '🥉', name: '20승 달성' });
-        
-        if (player.recentGames && player.recentGames.length >= 5) {
-            let streak = 0;
-            for (let i = 0; i < 5; i++) {
-                if (player.recentGames[i] && player.recentGames[i].res === '승') {
-                    streak++;
-                } else {
-                    break;
-                }
-            }
-            if (streak === 5) achievements.push({ icon: '🔥', name: '5연승 달성' });
-        }
-        
-        if (totalGames >= 100) achievements.push({ icon: '💪', name: '100경기 참여' });
-        if (player.groupRank === 1) achievements.push({ icon: '👑', name: '1위 달성' });
-        
-        if (rankHistory.length >= 2) {
-            const firstRank = rankHistory[0];
-            const lastRank = rankHistory[rankHistory.length - 1];
-            if (firstRank - lastRank >= 10) {
-                achievements.push({ icon: '📈', name: `${firstRank - lastRank}단계 상승` });
-            }
-        }
-        
-        return achievements;
-    }
-
-    /**
-     * ✅ 상성 분석 함수
-     */
-    function analyzeMatchups(player) {
-        const matchups = {};
-        
-        if (!player.recentGames) return matchups;
-        
-        player.recentGames.forEach(game => {
-            const opponent = game.opp;
-            if (!matchups[opponent]) {
-                matchups[opponent] = { wins: 0, losses: 0, winRate: 0 };
-            }
-            
-            if (game.res === '승') {
-                matchups[opponent].wins++;
-            } else {
-                matchups[opponent].losses++;
-            }
-        });
-        
-        Object.keys(matchups).forEach(opp => {
-            const total = matchups[opp].wins + matchups[opp].losses;
-            matchups[opp].winRate = ((matchups[opp].wins / total) * 100).toFixed(0);
-        });
-        
-        return matchups;
-    }
-
-    /**
-     * ✅ 멘트 생성 함수
-     */
-    function generateMentions(player) {
-        const mentions = [];
-        
-        if (!player) return mentions;
-        
-        // 분석 데이터
-        const recentGames = player.recentGames || [];
-        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
-        const wins = recentGames.filter(g => g.res === '승').length;
-        const totalGames = recentGames.length;
-        
-        // 1️⃣ 최근 경기 결과 분석
-        if (recentGames.length > 0) {
-            const lastGame = recentGames[0];
-            if (lastGame.res === '패') {
-                mentions.push({
-                    emoji: '💪',
-                    text: `${lastGame.opp} 상대로 복수전 하세요!`,
-                    priority: 10
-                });
-            } else if (lastGame.res === '승') {
-                mentions.push({
-                    emoji: '🔥',
-                    text: '계속 이기세요! 흐름을 유지하세요!',
-                    priority: 5
-                });
-            }
-        }
-        
-        // 2️⃣ 연승/연패 분석
-        if (recentGames.length >= 3) {
-            let winStreak = 0, lossStreak = 0;
-            for (let i = 0; i < 3; i++) {
-                if (recentGames[i] && recentGames[i].res === '승') {
-                    winStreak++;
-                } else {
-                    break;
-                }
-            }
-            for (let i = 0; i < 3; i++) {
-                if (recentGames[i] && recentGames[i].res === '패') {
-                    lossStreak++;
-                } else {
-                    break;
-                }
-            }
-            
-            if (winStreak >= 3) {
-                mentions.push({
-                    emoji: '🏆',
-                    text: '지금이 기회! 계속 우승하세요!',
-                    priority: 9
-                });
-            }
-            
-            if (lossStreak >= 3) {
-                mentions.push({
-                    emoji: '💪',
-                    text: '분발하세요! 넌 할 수 있어!',
-                    priority: 8
-                });
-            }
-        }
-        
-        // 3️⃣ 상성 분석
-        const matchups = analyzeMatchups(player);
-        const sortedMatchups = Object.entries(matchups)
-            .sort((a, b) => b[1].winRate - a[1].winRate);
-        
-        // 상성 좋은 상대
-        if (sortedMatchups.length > 0) {
-            const bestMatchup = sortedMatchups[0];
-            if (bestMatchup[1].winRate >= 50) {
-                mentions.push({
-                    emoji: '🎯',
-                    text: `${bestMatchup[0]}과 경기해보세요! (${bestMatchup[1].winRate}% 승률)`,
-                    priority: 7
-                });
-            }
-        }
-        
-        // 상성 안 좋은 상대
-        if (sortedMatchups.length > 0) {
-            const worstMatchup = sortedMatchups[sortedMatchups.length - 1];
-            if (worstMatchup[1].winRate < 50 && worstMatchup[1].wins === 0) {
-                mentions.push({
-                    emoji: '💥',
-                    text: `${worstMatchup[0]} 상대로 설욕전! (${worstMatchup[1].losses}연패)`,
-                    priority: 8
-                });
-            }
-        }
-        
-        // 4️⃣ 순위 변동 분석
-        if (rankHistory.length >= 2) {
-            const firstRank = rankHistory[0];
-            const lastRank = rankHistory[rankHistory.length - 1];
-            const rankChange = firstRank - lastRank;
-            
-            if (rankChange >= 5) {
-                mentions.push({
-                    emoji: '📈',
-                    text: `대단한 상승! 계속 올라가세요! (+${rankChange}위)`,
-                    priority: 7
-                });
-            } else if (rankChange <= -5) {
-                mentions.push({
-                    emoji: '💪',
-                    text: `다시 올라올 수 있어! 파이팅! (${rankChange}위)`,
-                    priority: 6
-                });
-            }
-        }
-        
-        // 5️⃣ 활동도 분석
-        if (totalGames >= 10) {
-            mentions.push({
-                emoji: '🔥',
-                text: `열정이 대단해요! 총 ${totalGames}경기 플레이!`,
-                priority: 5
-            });
-        }
-        
-        if (totalGames === 0) {
-            mentions.push({
-                emoji: '⏰',
-                text: '경기를 신청해보세요! 순위를 올릴 기회예요!',
-                priority: 4
-            });
-        }
-        
-        // 6️⃣ 순위별 멘트
-        if (player.groupRank === 1) {
-            mentions.push({
-                emoji: '👑',
-                text: '1위를 유지하세요! 계속 우승!',
-                priority: 6
-            });
-        } else if (player.groupRank <= 3) {
-            const gap = player.groupRank - 1;
-            mentions.push({
-                emoji: '📈',
-                text: `1위까지 ${gap}위 남았어요! 파이팅!`,
-                priority: 5
-            });
-        }
-        
-        // 우선순위 정렬
-        mentions.sort((a, b) => b.priority - a.priority);
-        
-        return mentions.slice(0, 3); // 상위 3개만 반환
-    }
-
-    /**
-     * ✅ 업적 배지 계산 함수 (재정의)
-     */
-    function calculateAchievements(player) {
-        const achievements = [];
-        if (!player) return achievements;
-        
-        const wins = (player.recentGames || []).filter(g => g.res === '승').length;
-        const totalGames = (player.recentGames || []).length;
-        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
-        
-        if (wins >= 5) achievements.push({ icon: '🥇', name: '5승 달성' });
-        if (wins >= 10) achievements.push({ icon: '🥈', name: '10승 달성' });
-        if (wins >= 20) achievements.push({ icon: '🥉', name: '20승 달성' });
-        
-        if (player.recentGames && player.recentGames.length >= 5) {
-            let streak = 0;
-            for (let i = 0; i < 5; i++) {
-                if (player.recentGames[i] && player.recentGames[i].res === '승') {
-                    streak++;
-                } else {
-                    break;
-                }
-            }
-            if (streak === 5) achievements.push({ icon: '🔥', name: '5연승 달성' });
-        }
-        
-        if (totalGames >= 100) achievements.push({ icon: '💪', name: '100경기 참여' });
-        if (player.groupRank === 1) achievements.push({ icon: '👑', name: '1위 달성' });
-        
-        if (rankHistory.length >= 2) {
-            const firstRank = rankHistory[0];
-            const lastRank = rankHistory[rankHistory.length - 1];
-            if (firstRank - lastRank >= 10) {
-                achievements.push({ icon: '📈', name: `${firstRank - lastRank}단계 상승` });
-            }
-        }
-        
-        return achievements;
-    }
-
-
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
-        
-        // ✅ 업적 계산
-        const achievements = calculateAchievements(p);
-        const achievementHtml = achievements.length > 0 
-            ? `<div style="margin-bottom:15px; display:flex; flex-wrap:wrap; gap:8px;">
-                ${achievements.map(a => `<span style="background:#fff5f5; border:1px solid #fed7e2; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; color:#e53e3e;">${a.icon} ${a.name}</span>`).join('')}
-               </div>`
-            : '';
-        
-        // ✅ 멘트 시스템 추가
-        const mentions = generateMentions(p);
-        const mentionsHtml = mentions.length > 0
-            ? `<div style="margin-bottom:15px; background:#fff5e6; border-left:4px solid #f6ad55; padding:12px; border-radius:8px;">
-                <h4 style="margin:0 0 10px 0; color:#c05621; font-size:13px;">💬 추천 멘트</h4>
-                ${mentions.map(m => `<div style="margin-bottom:8px; padding:8px; background:white; border-radius:6px; border-left:3px solid #f6ad55; font-size:12px;">
-                    <strong>${m.emoji} ${m.text}</strong>
-                </div>`).join('')}
-               </div>`
-            : '';
-        
-        // ✅ 상성 분석
-        const matchups = analyzeMatchups(p);
-        const sortedMatchups = Object.entries(matchups)
-            .sort((a, b) => b[1].wins - a[1].wins)
-            .slice(0, 10);
-        
-        const matchupHtml = sortedMatchups.length > 0
-            ? `<div style="margin-top:15px; background:#f8f9fa; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
-                <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">🎯 상대별 전적 분석 (최근)</h4>
-                ${sortedMatchups.map(([opp, stats]) => {
-                    const color = stats.winRate >= 50 ? '#38a169' : '#e53e3e';
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-                        <span><strong>${opp}</strong></span>
-                        <span style="color:${color}; font-weight:bold;">${stats.wins}승 ${stats.losses}패 (${stats.winRate}%)</span>
-                    </div>`;
-                }).join('')}
-               </div>`
-            : '';
-        
         const gamesList = (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;"><strong>${g.dt}</strong> vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
-        
-        document.getElementById("modalBody").innerHTML = `
-            <h3 style="margin:0 0 15px 0; color:#2d3748; font-weight:800;">${p.name} - 상세 전적</h3>
-            ${achievementHtml}
-            ${mentionsHtml}
-            <div style="border-top: 2px solid #e2e8f0; padding-top:15px;">
-                <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">📊 경기 기록</h4>
-                ${gamesList || '<p style="color:#999; text-align:center; padding:20px;">경기 기록이 없습니다.</p>'}
-            </div>
-            ${matchupHtml}
-        `;
-        
+        document.getElementById("modalBody").innerHTML = `<h3 style="margin:0 0 15px 0; color:#2d3748; font-weight:800;">${p.name} - 상세 전적</h3><div style="border-top: 2px solid #e2e8f0; padding-top:15px;">${gamesList || '<p style="color:#999; text-align:center; padding:20px;">경기 기록이 없습니다.</p>'}</div>`;
         document.getElementById("modalOverlay").style.display = "flex";
         
+        // ✅ 개선된 그래프
         setTimeout(() => {
             const ctx = document.getElementById('rankChart').getContext('2d');
             if (myChart) myChart.destroy();
             
-            // ✅ rankHistory 필터링: 1~50 범위만 + 최근 10경기만
-            const rankHistory = (p.rankHistory || [])
-                .filter(r => !isNaN(r) && r >= 1 && r <= 50)
-                .slice(-10);
-            
-            if (rankHistory.length === 0) {
-                ctx.fillStyle = '#999';
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('경기 기록이 없어 그래프를 표시할 수 없습니다', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            }
-            
-            // ✅ 동적 Y축 설정 (데이터에 맞춰서)
-            const minRank = Math.min(...rankHistory);
-            const maxRank = Math.max(...rankHistory);
-            const yMin = Math.max(1, minRank - 1);
-            const yMax = maxRank + 2;
-            const stepSize = Math.ceil((yMax - yMin) / 5);
+            const rankHistory = p.rankHistory || [];
             
             myChart = new Chart(ctx, {
                 type: 'line',
@@ -970,21 +630,21 @@
                         label: `${p.name}의 순위 변동`,
                         data: rankHistory,
                         borderColor: '#3182ce',
-                        backgroundColor: 'rgba(49, 130, 206, 0.15)',
-                        borderWidth: 2.5,
+                        backgroundColor: 'rgba(49, 130, 206, 0.1)',
+                        borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 7,
+                        pointRadius: 6,
                         pointBackgroundColor: '#3182ce',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2.5,
-                        pointHoverRadius: 9,
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 8,
                         segment: {
                             borderColor: ctx => ctx.p0DataIndex > 0 && rankHistory[ctx.p0DataIndex] < rankHistory[ctx.p0DataIndex - 1] 
-                                ? '#e53e3e'
+                                ? '#e53e3e' // 순위 올랐을 때 (숫자 작아짐) - 빨강
                                 : ctx.p0DataIndex > 0 && rankHistory[ctx.p0DataIndex] > rankHistory[ctx.p0DataIndex - 1]
-                                ? '#3182ce'
-                                : '#cbd5e0'
+                                ? '#3182ce' // 순위 내려갔을 때 (숫자 커짐) - 파랑
+                                : '#cbd5e0' // 같을 때 - 회색
                         }
                     }]
                 },
@@ -994,7 +654,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `📊 ${p.name} 순위 변동 추이 (최근 ${rankHistory.length}경기)`,
+                            text: `📊 ${p.name} 순위 변동 추이`,
                             font: { size: 16, weight: 'bold' },
                             color: '#2d3748',
                             padding: 15
@@ -1015,26 +675,23 @@
                     scales: {
                         y: {
                             reverse: true,
-                            min: yMin,
-                            max: yMax,
                             ticks: {
-                                stepSize: stepSize,
+                                stepSize: 1,
                                 callback: function(value) {
                                     return value + '위';
                                 },
                                 color: '#4a5568',
-                                font: { weight: 'bold', size: 12 }
+                                font: { weight: 'bold' }
                             },
                             title: {
                                 display: true,
                                 text: '순위',
                                 color: '#2d3748',
-                                font: { weight: 'bold', size: 13 }
+                                font: { weight: 'bold' }
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.08)',
-                                drawBorder: true,
-                                lineWidth: 1.5
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: true
                             }
                         },
                         x: {
@@ -1042,15 +699,14 @@
                                 display: true,
                                 text: '경기 횟수',
                                 color: '#2d3748',
-                                font: { weight: 'bold', size: 13 }
+                                font: { weight: 'bold' }
                             },
                             ticks: {
                                 color: '#4a5568',
-                                font: { weight: 'bold', size: 12 }
+                                font: { weight: 'bold' }
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.08)',
-                                lineWidth: 1
+                                color: 'rgba(0, 0, 0, 0.05)'
                             }
                         }
                     }
@@ -1061,6 +717,10 @@
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🎯 경기 기록 시스템
+    // ═══════════════════════════════════════════════════════════════
+    
     function updateChallengerList() {
         const centerPlayers = players.filter(p => {
             const pCenter = p.centerId || 'sehwa';
@@ -1093,116 +753,29 @@
         document.getElementById("defenderSelect").innerHTML = options;
     };
 
-    let communityPostsData = [];
-
     // ═══════════════════════════════════════════════════════════════
-    // 💬 커뮤니티 시스템 (게시판)
+    // 💬 채팅 시스템
     // ═══════════════════════════════════════════════════════════════
-    window.submitPost = async () => {
-        const type = document.getElementById("postType").value;
-        const title = document.getElementById("postTitle").value.trim();
-        const content = document.getElementById("postContent").value.trim();
-        const author = document.getElementById("postAuthor").value.trim();
-        const password = document.getElementById("postPassword").value;
-        
-        if (!title || !content || !author || !password) {
-            return alert("모든 항목을 입력해주세요.");
-        }
-        
-        try {
-            await addDoc(collection(db, "communityPosts"), {
-                type,
-                title,
-                content,
-                author,
-                password,
-                createdAt: serverTimestamp(),
-                likes: 0
-            });
-            alert("✅ 글이 올려졌습니다!");
-            document.getElementById("postTitle").value = "";
-            document.getElementById("postContent").value = "";
-            document.getElementById("postAuthor").value = "";
-            document.getElementById("postPassword").value = "";
-        } catch (e) {
-            alert("❌ 저장 오류: " + e.message);
-        }
+    window.sendChat = async () => {
+        const msg = document.getElementById("chatInput").value.trim();
+        if(!msg) return;
+        await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
+        document.getElementById("chatInput").value = "";
     };
-
-    window.renderCommunityPosts = () => {
-        const filter = document.getElementById("filterPostType").value;
-        let filtered = communityPostsData;
-        
-        if (filter) {
-            filtered = communityPostsData.filter(p => p.type === filter);
-        }
-        
-        // 최신순 정렬
-        filtered.sort((a, b) => {
-            const aTime = a.createdAt ? a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt) : new Date(0);
-            const bTime = b.createdAt ? b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt) : new Date(0);
-            return bTime - aTime;
-        });
-        
-        let html = "";
-        if (filtered.length === 0) {
-            html = "<p style='text-align:center; padding:40px; color:#999;'>등록된 글이 없습니다.</p>";
-        } else {
-            html = filtered.map(post => {
-                const postTime = post.createdAt ? (post.createdAt.toDate ? post.createdAt.toDate() : new Date(post.createdAt)) : new Date();
-                const timeStr = postTime.toLocaleDateString('ko-KR') + ' ' + postTime.toLocaleTimeString('ko-KR', {hour: '2-digit', minute:'2-digit'});
-                
-                const typeEmoji = {
-                    '의견': '💭',
-                    '공지': '📢',
-                    '질문': '❓',
-                    '팁': '💡',
-                    '자유': '🎭'
-                }[post.type] || '📝';
-                
-                return `<div class="info-card" style="border-left: 5px solid #3182ce;">
-                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
-                        <div>
-                            <span style="display:inline-block; background:#ebf8ff; border:1px solid #bee3f8; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:bold; color:#3182ce; margin-right:8px;">${typeEmoji} ${post.type}</span>
-                            <span style="font-size:11px; color:#718096;">${timeStr}</span>
-                        </div>
-                        <button class="btn-del" onclick="deletePost('${post.id}', '${post.password}')">삭제</button>
-                    </div>
-                    <h3 style="margin:10px 0; color:#2d3748; font-size:16px; font-weight:800;">${post.title}</h3>
-                    <p style="color:#4a5568; line-height:1.6; margin:10px 0; font-size:14px; white-space:pre-wrap;">${post.content}</p>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
-                        <span style="font-size:12px; color:#718096;">✍️ ${post.author}</span>
-                        <span style="font-size:12px; color:#718096;">❤️ ${post.likes || 0}</span>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-        
-        document.getElementById("community-list").innerHTML = html;
-    };
-
-    window.deletePost = async (id, correctPassword) => {
-        const inputPassword = prompt("비밀번호를 입력하세요.");
-        if (inputPassword === null) return;
-        
-        if (inputPassword !== correctPassword) {
-            return alert("❌ 비밀번호가 일치하지 않습니다.");
-        }
-        
-        try {
-            await deleteDoc(doc(db, "communityPosts", id));
-            alert("✅ 글이 삭제되었습니다.");
-            renderCommunityPosts();
-        } catch (e) {
-            alert("❌ 삭제 오류: " + e.message);
-        }
-    };
-
-    onSnapshot(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")), (snap) => {
-        communityPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderCommunityPosts();
+    
+    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
+        const chatDisplay = document.getElementById("chatDisplay");
+        let html = ""; 
+        let rev = [];
+        snap.forEach(d => rev.push(d.data()));
+        rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
+        chatDisplay.innerHTML = html; 
+        chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🤝 게스트 모집 시스템
+    // ═══════════════════════════════════════════════════════════════
     window.submitGuest = async () => {
         const center = document.getElementById("guestCenter").value;
         const name = document.getElementById("guestName").value.trim();
@@ -1307,4 +880,4 @@
 </body>
 </html>
 
-수정 4;":43
+롤백
