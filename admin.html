@@ -120,7 +120,7 @@
         <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
         <button class="tab-btn" onclick="switchGlobalTab('gtab-matches', this)">🎾 대회 관리</button>
         <button class="tab-btn" onclick="switchGlobalTab('gtab-guests', this)">🤝 게스트 관리</button>
-        <button class="tab-btn" onclick="switchGlobalTab('gtab-chats', this)">💬 채팅 관리</button>
+        <button class="tab-btn" onclick="switchGlobalTab('gtab-community', this)">💬 커뮤니티 관리</button>
     </div>
     <div id="gtab-centers" class="tab-content active">
         <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터 등록 요청 및 관리</h2><div id="centerManageList">데이터 로딩 중...</div></div>
@@ -131,8 +131,21 @@
     <div id="gtab-guests" class="tab-content">
         <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">🤝 게스트 모집글 및 댓글 관리</h2><div id="guestManageList">데이터 로딩 중...</div></div>
     </div>
-    <div id="gtab-chats" class="tab-content">
-        <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 통합 채팅 관리</h2><div id="chatManageList">데이터 로딩 중...</div></div>
+    <div id="gtab-community" class="tab-content">
+        <div class="card">
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 커뮤니티 글 관리</h2>
+            <div style="margin-bottom:15px;">
+                <select id="filterCommunityType" onchange="loadCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
+                    <option value="">🌏 전체 글</option>
+                    <option value="의견">💭 의견</option>
+                    <option value="공지">📢 공지</option>
+                    <option value="질문">❓ 질문</option>
+                    <option value="팁">💡 팁/정보</option>
+                    <option value="자유">🎭 자유주제</option>
+                </select>
+            </div>
+            <div id="communityManageList">데이터 로딩 중...</div>
+        </div>
     </div>
 </div>
 
@@ -642,189 +655,275 @@
             });
             document.getElementById("guestManageList").innerHTML = html + "</table>";
         });
+
+        loadCommunityPosts();
     }
 
-    window.toggleGuestEdit = async (id) => {
-        const g = guestPosts.find(x => x.id === id); 
-        const row = document.getElementById(`grow-${id}`);
-        
-        const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
-        let commentHtml = "";
-        cSnap.forEach(cd => {
-            const cdata = cd.data();
-            commentHtml += `<div class="log-row"><span><b>${cdata.userName}:</b> ${cdata.text}</span><button class="mini-del" onclick="removeData('guestComments', '${cd.id}')">✕</button></div>`;
-        });
-
-        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-            <div><span class="edit-label">센터명</span><input id="ge-center-${id}" class="edit-input" style="width:70%;" value="${g.center || ''}"></div>
-            <div style="margin-top:8px;">
-                <span class="edit-label">날짜</span>
-                <input id="ge-date-${id}" type="date" class="edit-input" style="width:150px; display:inline-block; width:40%;" value="${g.date || ''}">
-                <span class="edit-label" style="margin-left:10px;">시간</span>
-                <input id="ge-time-${id}" class="edit-input" style="width:30%; display:inline-block;" value="${g.time || ''}">
-            </div>
-            <div style="margin-top:8px;">
-                <span class="edit-label">모집자</span><input id="ge-name-${id}" class="edit-input" style="width:40%;" value="${g.name || ''}">
-                <span class="edit-label" style="margin-left:10px;">등급</span>
-                <select id="ge-level-${id}" class="edit-input" style="width:20%; display:inline-block;">
-                    <option value="S1" ${g.level==='S1'?'selected':''}>S1</option>
-                    <option value="S2" ${g.level==='S2'?'selected':''}>S2</option>
-                    <option value="S3" ${g.level==='S3'?'selected':''}>S3</option>
-                </select>
-            </div>
-            <div style="margin-top:12px; border-top:1px dashed #ccc; padding-top:10px;">
-                <div style="font-weight:bold; color:#e53e3e; margin-bottom:8px;">💬 댓글 관리</div>
-                ${commentHtml ? commentHtml : '<p style="color:#999; font-size:11px;">댓글이 없습니다.</p>'}
-            </div>
-        </div></td>
-        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveGuestEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
-    };
-
-    window.saveGuestEdit = async (id) => {
+    window.loadCommunityPosts = async () => {
         try {
-            await updateDoc(doc(db, "guestPosts", id), {
-                center: document.getElementById(`ge-center-${id}`).value,
-                date: document.getElementById(`ge-date-${id}`).value,
-                time: document.getElementById(`ge-time-${id}`).value,
-                name: document.getElementById(`ge-name-${id}`).value,
-                level: document.getElementById(`ge-level-${id}`).value
+            const snap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")));
+            const filter = document.getElementById("filterCommunityType").value;
+            let communityPosts = [];
+            
+            snap.forEach(d => {
+                const post = {id: d.id, ...d.data()};
+                communityPosts.push(post);
             });
-            alert("✅ 모집글 수정 완료");
-            startGlobalListening();
-        } catch(e) { 
-            alert("❌ 수정 오류: " + e.message); 
+            
+            let filtered = communityPosts;
+            if (filter) {
+                filtered = communityPosts.filter(p => p.type === filter);
+            }
+            
+            let html = "<table><tr><th>유형/제목</th><th>작성자</th><th>관리</th></tr>";
+            filtered.forEach(d => {
+                const typeEmoji = {
+                    '의견': '💭',
+                    '공지': '📢',
+                    '질문': '❓',
+                    '팁': '💡',
+                    '자유': '🎭'
+                }[d.type] || '📝';
+                
+                const postTime = d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate() : new Date(d.createdAt)) : new Date();
+                const timeStr = postTime.toLocaleDateString('ko-KR');
+                
+                html += `<tr id="prow-${d.id}"><td style="text-align:left;"><span style="display:inline-block; background:#f0f7ff; border:1px solid #bee3f8; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:bold; color:#3182ce; margin-right:5px;">${typeEmoji} ${d.type}</span><b>${d.title}</b><br><small style="color:#718096;">${timeStr}</small></td><td style="font-size:12px;">${d.author}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleCommunityEdit('${d.id}')">수정</button><button class="btn-del" onclick="removeData('communityPosts', '${d.id}')">🗑️ 삭제</button></div></td></tr>`;
+            });
+            
+            document.getElementById("communityManageList").innerHTML = html + "</table>";
+        } catch (e) {
+            console.error("커뮤니티 로드 오류:", e);
         }
     };
 
-    window.removeGuestPost = async (id) => {
-        if(confirm("이 게시글과 관련된 모든 댓글이 삭제됩니다. 계속하시겠습니까?")) {
-            try {
-                const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
-                for(const c of cSnap.docs) { 
-                    await deleteDoc(doc(db, "guestComments", c.id)); 
+    window.toggleCommunityEdit = (id) => {
+        const snap = getDocs(collection(db, "communityPosts"));
+        snap.then(result => {
+            let post = null;
+            result.forEach(d => {
+                if (d.id === id) {
+                    post = {id: d.id, ...d.data()};
                 }
-                await deleteDoc(doc(db, "guestPosts", id));
-                alert("✅ 삭제되었습니다.");
-            } catch(e) {
-                alert("❌ 삭제 오류: " + e.message);
-            }
-        }
-    };
-
-    window.toggleCenterEdit = (id) => {
-        const c = centers.find(x => x.id === id); 
-        const row = document.getElementById(`crow-${id}`);
-        const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
-        
-        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-                <div><span class="edit-label">지역</span><input id="ce-sido-${id}" class="edit-input" style="width:70px; display:inline-block;" value="${c.sido || ''}">
-                <span class="edit-label" style="margin-left:5px; width:auto;">상호</span><input id="ce-name-${id}" class="edit-input" style="width:60%; display:inline-block;" value="${c.name || ''}"></div>
-                <div style="margin-top:8px;"><span class="edit-label">주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
-                <div style="margin-top:8px;"><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:50%; display:inline-block;" value="${c.contact || ''}"></div>
-                <div style="margin-top:8px;"><span class="edit-label">영업시간</span><input id="ce-time-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.time || ''}"></div>
-                <div style="margin-top:8px;"><span class="edit-label">코트수</span>
-                    <div style="display:inline-flex; gap:8px; margin-left:10px;">
-                        <div style="text-align:center;"><label style="font-size:10px;">정식</label><input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[0] || 0}"></div>
-                        <div style="text-align:center;"><label style="font-size:10px;">복식</label><input id="ce-court-dub-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[1] || 0}"></div>
-                        <div style="text-align:center;"><label style="font-size:10px;">세미</label><input id="ce-court-semi-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[2] || 0}"></div>
-                    </div>
+            });
+            
+            if (!post) return;
+            
+            const row = document.getElementById(`prow-${id}`);
+            row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+                <div><span class="edit-label">유형</span>
+                    <select id="ce-type-${id}" class="edit-input" style="width:70%; display:inline-block;">
+                        <option value="의견" ${post.type==='의견'?'selected':''}>💭 의견</option>
+                        <option value="공지" ${post.type==='공지'?'selected':''}>📢 공지</option>
+                        <option value="질문" ${post.type==='질문'?'selected':''}>❓ 질문</option>
+                        <option value="팁" ${post.type==='팁'?'selected':''}>💡 팁/정보</option>
+                        <option value="자유" ${post.type==='자유'?'selected':''}>🎭 자유주제</option>
+                    </select>
                 </div>
-                <div style="margin-top:8px;"><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:80%;" value="${c.fee || ''}"></div>
-            </div></td>
-        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCenterEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
-    };
+                <div style="margin-top:8px;"><span class="edit-label">제목</span><input id="ce-title-${id}" class="edit-input" style="width:80%;" value="${post.title}"></div>
+                <div style="margin-top:8px;"><span class="edit-label">내용</span><textarea id="ce-content-${id}" class="edit-input" style="width:80%; height:100px;">${post.content}</textarea></div>
 
-    window.saveCenterEdit = async (id) => {
-        const reg = document.getElementById(`ce-court-reg-${id}`).value || 0;
-        const dub = document.getElementById(`ce-court-dub-${id}`).value || 0;
-        const semi = document.getElementById(`ce-court-semi-${id}`).value || 0;
-        
-        try {
-            await updateDoc(doc(db, "infoRequests", id), {
-                sido: document.getElementById(`ce-sido-${id}`).value,
-                name: document.getElementById(`ce-name-${id}`).value,
-                addr: document.getElementById(`ce-addr-${id}`).value,
-                contact: document.getElementById(`ce-contact-${id}`).value,
-                time: document.getElementById(`ce-time-${id}`).value,
-                court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`,
-                fee: document.getElementById(`ce-fee-${id}`).value
-            });
-            alert("✅ 센터 정보 수정 완료");
-            startGlobalListening();
-        } catch(e) { 
-            alert("❌ 수정 오류: " + e.message); 
-        }
-    };
-
-    window.toggleMatchEdit = (id) => {
-        const m = matches.find(x => x.id === id); 
-        const row = document.getElementById(`mrow-${id}`);
-        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-            <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
-            <div style="margin-top:8px;">
-                <span class="edit-label">유형</span>
-                <select id="me-type-${id}" class="edit-input" style="width:25%; display:inline-block;">
-                    <option value="전국" ${m.type==='전국'?'selected':''}>전국</option>
-                    <option value="지역" ${m.type==='지역'?'selected':''}>지역</option>
-                </select>
-                <span class="edit-label" style="margin-left:8px;">지역</span><input id="me-sido-${id}" class="edit-input" style="width:40%; display:inline-block;" value="${m.sido || ''}">
-            </div>
-            <div style="margin-top:8px;">
-                <span class="edit-label">대회일</span><input id="me-date-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.date || ''}">
-                <span class="edit-label" style="margin-left:8px;">마감</span><input id="me-deadline-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.deadline || ''}">
-            </div>
-            <div style="margin-top:8px;"><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
-            <div style="margin-top:8px;"><span class="edit-label">참가비</span><input id="me-fee-${id}" class="edit-input" style="width:80%;" value="${m.fee || ''}"></div>
-            <div style="margin-top:8px;"><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}" placeholder="http://..."></div>
+```
         </div></td>
-        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveMatchEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
-    };
+        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCommunityEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="loadCommunityPosts()">❌ 취소</button></div></td>`;
+    });
+};
 
-    window.saveMatchEdit = async (id) => {
+window.saveCommunityEdit = async (id) => {
+    try {
+        await updateDoc(doc(db, "communityPosts", id), {
+            type: document.getElementById(`ce-type-${id}`).value,
+            title: document.getElementById(`ce-title-${id}`).value,
+            content: document.getElementById(`ce-content-${id}`).value
+        });
+        alert("✅ 수정 완료");
+        loadCommunityPosts();
+    } catch(e) { 
+        alert("❌ 수정 오류: " + e.message); 
+    }
+};
+
+window.toggleGuestEdit = async (id) => {
+    const g = guestPosts.find(x => x.id === id); 
+    const row = document.getElementById(`grow-${id}`);
+    
+    const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
+    let commentHtml = "";
+    cSnap.forEach(cd => {
+        const cdata = cd.data();
+        commentHtml += `<div class="log-row"><span><b>${cdata.userName}:</b> ${cdata.text}</span><button class="mini-del" onclick="removeData('guestComments', '${cd.id}')">✕</button></div>`;
+    });
+
+    row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+        <div><span class="edit-label">센터명</span><input id="ge-center-${id}" class="edit-input" style="width:70%;" value="${g.center || ''}"></div>
+        <div style="margin-top:8px;">
+            <span class="edit-label">날짜</span>
+            <input id="ge-date-${id}" type="date" class="edit-input" style="width:150px; display:inline-block; width:40%;" value="${g.date || ''}">
+            <span class="edit-label" style="margin-left:10px;">시간</span>
+            <input id="ge-time-${id}" class="edit-input" style="width:30%; display:inline-block;" value="${g.time || ''}">
+        </div>
+        <div style="margin-top:8px;">
+            <span class="edit-label">모집자</span><input id="ge-name-${id}" class="edit-input" style="width:40%;" value="${g.name || ''}">
+            <span class="edit-label" style="margin-left:10px;">등급</span>
+            <select id="ge-level-${id}" class="edit-input" style="width:20%; display:inline-block;">
+                <option value="S1" ${g.level==='S1'?'selected':''}>S1</option>
+                <option value="S2" ${g.level==='S2'?'selected':''}>S2</option>
+                <option value="S3" ${g.level==='S3'?'selected':''}>S3</option>
+            </select>
+        </div>
+        <div style="margin-top:12px; border-top:1px dashed #ccc; padding-top:10px;">
+            <div style="font-weight:bold; color:#e53e3e; margin-bottom:8px;">💬 댓글 관리</div>
+            ${commentHtml ? commentHtml : '<p style="color:#999; font-size:11px;">댓글이 없습니다.</p>'}
+        </div>
+    </div></td>
+    <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveGuestEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
+};
+
+window.saveGuestEdit = async (id) => {
+    try {
+        await updateDoc(doc(db, "guestPosts", id), {
+            center: document.getElementById(`ge-center-${id}`).value,
+            date: document.getElementById(`ge-date-${id}`).value,
+            time: document.getElementById(`ge-time-${id}`).value,
+            name: document.getElementById(`ge-name-${id}`).value,
+            level: document.getElementById(`ge-level-${id}`).value
+        });
+        alert("✅ 모집글 수정 완료");
+        startGlobalListening();
+    } catch(e) { 
+        alert("❌ 수정 오류: " + e.message); 
+    }
+};
+
+window.removeGuestPost = async (id) => {
+    if(confirm("이 게시글과 관련된 모든 댓글이 삭제됩니다. 계속하시겠습니까?")) {
         try {
-            await updateDoc(doc(db, "matchRequests", id), {
-                title: document.getElementById(`me-title-${id}`).value,
-                type: document.getElementById(`me-type-${id}`).value,
-                sido: document.getElementById(`me-sido-${id}`).value,
-                date: document.getElementById(`me-date-${id}`).value,
-                deadline: document.getElementById(`me-deadline-${id}`).value,
-                loc: document.getElementById(`me-loc-${id}`).value,
-                fee: document.getElementById(`me-fee-${id}`).value,
-                link: document.getElementById(`me-link-${id}`).value
-            });
-            alert("✅ 대회 정보 수정 완료");
-            startGlobalListening();
-        } catch(e) { 
-            alert("❌ 수정 오류: " + e.message); 
-        }
-    };
-
-    window.updateStatus = async (col, id, status) => { 
-        if(confirm("승인하시겠습니까?")) {
-            try {
-                await updateDoc(doc(db, col, id), { status });
-                alert("✅ 승인되었습니다!");
-            } catch(e) {
-                alert("❌ 오류: " + e.message);
+            const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
+            for(const c of cSnap.docs) { 
+                await deleteDoc(doc(db, "guestComments", c.id)); 
             }
+            await deleteDoc(doc(db, "guestPosts", id));
+            alert("✅ 삭제되었습니다.");
+        } catch(e) {
+            alert("❌ 삭제 오류: " + e.message);
         }
-    };
+    }
+};
 
-    window.removeData = async (col, id) => { 
-        if(confirm("삭제하시겠습니까?")) {
-            try {
-                await deleteDoc(doc(db, col, id));
-                alert("✅ 삭제되었습니다!");
-            } catch(e) {
-                alert("❌ 오류: " + e.message);
-            }
+window.toggleCenterEdit = (id) => {
+    const c = centers.find(x => x.id === id); 
+    const row = document.getElementById(`crow-${id}`);
+    const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
+    
+    row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+            <div><span class="edit-label">지역</span><input id="ce-sido-${id}" class="edit-input" style="width:70px; display:inline-block;" value="${c.sido || ''}">
+            <span class="edit-label" style="margin-left:5px; width:auto;">상호</span><input id="ce-name-${id}" class="edit-input" style="width:60%; display:inline-block;" value="${c.name || ''}"></div>
+            <div style="margin-top:8px;"><span class="edit-label">주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
+            <div style="margin-top:8px;"><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:50%; display:inline-block;" value="${c.contact || ''}"></div>
+            <div style="margin-top:8px;"><span class="edit-label">영업시간</span><input id="ce-time-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.time || ''}"></div>
+            <div style="margin-top:8px;"><span class="edit-label">코트수</span>
+                <div style="display:inline-flex; gap:8px; margin-left:10px;">
+                    <div style="text-align:center;"><label style="font-size:10px;">정식</label><input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[0] || 0}"></div>
+                    <div style="text-align:center;"><label style="font-size:10px;">복식</label><input id="ce-court-dub-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[1] || 0}"></div>
+                    <div style="text-align:center;"><label style="font-size:10px;">세미</label><input id="ce-court-semi-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[2] || 0}"></div>
+                </div>
+            </div>
+            <div style="margin-top:8px;"><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:80%;" value="${c.fee || ''}"></div>
+        </div></td>
+    <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCenterEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
+};
+
+window.saveCenterEdit = async (id) => {
+    const reg = document.getElementById(`ce-court-reg-${id}`).value || 0;
+    const dub = document.getElementById(`ce-court-dub-${id}`).value || 0;
+    const semi = document.getElementById(`ce-court-semi-${id}`).value || 0;
+    
+    try {
+        await updateDoc(doc(db, "infoRequests", id), {
+            sido: document.getElementById(`ce-sido-${id}`).value,
+            name: document.getElementById(`ce-name-${id}`).value,
+            addr: document.getElementById(`ce-addr-${id}`).value,
+            contact: document.getElementById(`ce-contact-${id}`).value,
+            time: document.getElementById(`ce-time-${id}`).value,
+            court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`,
+            fee: document.getElementById(`ce-fee-${id}`).value
+        });
+        alert("✅ 센터 정보 수정 완료");
+        startGlobalListening();
+    } catch(e) { 
+        alert("❌ 수정 오류: " + e.message); 
+    }
+};
+
+window.toggleMatchEdit = (id) => {
+    const m = matches.find(x => x.id === id); 
+    const row = document.getElementById(`mrow-${id}`);
+    row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+        <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
+        <div style="margin-top:8px;">
+            <span class="edit-label">유형</span>
+            <select id="me-type-${id}" class="edit-input" style="width:25%; display:inline-block;">
+                <option value="전국" ${m.type==='전국'?'selected':''}>전국</option>
+                <option value="지역" ${m.type==='지역'?'selected':''}>지역</option>
+            </select>
+            <span class="edit-label" style="margin-left:8px;">지역</span><input id="me-sido-${id}" class="edit-input" style="width:40%; display:inline-block;" value="${m.sido || ''}">
+        </div>
+        <div style="margin-top:8px;">
+            <span class="edit-label">대회일</span><input id="me-date-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.date || ''}">
+            <span class="edit-label" style="margin-left:8px;">마감</span><input id="me-deadline-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.deadline || ''}">
+        </div>
+        <div style="margin-top:8px;"><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
+        <div style="margin-top:8px;"><span class="edit-label">참가비</span><input id="me-fee-${id}" class="edit-input" style="width:80%;" value="${m.fee || ''}"></div>
+        <div style="margin-top:8px;"><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}" placeholder="http://..."></div>
+    </div></td>
+    <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveMatchEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
+};
+
+window.saveMatchEdit = async (id) => {
+    try {
+        await updateDoc(doc(db, "matchRequests", id), {
+            title: document.getElementById(`me-title-${id}`).value,
+            type: document.getElementById(`me-type-${id}`).value,
+            sido: document.getElementById(`me-sido-${id}`).value,
+            date: document.getElementById(`me-date-${id}`).value,
+            deadline: document.getElementById(`me-deadline-${id}`).value,
+            loc: document.getElementById(`me-loc-${id}`).value,
+            fee: document.getElementById(`me-fee-${id}`).value,
+            link: document.getElementById(`me-link-${id}`).value
+        });
+        alert("✅ 대회 정보 수정 완료");
+        startGlobalListening();
+    } catch(e) { 
+        alert("❌ 수정 오류: " + e.message); 
+    }
+};
+
+window.updateStatus = async (col, id, status) => { 
+    if(confirm("승인하시겠습니까?")) {
+        try {
+            await updateDoc(doc(db, col, id), { status });
+            alert("✅ 승인되었습니다!");
+        } catch(e) {
+            alert("❌ 오류: " + e.message);
         }
-    };
+    }
+};
 
-    document.body.style.display = "block";
+window.removeData = async (col, id) => { 
+    if(confirm("삭제하시겠습니까?")) {
+        try {
+            await deleteDoc(doc(db, col, id));
+            alert("✅ 삭제되었습니다!");
+        } catch(e) {
+            alert("❌ 오류: " + e.message);
+        }
+    }
+};
+
+document.body.style.display = "block";
+```
+
 </script>
 
 </body>
 </html>
-
-수정3
