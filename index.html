@@ -590,8 +590,10 @@
             const ctx = document.getElementById('rankChart').getContext('2d');
             if (myChart) myChart.destroy();
             
-            // ✅ 최근 10경기만 표시
-            const rankHistory = (p.rankHistory || []).slice(-10);
+            // ✅ rankHistory 필터링: 1~50 범위만 + 최근 10경기만
+            const rankHistory = (p.rankHistory || [])
+                .filter(r => !isNaN(r) && r >= 1 && r <= 50)  // 이상한 초기값 제거
+                .slice(-10);  // 최근 10경기만
             
             if (rankHistory.length === 0) {
                 ctx.fillStyle = '#999';
@@ -860,4 +862,4 @@
 </body>
 </html>
 
-수정 3
+수정4
