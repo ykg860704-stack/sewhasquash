@@ -614,9 +614,160 @@
     };
 
     /**
-     * ✅ 업적 배지 계산 함수
+     * ✅ 멘트 생성 함수
      */
-    function calculateAchievements(player) {
+    function generateMentions(player) {
+        const mentions = [];
+        
+        if (!player) return mentions;
+        
+        // 분석 데이터
+        const recentGames = player.recentGames || [];
+        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
+        const wins = recentGames.filter(g => g.res === '승').length;
+        const totalGames = recentGames.length;
+        
+        // 1️⃣ 최근 경기 결과 분석
+        if (recentGames.length > 0) {
+            const lastGame = recentGames[0];
+            if (lastGame.res === '패') {
+                mentions.push({
+                    emoji: '💪',
+                    text: `${lastGame.opp} 상대로 복수전 하세요!`,
+                    priority: 10
+                });
+            } else if (lastGame.res === '승') {
+                mentions.push({
+                    emoji: '🔥',
+                    text: '계속 이기세요! 흐름을 유지하세요!',
+                    priority: 5
+                });
+            }
+        }
+        
+        // 2️⃣ 연승/연패 분석
+        if (recentGames.length >= 3) {
+            let winStreak = 0, lossStreak = 0;
+            for (let i = 0; i < 3; i++) {
+                if (recentGames[i] && recentGames[i].res === '승') {
+                    winStreak++;
+                } else {
+                    break;
+                }
+            }
+            for (let i = 0; i < 3; i++) {
+                if (recentGames[i] && recentGames[i].res === '패') {
+                    lossStreak++;
+                } else {
+                    break;
+                }
+            }
+            
+            if (winStreak >= 3) {
+                mentions.push({
+                    emoji: '🏆',
+                    text: '지금이 기회! 계속 우승하세요!',
+                    priority: 9
+                });
+            }
+            
+            if (lossStreak >= 3) {
+                mentions.push({
+                    emoji: '💪',
+                    text: '분발하세요! 넌 할 수 있어!',
+                    priority: 8
+                });
+            }
+        }
+        
+        // 3️⃣ 상성 분석
+        const matchups = analyzeMatchups(player);
+        const sortedMatchups = Object.entries(matchups)
+            .sort((a, b) => b[1].winRate - a[1].winRate);
+        
+        // 상성 좋은 상대
+        if (sortedMatchups.length > 0) {
+            const bestMatchup = sortedMatchups[0];
+            if (bestMatchup[1].winRate >= 50) {
+                mentions.push({
+                    emoji: '🎯',
+                    text: `${bestMatchup[0]}과 경기해보세요! (${bestMatchup[1].winRate}% 승률)`,
+                    priority: 7
+                });
+            }
+        }
+        
+        // 상성 안 좋은 상대
+        if (sortedMatchups.length > 0) {
+            const worstMatchup = sortedMatchups[sortedMatchups.length - 1];
+            if (worstMatchup[1].winRate < 50 && worstMatchup[1].wins === 0) {
+                mentions.push({
+                    emoji: '💥',
+                    text: `${worstMatchup[0]} 상대로 설욕전! (${worstMatchup[1].losses}연패)`,
+                    priority: 8
+                });
+            }
+        }
+        
+        // 4️⃣ 순위 변동 분석
+        if (rankHistory.length >= 2) {
+            const firstRank = rankHistory[0];
+            const lastRank = rankHistory[rankHistory.length - 1];
+            const rankChange = firstRank - lastRank;
+            
+            if (rankChange >= 5) {
+                mentions.push({
+                    emoji: '📈',
+                    text: `대단한 상승! 계속 올라가세요! (+${rankChange}위)`,
+                    priority: 7
+                });
+            } else if (rankChange <= -5) {
+                mentions.push({
+                    emoji: '💪',
+                    text: `다시 올라올 수 있어! 파이팅! (${rankChange}위)`,
+                    priority: 6
+                });
+            }
+        }
+        
+        // 5️⃣ 활동도 분석
+        if (totalGames >= 10) {
+            mentions.push({
+                emoji: '🔥',
+                text: `열정이 대단해요! 총 ${totalGames}경기 플레이!`,
+                priority: 5
+            });
+        }
+        
+        if (totalGames === 0) {
+            mentions.push({
+                emoji: '⏰',
+                text: '경기를 신청해보세요! 순위를 올릴 기회예요!',
+                priority: 4
+            });
+        }
+        
+        // 6️⃣ 순위별 멘트
+        if (player.groupRank === 1) {
+            mentions.push({
+                emoji: '👑',
+                text: '1위를 유지하세요! 계속 우승!',
+                priority: 6
+            });
+        } else if (player.groupRank <= 3) {
+            const gap = player.groupRank - 1;
+            mentions.push({
+                emoji: '📈',
+                text: `1위까지 ${gap}위 남았어요! 파이팅!`,
+                priority: 5
+            });
+        }
+        
+        // 우선순위 정렬
+        mentions.sort((a, b) => b.priority - a.priority);
+        
+        return mentions.slice(0, 3); // 상위 3개만 반환
+    }
         const achievements = [];
         if (!player) return achievements;
         
@@ -692,6 +843,17 @@
                </div>`
             : '';
         
+        // ✅ 멘트 시스템 추가
+        const mentions = generateMentions(p);
+        const mentionsHtml = mentions.length > 0
+            ? `<div style="margin-bottom:15px; background:#fff5e6; border-left:4px solid #f6ad55; padding:12px; border-radius:8px;">
+                <h4 style="margin:0 0 10px 0; color:#c05621; font-size:13px;">💬 추천 멘트</h4>
+                ${mentions.map(m => `<div style="margin-bottom:8px; padding:8px; background:white; border-radius:6px; border-left:3px solid #f6ad55; font-size:12px;">
+                    <strong>${m.emoji} ${m.text}</strong>
+                </div>`).join('')}
+               </div>`
+            : '';
+        
         // ✅ 상성 분석
         const matchups = analyzeMatchups(p);
         const sortedMatchups = Object.entries(matchups)
@@ -716,6 +878,7 @@
         document.getElementById("modalBody").innerHTML = `
             <h3 style="margin:0 0 15px 0; color:#2d3748; font-weight:800;">${p.name} - 상세 전적</h3>
             ${achievementHtml}
+            ${mentionsHtml}
             <div style="border-top: 2px solid #e2e8f0; padding-top:15px;">
                 <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">📊 경기 기록</h4>
                 ${gamesList || '<p style="color:#999; text-align:center; padding:20px;">경기 기록이 없습니다.</p>'}
@@ -1093,3 +1256,5 @@
 
 </body>
 </html>
+
+수정_멘트
