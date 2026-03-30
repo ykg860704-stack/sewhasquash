@@ -74,6 +74,11 @@
     .demote-item-name { font-weight: bold; color: #2d3748; font-size: 14px; }
     .demote-modal-btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
     .demote-modal-btn:hover { background: #218838; }
+
+    /* 경기 기록 스타일 */
+    .game-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 3px; }
+    .game-win { background: #c6f6d5; color: #22543d; }
+    .game-loss { background: #bee3f8; color: #2c5aa0; }
 </style>
 ```
 
@@ -213,7 +218,7 @@
         onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
             players = []; 
             let pList = "<table><tr><th style='width:50%'>이름</th><th style='width:50%'>승인</th></tr>", 
-                aList = "<table><tr><th style='width:15%'>순위</th><th style='width:60%'>정보</th><th style='width:25%'>관리</th></tr>";
+                aList = "<table><tr><th style='width:10%'>순위</th><th style='width:50%'>정보</th><th style='width:20%'>경기기록</th><th style='width:20%'>관리</th></tr>";
             snap.forEach(d => {
                 const p = {id: d.id, ...d.data()};
                 if ((p.centerId || 'sehwa') === currentCenterId) {
@@ -221,7 +226,13 @@
                     if(p.status === "pending") {
                         pList += `<tr><td><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td><div class="btn-group"><button class="btn-save" onclick="approve('${p.id}')">✅ 승인</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">❌ 거절</button></div></td></tr>`;
                     } else {
-                        aList += `<tr id="row-${p.id}"><td><strong>${p.groupRank}위</strong></td><td style="text-align:left;"><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td><div class="btn-group"><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></div></td></tr>`;
+                        // ✅ 수정: recentGames 표시 추가
+                        const gameCount = (p.recentGames || []).length;
+                        const gamesBadges = (p.recentGames || []).slice(0, 5).map(g => 
+                            `<span class="game-badge game-${g.res === '승' ? 'win' : 'loss'}">${g.res}</span>`
+                        ).join('');
+                        
+                        aList += `<tr id="row-${p.id}"><td><strong>${p.groupRank}위</strong></td><td style="text-align:left;"><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td style="text-align:center; font-size:12px;"><strong>${gameCount}경기</strong><br>${gamesBadges || '기록없음'}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></div></td></tr>`;
                     }
                 }
             });
@@ -274,23 +285,11 @@
 
     /**
      * ✅ 최종 완성: autoDemote 함수 - 올바른 알고리즘
-     * 
-     * 핵심 로직:
-     * 1. 7일 미경기자 모두 찾기
-     * 2. 각 그룹별로:
-     *    - 미경기자들을 제거
-     *    - 나머지 선수들을 1, 2, 3... 으로 재정렬
-     *    - 미경기자들을 맨 아래에 추가
-     * 
-     * 예시:
-     * 강등 전: 1위(경기X), 2위(경기O), 3위(경기O), 4위(경기O)
-     * 강등 후: 1위(2번 올라옴), 2위(3번 올라옴), 3위(4번 올라옴), 4위(1번 내려감)
      */
     window.autoDemote = async () => {
         if(!confirm("7일 동안 경기가 없는 선수들을 강등 처리하시겠습니까?\n(경기 있는 선수들의 순위가 자동으로 올라옵니다)")) return;
         
         try {
-            // === 1단계: 데이터 검증 ===
             const centerPlayers = players.filter(p => 
                 (p.centerId || 'sehwa') === currentCenterId && p.status === 'approved'
             );
@@ -300,7 +299,6 @@
                 return;
             }
 
-            // === 2단계: 그룹별로 분류 ===
             const groups = {};
             centerPlayers.forEach(p => {
                 const groupKey = `${p.timeGroup}/${p.league}`;
@@ -308,22 +306,18 @@
                 groups[groupKey].push(p);
             });
 
-            // === 3단계: 7일 미경기자 찾기 ===
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             const processedPlayers = [];
             const updatePromises = [];
 
-            // === 4단계: 각 그룹별로 강등 처리 ===
             for (const [groupKey, groupPlayers] of Object.entries(groups)) {
-                // 미경기자와 경기자를 분리
                 const activeWithGames = [];
                 const nonActiveNoGames = [];
 
                 for (const player of groupPlayers) {
                     let lastGameDate = null;
 
-                    // 최신 경기 날짜 추출
                     if (player.recentGames && Array.isArray(player.recentGames) && player.recentGames.length > 0) {
                         const lastGame = player.recentGames[0];
                         
@@ -355,7 +349,6 @@
                         }
                     }
 
-                    // 7일 이상 경기 없으면 미경기자
                     if (lastGameDate === null || lastGameDate < sevenDaysAgo) {
                         nonActiveNoGames.push({
                             player: player,
@@ -369,7 +362,6 @@
                     }
                 }
 
-                // === 5단계: 경기 있는 선수들 1, 2, 3... 재정렬 ===
                 activeWithGames.sort((a, b) => a.oldRank - b.oldRank);
                 
                 for (let i = 0; i < activeWithGames.length; i++) {
@@ -381,7 +373,6 @@
                     );
                 }
 
-                // === 6단계: 미경기자들을 맨 아래에 배치 ===
                 nonActiveNoGames.sort((a, b) => a.oldRank - b.oldRank);
                 
                 const startRank = activeWithGames.length + 1;
@@ -403,16 +394,12 @@
                 }
             }
 
-            // === 7단계: 미경기자가 없으면 조기 종료 ===
             if (processedPlayers.length === 0) {
                 alert("❌ 7일 이상 경기가 없는 미경기자가 없습니다.");
                 return;
             }
 
-            // === 8단계: 모든 순위 업데이트 동시 실행 ===
             await Promise.all(updatePromises);
-
-            // === 9단계: 결과 표시 ===
             showDemoteResult(processedPlayers, processedPlayers.length);
 
         } catch(e) {
@@ -421,9 +408,6 @@
         }
     };
 
-    /**
-     * 강등 결과를 모달로 표시하는 함수
-     */
     function showDemoteResult(processedPlayers, totalCount) {
         let resultHtml = `<p style="color: #555; margin-bottom: 15px; font-weight: bold;">
             총 ${totalCount}명의 미경기자가 처리되었습니다.
@@ -451,9 +435,6 @@
         document.getElementById('demoteModal').classList.add('show');
     }
 
-    /**
-     * 강등 결과 모달 닫기
-     */
     window.closeDemoteModal = () => {
         document.getElementById('demoteModal').classList.remove('show');
         startCenterListening();
@@ -464,15 +445,15 @@
         tempRecords = JSON.parse(JSON.stringify(p.recentGames || []));
         const row = document.getElementById(`row-${id}`);
         
-        let recordHtml = `<div class="record-edit-box"><div style="font-weight:bold; margin-bottom:8px; color:#e53e3e;">📋 경기 기록</div>`;
+        let recordHtml = `<div class="record-edit-box"><div style="font-weight:bold; margin-bottom:8px; color:#e53e3e;">📋 경기 기록 (${tempRecords.length}경기)</div>`;
         tempRecords.forEach((g, idx) => {
-            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp} (${g.res})</span>
+            recordHtml += `<div class="log-row"><span>${g.dt} vs ${g.opp} (${g.res}) ${g.sc || ''}</span>
                 <input id="score-${id}-${idx}" class="edit-input" style="width:50px;" value="${g.sc || ''}">
                 <button class="mini-del" onclick="removeLog(${idx}, '${id}')">✕ 삭제</button></div>`;
         });
         recordHtml += `</div>`;
 
-        row.innerHTML = `<td colspan="3" style="text-align:left;">
+        row.innerHTML = `<td colspan="4" style="text-align:left;">
             <div style="background:#f0fff4; padding:12px; border-radius:8px; border:1px solid #c6f6d5;">
                 <div style="margin-bottom:10px;">
                     <span style="font-weight:bold; color:#22543d;">순위:</span>
@@ -757,3 +738,5 @@
 
 </body>
 </html>
+
+수정
