@@ -76,7 +76,6 @@
         .comment-input-box input { padding: 8px; border-radius: 8px; font-size: 12px; }
         .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
-        /* 새로고침 버튼 스타일 */
         .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
     </style>
 </head>
@@ -205,7 +204,6 @@
             <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
             <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
         </select>
-        <!-- ✅ 개선: getDocs로 변경 후 수동 새로고침 버튼 추가 -->
         <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
     </div>
     <div id="info-list"></div>
@@ -255,7 +253,6 @@
             <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
             <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
         </select>
-        <!-- ✅ 개선: getDocs로 변경 후 수동 새로고침 버튼 추가 -->
         <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
     </div>
     <div id="match-list"></div>
@@ -286,7 +283,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ✅ 개선: showTab에 btn 매개변수를 받아서 event 의존성 제거 (기존 버그 수정)
     window.showTab = (tabId, btn) => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -300,31 +296,45 @@
     let players = [], challengerResult = null, myChart = null;
     let allCenters = [];
     let allMatches = [];
-
-    // ✅ 게스트 데이터를 모듈 레벨에서 관리 (이중 렌더링 버그 수정)
     let guestPostsData = [];
     let guestCommentsData = {};
 
-    // ─── 랭킹: 실시간 유지 (경기 결과가 즉시 반영되어야 하므로 onSnapshot 유지) ───
+    // ═══════════════════════════════════════════════════════════════
+    // 🎯 랭킹 시스템 - 실시간 유지 (경기 결과가 즉시 반영)
+    // ═══════════════════════════════════════════════════════════════
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
-        snap.forEach(d => { if(d.data().status === "approved") players.push({id: d.id, ...d.data()}); });
+        snap.forEach(d => { 
+            if(d.data().status === "approved") {
+                players.push({id: d.id, ...d.data()});
+            }
+        });
+        console.log('랭킹 업데이트:', players.length, '명');
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
-        renderUI(); updateCenterRanking(); updateChallengerList(); updateIndividualAwards();
+        renderUI(); 
+        updateCenterRanking(); 
+        updateChallengerList(); 
+        updateIndividualAwards();
     });
 
-    // ✅ 개선: 센터정보 → onSnapshot 제거, getDocs(1회 읽기)로 변경
-    // 자주 바뀌지 않는 데이터이므로 실시간 연결 불필요 → Firestore 읽기 횟수 대폭 절감
+    // ═══════════════════════════════════════════════════════════════
+    // 📍 센터정보 로드 (1회만)
+    // ═══════════════════════════════════════════════════════════════
     window.loadInfoData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
             allCenters = [];
-            snap.forEach(d => { if(d.data().status === "approved") allCenters.push(d.data()); });
+            snap.forEach(d => { 
+                if(d.data().status === "approved") {
+                    allCenters.push(d.data()); 
+                }
+            });
+            console.log('센터 로드:', allCenters.length, '개');
             renderInfoList();
             updateGuestCenterOptions();
         } catch(e) { console.error("센터정보 로드 오류:", e); }
     };
-    loadInfoData(); // 초기 1회 로드
+    loadInfoData();
 
     window.renderInfoList = () => {
         const filter = document.getElementById("filterSido").value;
@@ -369,28 +379,33 @@
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
-    // ✅ 개선: 대회정보 → onSnapshot 제거, getDocs(1회 읽기)로 변경
-    // 대회 일정은 실시간 변경 빈도가 낮음 → 불필요한 연결 제거
+    // ═══════════════════════════════════════════════════════════════
+    // 🎾 대회정보 로드 (1회만)
+    // ═══════════════════════════════════════════════════════════════
     window.loadMatchData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
             allMatches = [];
-            snap.forEach(d => { if(d.data().status === "approved") allMatches.push(d.data()); });
+            snap.forEach(d => { 
+                if(d.data().status === "approved") {
+                    allMatches.push(d.data()); 
+                }
+            });
+            console.log('대회 로드:', allMatches.length, '개');
             renderMatchList();
         } catch(e) { console.error("대회정보 로드 오류:", e); }
     };
-    loadMatchData(); // 초기 1회 로드
+    loadMatchData();
 
     window.renderMatchList = () => {
         const filter = document.getElementById("filterMatchSido").value;
-        
         const today = new Date().toISOString().split('T')[0];
         let filtered = allMatches.filter(m => m.date >= today);
 
         if(filter === "전국") filtered = allMatches.filter(m => m.type === "전국");
         else if(filter !== "전체") filtered = allMatches.filter(m => m.sido === filter);
+        
         let html = "";
-        const now = new Date();
         filtered.forEach(m => {
             const mDate = new Date(m.date);
             const dDate = new Date(m.deadline);
@@ -439,12 +454,28 @@
         } catch(e) { alert("저장 중 오류 발생: " + e.message); }
     };
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🏆 랭킹 렌더링 함수들
+    // ═══════════════════════════════════════════════════════════════
     function renderUI() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
+        const centerPlayers = players.filter(p => {
+            const pCenter = p.centerId || 'sehwa';
+            return pCenter === currentCenter;
+        });
+        
+        const groups = [
+            {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, 
+            {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, 
+            {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, 
+            {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}
+        ];
+        
         document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
         let fullHtml = "";
-        groups.forEach(g => { const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); });
+        groups.forEach(g => { 
+            const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); 
+            if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); 
+        });
         document.getElementById("rankContainer").innerHTML = fullHtml || "<p>데이터가 없습니다.</p>";
     }
 
@@ -490,12 +521,27 @@
     window.register = async () => {
         const name = document.getElementById("nameInput").value.trim();
         if(!name) return;
-        await addDoc(collection(db, "ranking"), { centerId: currentCenter, name, timeGroup: document.getElementById("timeGroup").value, gender: document.getElementById("gender").value, league: document.getElementById("league").value, groupRank: 999, status: "pending", recentGames: [], rankHistory: [999] });
-        alert("신청 완료!"); document.getElementById("nameInput").value = "";
+        await addDoc(collection(db, "ranking"), { 
+            centerId: currentCenter, 
+            name, 
+            timeGroup: document.getElementById("timeGroup").value, 
+            gender: document.getElementById("gender").value, 
+            league: document.getElementById("league").value, 
+            groupRank: 999, 
+            status: "pending", 
+            recentGames: [], 
+            rankHistory: [999] 
+        });
+        alert("신청 완료!"); 
+        document.getElementById("nameInput").value = "";
     };
 
     function updateIndividualAwards() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
+        const centerPlayers = players.filter(p => {
+            const pCenter = p.centerId || 'sehwa';
+            return pCenter === currentCenter;
+        });
+        
         if(centerPlayers.length === 0) return;
         let bestW = {name: '-', count: 0}, bestA = {name: '-', count: 0};
         centerPlayers.forEach(p => {
@@ -504,11 +550,18 @@
             if(wins > bestW.count) bestW = {name: p.name, count: wins};
             if(total > bestA.count) bestA = {name: p.name, count: total};
         });
-        document.getElementById("bestWinner").innerText = bestW.name; document.getElementById("bestWinCount").innerText = bestW.count + "승";
-        document.getElementById("bestActive").innerText = bestA.name; document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
+        document.getElementById("bestWinner").innerText = bestW.name; 
+        document.getElementById("bestWinCount").innerText = bestW.count + "승";
+        document.getElementById("bestActive").innerText = bestA.name; 
+        document.getElementById("bestActiveCount").innerText = bestA.count + "경기";
     }
 
-    window.setResult = (r) => { challengerResult = r; document.getElementById("resWin").style.background = r==='승'?'#ebf8ff':'white'; document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; };
+    window.setResult = (r) => { 
+        challengerResult = r; 
+        document.getElementById("resWin").style.background = r==='승'?'#ebf8ff':'white'; 
+        document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; 
+    };
+
     window.battleRecord = async () => {
         const cId = document.getElementById("challengerSelect").value, dId = document.getElementById("defenderSelect").value;
         if(!cId || !dId || !challengerResult) return alert("선택 필수!");
@@ -519,7 +572,8 @@
         if (challengerResult === '승') { uC.groupRank = Number(d.groupRank); uD.groupRank = Number(c.groupRank); }
         uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
         uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
-        await updateDoc(doc(db, "ranking", c.id), uC); await updateDoc(doc(db, "ranking", d.id), uD);
+        await updateDoc(doc(db, "ranking", c.id), uC); 
+        await updateDoc(doc(db, "ranking", d.id), uD);
         alert("기록 성공!");
     };
 
@@ -533,58 +587,71 @@
     };
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
-    
-    // ✅ 최종 수정: 도전자 선택 로직 완전 정정
-    // 스쿼시 규칙: 낮은 순위(큰 번호)가 높은 순위(작은 번호)를 도전
-    // 따라서 도전자가 14위면, 방어자는 1~13위(더 높은 순위)여야 함
-    window.filterOpponents = () => {
-        const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
-        if(!c) return;
-        
-        // centerId 기본값 처리 (데이터베이스에 centerId가 없을 수 있음)
-        const challengerCenterId = c.centerId || 'sehwa';
-        
-        // 같은 센터, 같은 시간, 같은 그룹에서 현재 도전자보다 더 높은 순위(낮은 번호) 선수만 필터링
-        const targets = players.filter(p => {
-            const defenderCenterId = p.centerId || 'sehwa';
-            return (
-                defenderCenterId === challengerCenterId &&    // 같은 센터
-                p.timeGroup === c.timeGroup &&                 // 같은 시간대
-                p.league === c.league &&                       // 같은 그룹
-                Number(p.groupRank) < Number(c.groupRank) &&  // 더 높은 순위(더 낮은 번호)
-                p.id !== c.id                                  // 자신 제외
-            );
-        });
-        
-        // 디버깅: 콘솔에 선택된 도전자와 가능한 방어자 정보 출력
-        console.log(`도전자: ${c.name} (${c.groupRank}위, 센터: ${challengerCenterId})`);
-        console.log(`가능한 방어자: ${targets.length}명`, targets.map(p => `${p.name}(${p.groupRank}위)`));
-        
-        document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
-    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎯 경기 기록 시스템 - 핵심 수정
+    // ═══════════════════════════════════════════════════════════════
     
     function updateChallengerList() {
-        const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
+        const centerPlayers = players.filter(p => {
+            const pCenter = p.centerId || 'sehwa';
+            return pCenter === currentCenter && p.groupRank > 1;
+        });
+        
+        document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     }
 
-    // ✅ 개선: 채팅 limit 50 → 30 으로 줄여 읽기 횟수 절감
+    window.filterOpponents = () => {
+        const challengerId = document.getElementById("challengerSelect").value;
+        if (!challengerId) {
+            document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>";
+            return;
+        }
+
+        const challenger = players.find(p => p.id === challengerId);
+        if (!challenger) return;
+
+        console.log(`도전자: ${challenger.name} (${challenger.groupRank}위, ${challenger.timeGroup} ${challenger.league})`);
+
+        // 같은 센터, 같은 시간, 같은 그룹에서 도전자보다 높은 순위(더 낮은 번호) 선수 필터링
+        const targets = players.filter(p => {
+            const sameCenter = (p.centerId || 'sehwa') === (challenger.centerId || 'sehwa');
+            const sameTime = p.timeGroup === challenger.timeGroup;
+            const sameLeague = p.league === challenger.league;
+            const higherRank = Number(p.groupRank) < Number(challenger.groupRank);
+            
+            return sameCenter && sameTime && sameLeague && higherRank;
+        });
+
+        console.log(`가능한 방어자: ${targets.length}명`, targets.map(p => `${p.name}(${p.groupRank}위)`));
+
+        const options = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
+        document.getElementById("defenderSelect").innerHTML = options;
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // 💬 채팅 시스템
+    // ═══════════════════════════════════════════════════════════════
     window.sendChat = async () => {
         const msg = document.getElementById("chatInput").value.trim();
         if(!msg) return;
         await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
         document.getElementById("chatInput").value = "";
     };
+    
     onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
         const chatDisplay = document.getElementById("chatDisplay");
-        let html = ""; let rev = [];
+        let html = ""; 
+        let rev = [];
         snap.forEach(d => rev.push(d.data()));
         rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
-        chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        chatDisplay.innerHTML = html; 
+        chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
 
-    // ─── 게스트 모집 ───
-
+    // ═══════════════════════════════════════════════════════════════
+    // 🤝 게스트 모집 시스템
+    // ═══════════════════════════════════════════════════════════════
     window.submitGuest = async () => {
         const center = document.getElementById("guestCenter").value;
         const name = document.getElementById("guestName").value.trim();
@@ -604,8 +671,6 @@
         } catch(e) { alert("오류 발생: " + e.message); }
     };
 
-    // ✅ 개선: 게스트 댓글 onSnapshot은 유지하되, 별도로 데이터만 저장하고 렌더링은 guestPostsData 기준으로만 실행
-    // → 기존에는 댓글 업데이트 시 + 게시글 업데이트 시 둘 다 renderGuestList를 호출해 이중 렌더링 발생하던 버그 수정
     onSnapshot(query(collection(db, "guestComments"), orderBy("createdAt", "asc")), (snap) => {
         guestCommentsData = {};
         snap.forEach(d => {
@@ -613,17 +678,14 @@
             if(!guestCommentsData[data.postId]) guestCommentsData[data.postId] = [];
             guestCommentsData[data.postId].push(data);
         });
-        // 게시글 데이터가 이미 로드된 경우에만 렌더링
         if(guestPostsData.length > 0) renderGuestList();
     });
 
-    // 게스트 게시글: 실시간 유지 (커뮤니티 기능이므로 onSnapshot 적합)
     onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "asc")), (snap) => {
         guestPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderGuestList();
     });
 
-    // ✅ 개선: renderGuestList는 항상 guestPostsData를 사용 (snapshot 인자 제거로 단순화)
     function renderGuestList() {
         const listDiv = document.getElementById("guest-list");
         if(!listDiv) return;
@@ -693,3 +755,5 @@
 
 </body>
 </html>
+
+123
