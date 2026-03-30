@@ -841,49 +841,6 @@
     }
 
     /**
-     * ✅ 업적 배지 계산 함수 (재정의)
-     */
-    function calculateAchievements(player) {
-        const achievements = [];
-        if (!player) return achievements;
-        
-        const wins = (player.recentGames || []).filter(g => g.res === '승').length;
-        const totalGames = (player.recentGames || []).length;
-        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
-        
-        if (wins >= 5) achievements.push({ icon: '🥇', name: '5승 달성' });
-        if (wins >= 10) achievements.push({ icon: '🥈', name: '10승 달성' });
-        if (wins >= 20) achievements.push({ icon: '🥉', name: '20승 달성' });
-        
-        if (player.recentGames && player.recentGames.length >= 5) {
-            let streak = 0;
-            for (let i = 0; i < 5; i++) {
-                if (player.recentGames[i] && player.recentGames[i].res === '승') {
-                    streak++;
-                } else {
-                    break;
-                }
-            }
-            if (streak === 5) achievements.push({ icon: '🔥', name: '5연승 달성' });
-        }
-        
-        if (totalGames >= 100) achievements.push({ icon: '💪', name: '100경기 참여' });
-        if (player.groupRank === 1) achievements.push({ icon: '👑', name: '1위 달성' });
-        
-        if (rankHistory.length >= 2) {
-            const firstRank = rankHistory[0];
-            const lastRank = rankHistory[rankHistory.length - 1];
-            if (firstRank - lastRank >= 10) {
-                achievements.push({ icon: '📈', name: `${firstRank - lastRank}단계 상승` });
-            }
-        }
-        
-        return achievements;
-    }
-
-
-    window.showLog = (id) => {
-        const p = players.find(x => x.id === id);
         
         // ✅ 업적 계산
         const achievements = calculateAchievements(p);
