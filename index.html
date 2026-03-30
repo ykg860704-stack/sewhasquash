@@ -97,8 +97,7 @@
     <button class="nav-item" onclick="showTab('info', this)">🏢 센터정보</button>
     <button class="nav-item" onclick="showTab('match', this)">🎾 대회정보</button>
     <button class="nav-item" onclick="showTab('market', this)">💰 용품정보</button>
-    <button class="nav-item" onclick="showTab('chat', this)">💬 통합채팅</button>
-    <button class="nav-item" onclick="showTab('board', this)">📋 게시판</button>
+    <button class="nav-item" onclick="showTab('community', this)">💬 커뮤니티</button>
     <button class="nav-item" onclick="showTab('gallery', this)">📸 사진첩</button>
 </div>
 
@@ -270,8 +269,39 @@
 </div>
 
 <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
-<div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
-<div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
+<div id="tab-community" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">💬 커뮤니티 - 새 글 작성</h2>
+        <div class="input-group">
+            <select id="postType">
+                <option value="의견">💭 의견</option>
+                <option value="공지">📢 공지</option>
+                <option value="질문">❓ 질문</option>
+                <option value="팁">💡 팁/정보</option>
+                <option value="자유">🎭 자유주제</option>
+            </select>
+            <input id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
+            <textarea id="postContent" placeholder="내용을 입력하세요" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:'Pretendard', sans-serif; min-height:120px; resize:vertical;"></textarea>
+            <input id="postAuthor" placeholder="작성자명 (닉네임)">
+            <input id="postPassword" type="password" placeholder="비밀번호 (수정/삭제 시 필요)">
+            <button class="btn-battle" onclick="submitPost()">✍️ 글 올리기</button>
+        </div>
+    </div>
+    <div class="section">
+        <h2 class="blue-h2">📋 커뮤니티 글</h2>
+        <div style="margin-bottom:15px;">
+            <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
+                <option value="">🌏 전체 글</option>
+                <option value="의견">💭 의견</option>
+                <option value="공지">📢 공지</option>
+                <option value="질문">❓ 질문</option>
+                <option value="팁">💡 팁/정보</option>
+                <option value="자유">🎭 자유주제</option>
+            </select>
+        </div>
+        <div id="community-list"></div>
+    </div>
+</div>
 <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
 ```
 
@@ -850,21 +880,114 @@
         document.getElementById("defenderSelect").innerHTML = options;
     };
 
-    window.sendChat = async () => {
-        const msg = document.getElementById("chatInput").value.trim();
-        if(!msg) return;
-        await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
-        document.getElementById("chatInput").value = "";
+    let communityPostsData = [];
+
+    // ═══════════════════════════════════════════════════════════════
+    // 💬 커뮤니티 시스템 (게시판)
+    // ═══════════════════════════════════════════════════════════════
+    window.submitPost = async () => {
+        const type = document.getElementById("postType").value;
+        const title = document.getElementById("postTitle").value.trim();
+        const content = document.getElementById("postContent").value.trim();
+        const author = document.getElementById("postAuthor").value.trim();
+        const password = document.getElementById("postPassword").value;
+        
+        if (!title || !content || !author || !password) {
+            return alert("모든 항목을 입력해주세요.");
+        }
+        
+        try {
+            await addDoc(collection(db, "communityPosts"), {
+                type,
+                title,
+                content,
+                author,
+                password,
+                createdAt: serverTimestamp(),
+                likes: 0
+            });
+            alert("✅ 글이 올려졌습니다!");
+            document.getElementById("postTitle").value = "";
+            document.getElementById("postContent").value = "";
+            document.getElementById("postAuthor").value = "";
+            document.getElementById("postPassword").value = "";
+        } catch (e) {
+            alert("❌ 저장 오류: " + e.message);
+        }
     };
-    
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
-        const chatDisplay = document.getElementById("chatDisplay");
-        let html = ""; 
-        let rev = [];
-        snap.forEach(d => rev.push(d.data()));
-        rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
-        chatDisplay.innerHTML = html; 
-        chatDisplay.scrollTop = chatDisplay.scrollHeight;
+
+    window.renderCommunityPosts = () => {
+        const filter = document.getElementById("filterPostType").value;
+        let filtered = communityPostsData;
+        
+        if (filter) {
+            filtered = communityPostsData.filter(p => p.type === filter);
+        }
+        
+        // 최신순 정렬
+        filtered.sort((a, b) => {
+            const aTime = a.createdAt ? a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt) : new Date(0);
+            const bTime = b.createdAt ? b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt) : new Date(0);
+            return bTime - aTime;
+        });
+        
+        let html = "";
+        if (filtered.length === 0) {
+            html = "<p style='text-align:center; padding:40px; color:#999;'>등록된 글이 없습니다.</p>";
+        } else {
+            html = filtered.map(post => {
+                const postTime = post.createdAt ? (post.createdAt.toDate ? post.createdAt.toDate() : new Date(post.createdAt)) : new Date();
+                const timeStr = postTime.toLocaleDateString('ko-KR') + ' ' + postTime.toLocaleTimeString('ko-KR', {hour: '2-digit', minute:'2-digit'});
+                
+                const typeEmoji = {
+                    '의견': '💭',
+                    '공지': '📢',
+                    '질문': '❓',
+                    '팁': '💡',
+                    '자유': '🎭'
+                }[post.type] || '📝';
+                
+                return `<div class="info-card" style="border-left: 5px solid #3182ce;">
+                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                        <div>
+                            <span style="display:inline-block; background:#ebf8ff; border:1px solid #bee3f8; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:bold; color:#3182ce; margin-right:8px;">${typeEmoji} ${post.type}</span>
+                            <span style="font-size:11px; color:#718096;">${timeStr}</span>
+                        </div>
+                        <button class="btn-del" onclick="deletePost('${post.id}', '${post.password}')">삭제</button>
+                    </div>
+                    <h3 style="margin:10px 0; color:#2d3748; font-size:16px; font-weight:800;">${post.title}</h3>
+                    <p style="color:#4a5568; line-height:1.6; margin:10px 0; font-size:14px; white-space:pre-wrap;">${post.content}</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
+                        <span style="font-size:12px; color:#718096;">✍️ ${post.author}</span>
+                        <span style="font-size:12px; color:#718096;">❤️ ${post.likes || 0}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        
+        document.getElementById("community-list").innerHTML = html;
+    };
+
+    window.deletePost = async (id, correctPassword) => {
+        const inputPassword = prompt("비밀번호를 입력하세요.");
+        if (inputPassword === null) return;
+        
+        if (inputPassword !== correctPassword) {
+            return alert("❌ 비밀번호가 일치하지 않습니다.");
+        }
+        
+        try {
+            await deleteDoc(doc(db, "communityPosts", id));
+            alert("✅ 글이 삭제되었습니다.");
+            renderCommunityPosts();
+        } catch (e) {
+            alert("❌ 삭제 오류: " + e.message);
+        }
+    };
+
+    onSnapshot(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")), (snap) => {
+        communityPostsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderCommunityPosts();
     });
 
     window.submitGuest = async () => {
@@ -970,5 +1093,3 @@
 
 </body>
 </html>
-
-수정5
