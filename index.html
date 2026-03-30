@@ -537,17 +537,29 @@
     // ✅ 최종 수정: 도전자 선택 로직 완전 정정
     // 스쿼시 규칙: 낮은 순위(큰 번호)가 높은 순위(작은 번호)를 도전
     // 따라서 도전자가 14위면, 방어자는 1~13위(더 높은 순위)여야 함
-    // → Number(p.groupRank) < Number(c.groupRank) 가 맞음
     window.filterOpponents = () => {
         const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
         if(!c) return;
-        // 같은 센터, 같은 시간, 같은 그룹에서 현재 도전자보다 더 높은 순위(낮은 번호) 선수
-        const targets = players.filter(p => 
-            p.centerId === c.centerId && 
-            p.timeGroup === c.timeGroup && 
-            p.league === c.league && 
-            Number(p.groupRank) < Number(c.groupRank)
-        );
+        
+        // centerId 기본값 처리 (데이터베이스에 centerId가 없을 수 있음)
+        const challengerCenterId = c.centerId || 'sehwa';
+        
+        // 같은 센터, 같은 시간, 같은 그룹에서 현재 도전자보다 더 높은 순위(낮은 번호) 선수만 필터링
+        const targets = players.filter(p => {
+            const defenderCenterId = p.centerId || 'sehwa';
+            return (
+                defenderCenterId === challengerCenterId &&    // 같은 센터
+                p.timeGroup === c.timeGroup &&                 // 같은 시간대
+                p.league === c.league &&                       // 같은 그룹
+                Number(p.groupRank) < Number(c.groupRank) &&  // 더 높은 순위(더 낮은 번호)
+                p.id !== c.id                                  // 자신 제외
+            );
+        });
+        
+        // 디버깅: 콘솔에 선택된 도전자와 가능한 방어자 정보 출력
+        console.log(`도전자: ${c.name} (${c.groupRank}위, 센터: ${challengerCenterId})`);
+        console.log(`가능한 방어자: ${targets.length}명`, targets.map(p => `${p.name}(${p.groupRank}위)`));
+        
         document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     };
     
@@ -681,6 +693,3 @@
 
 </body>
 </html>
-
-
-수정
