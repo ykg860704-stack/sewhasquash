@@ -11,6 +11,7 @@
         body { padding: 20px; background: #f8f9fa; display: none; max-width: 900px; margin: auto; }
 
 ```
+    /* 로그인 섹션 */
     .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
     .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
     @media (max-width: 600px) { .login-grid { flex-direction: column; } }
@@ -19,6 +20,7 @@
     h1, h2 { color: #2d3748; text-align: center; }
     h1 { margin-bottom: 30px; }
     
+    /* 탭 스타일 */
     .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; }
     .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #4a5568; font-weight: bold; cursor: pointer; border-radius: 8px; white-space: nowrap; }
     .tab-btn.active { background: #2d3748; color: white; }
@@ -30,6 +32,7 @@
     th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
     th { background: #f1f3f5; color: #4a5568; }
     
+    /* 버튼 스타일 */
     .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
     .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
     .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
@@ -37,6 +40,7 @@
     .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
     
     .action-btns { display: flex; gap: 4px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    
     .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
     .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
     .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
@@ -47,12 +51,20 @@
     .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
     .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
 
+    /* 수정 모드용 입력창 스타일 */
     .global-edit-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; font-size: 12px; }
     .edit-label { display: inline-block; width: 70px; font-weight: bold; color: #2b6cb0; margin-bottom: 5px; }
+    .court-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #fff; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e0; margin-top: 5px; }
 
+    /* 게스트 관리 스타일 */
+    .guest-manage-card { border-bottom: 1px solid #eee; padding: 15px 0; }
+    .admin-comment-sec { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 12px; }
+
+    /* 작은 버튼 그룹 */
     .btn-group { display: flex; gap: 4px; }
     .btn-group button { flex: 1; }
 
+    /* 강등 결과 모달 */
     .demote-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
     .demote-modal.show { display: flex; }
     .demote-modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
@@ -63,6 +75,7 @@
     .demote-modal-btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
     .demote-modal-btn:hover { background: #218838; }
 
+    /* 경기 기록 스타일 */
     .game-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 3px; }
     .game-win { background: #c6f6d5; color: #22543d; }
     .game-loss { background: #bee3f8; color: #2c5aa0; }
@@ -77,7 +90,7 @@
     <div class="login-grid">
         <div class="login-box" style="border-top: 5px solid #3182ce;">
             <h2>🏢 개별 센터 관리</h2>
-            <p style="font-size:13px; color:#666; margin-bottom:20px;">선수 랭킹 및 승인 관리</p>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">선수 랭킹 및 승인 관리 (센터 코드 입력)</p>
             <input type="password" id="centerCodeInput" class="login-input" placeholder="센터 코드">
             <button class="btn-save login-btn" onclick="loginCenterAdmin()">센터 관리 접속</button>
             <p id="centerError" class="err-msg">코드가 일치하지 않습니다.</p>
@@ -120,7 +133,7 @@
         <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
         <button class="tab-btn" onclick="switchGlobalTab('gtab-matches', this)">🎾 대회 관리</button>
         <button class="tab-btn" onclick="switchGlobalTab('gtab-guests', this)">🤝 게스트 관리</button>
-        <button class="tab-btn" onclick="switchGlobalTab('gtab-community', this)">💬 커뮤니티 관리</button>
+        <button class="tab-btn" onclick="switchGlobalTab('gtab-chats', this)">💬 채팅 관리</button>
     </div>
     <div id="gtab-centers" class="tab-content active">
         <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터 등록 요청 및 관리</h2><div id="centerManageList">데이터 로딩 중...</div></div>
@@ -131,23 +144,12 @@
     <div id="gtab-guests" class="tab-content">
         <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">🤝 게스트 모집글 및 댓글 관리</h2><div id="guestManageList">데이터 로딩 중...</div></div>
     </div>
-    <div id="gtab-community" class="tab-content">
-        <div class="card">
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 커뮤니티 글 관리</h2>
-            <div style="margin-bottom:15px;">
-                <select id="filterCommunityType" onchange="loadCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
-                    <option value="">🌏 전체 글</option>
-                    <option value="의견">💭 의견</option>
-                    <option value="공지">📢 공지</option>
-                    <option value="질문">❓ 질문</option>
-                    <option value="팁">💡 팁/정보</option>
-                    <option value="자유">🎭 자유주제</option>
-                </select>
-            </div>
-            <div id="communityManageList">데이터 로딩 중...</div>
-        </div>
+    <div id="gtab-chats" class="tab-content">
+        <div class="card"><h2 style="text-align:left; font-size:1.1em; border-left:4px solid #805ad5; padding-left:10px;">💬 통합 채팅 관리</h2><div id="chatManageList">데이터 로딩 중...</div></div>
     </div>
 </div>
+
+<!-- 강등 결과 모달 -->
 
 <div id="demoteModal" class="demote-modal">
     <div class="demote-modal-content">
@@ -181,98 +183,6 @@
         'sq5': { id: 'squash5', name: '스쿼시 5센터' }
     };
     let players = [], centers = [], matches = [], guestPosts = [], currentCenterId = "", tempRecords = [];
-
-    /**
-     * ✅ 3중 검토 완료: 날짜 파싱 함수 (모든 형식 지원, 공백 안전 처리)
-     * 
-     * 지원하는 형식:
-     * - YYYY.MM.DD (예: 2026.03.31)
-     * - M.D (예: 3.19, 현재 연도 기준)
-     * - "3. 19." (공백/마지막 점 포함)
-     * - YYYY-MM-DD (예: 2026-03-31)
-     * - YYYY/MM/DD (예: 2026/03/31)
-     * - M/D (예: 3/19)
-     * 
-     * 핵심: 각 부분을 trim()하여 공백 제거
-     */
-    function parseGameDate(dtStr) {
-        if (!dtStr) return null;
-        
-        try {
-            dtStr = String(dtStr).trim();
-            let dateObj = null;
-
-            // 형식 1: YYYY.MM.DD 또는 M.D
-            if (dtStr.includes('.')) {
-                let parts = dtStr.split('.');
-                // 각 부분의 공백 제거 및 빈 문자열 제거
-                parts = parts.map(p => p.trim()).filter(p => p.length > 0);
-                
-                if (parts.length === 3) {
-                    // YYYY.MM.DD
-                    const year = parseInt(parts[0]);
-                    const month = parseInt(parts[1]);
-                    const day = parseInt(parts[2]);
-                    
-                    if (!isNaN(year) && !isNaN(month) && !isNaN(day) &&
-                        year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                        dateObj = new Date(year, month - 1, day);
-                    }
-                } else if (parts.length === 2) {
-                    // M.D (현재 연도 기준)
-                    const today = new Date();
-                    const month = parseInt(parts[0]);
-                    const day = parseInt(parts[1]);
-                    
-                    if (!isNaN(month) && !isNaN(day) &&
-                        month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                        dateObj = new Date(today.getFullYear(), month - 1, day);
-                    }
-                }
-            }
-            // 형식 2: YYYY-MM-DD
-            else if (dtStr.includes('-')) {
-                dateObj = new Date(dtStr);
-            }
-            // 형식 3: YYYY/MM/DD 또는 M/D
-            else if (dtStr.includes('/')) {
-                let parts = dtStr.split('/');
-                // 각 부분의 공백 제거
-                parts = parts.map(p => p.trim()).filter(p => p.length > 0);
-                
-                if (parts.length === 3) {
-                    // YYYY/MM/DD
-                    const year = parseInt(parts[0]);
-                    const month = parseInt(parts[1]);
-                    const day = parseInt(parts[2]);
-                    
-                    if (!isNaN(year) && !isNaN(month) && !isNaN(day) &&
-                        year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                        dateObj = new Date(year, month - 1, day);
-                    }
-                } else if (parts.length === 2) {
-                    // M/D (현재 연도 기준)
-                    const today = new Date();
-                    const month = parseInt(parts[0]);
-                    const day = parseInt(parts[1]);
-                    
-                    if (!isNaN(month) && !isNaN(day) &&
-                        month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                        dateObj = new Date(today.getFullYear(), month - 1, day);
-                    }
-                }
-            }
-
-            // 유효한 날짜인지 확인
-            if (dateObj && !isNaN(dateObj.getTime())) {
-                return dateObj;
-            }
-        } catch (e) {
-            console.warn(`[날짜 파싱 실패] "${dtStr}": ${e.message}`);
-        }
-
-        return null;
-    }
 
     window.switchGlobalTab = (tabId, btn) => {
         document.querySelectorAll('#globalAdminPanel .tab-content').forEach(c => c.classList.remove('active'));
@@ -316,6 +226,7 @@
                     if(p.status === "pending") {
                         pList += `<tr><td><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td><div class="btn-group"><button class="btn-save" onclick="approve('${p.id}')">✅ 승인</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">❌ 거절</button></div></td></tr>`;
                     } else {
+                        // ✅ 수정: recentGames 표시 추가
                         const gameCount = (p.recentGames || []).length;
                         const gamesBadges = (p.recentGames || []).slice(0, 5).map(g => 
                             `<span class="game-badge game-${g.res === '승' ? 'win' : 'loss'}">${g.res}</span>`
@@ -373,14 +284,7 @@
     };
 
     /**
-     * ✅ 2중 검토 완료: autoDemote 함수
-     * 
-     * 알고리즘:
-     * 1. 각 그룹별로 선수를 분류 (경기 있음/없음)
-     * 2. 경기 있는 선수들을 1, 2, 3... 으로 재정렬
-     * 3. 경기 없는 선수들을 맨 아래에 배치
-     * 
-     * 날짜 파싱: parseGameDate() 함수로 안전하게 처리
+     * ✅ 최종 완성: autoDemote 함수 - 올바른 알고리즘
      */
     window.autoDemote = async () => {
         if(!confirm("7일 동안 경기가 없는 선수들을 강등 처리하시겠습니까?\n(경기 있는 선수들의 순위가 자동으로 올라옵니다)")) return;
@@ -395,7 +299,6 @@
                 return;
             }
 
-            // === 단계 1: 그룹별 분류 ===
             const groups = {};
             centerPlayers.forEach(p => {
                 const groupKey = `${p.timeGroup}/${p.league}`;
@@ -403,46 +306,53 @@
                 groups[groupKey].push(p);
             });
 
-            // === 단계 2: 7일 기준 계산 ===
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             const processedPlayers = [];
             const updatePromises = [];
 
-            console.log(`[autoDemote 시작] 기준일: ${now.toLocaleDateString('ko-KR')}, 7일 전: ${sevenDaysAgo.toLocaleDateString('ko-KR')}`);
-
-            // === 단계 3: 각 그룹별로 강등 처리 ===
             for (const [groupKey, groupPlayers] of Object.entries(groups)) {
                 const activeWithGames = [];
                 const nonActiveNoGames = [];
 
-                // 경기 있음/없음으로 분류
                 for (const player of groupPlayers) {
                     let lastGameDate = null;
 
-                    // 최신 경기 정보 추출
                     if (player.recentGames && Array.isArray(player.recentGames) && player.recentGames.length > 0) {
                         const lastGame = player.recentGames[0];
                         
                         if (lastGame && lastGame.dt) {
-                            lastGameDate = parseGameDate(lastGame.dt);
-                            
-                            if (lastGameDate) {
-                                console.log(`✅ ${player.name}: 마지막 경기일 = ${lastGameDate.toLocaleDateString('ko-KR')}`);
-                            } else {
-                                console.warn(`⚠️ ${player.name}: 날짜 파싱 실패 (원본: "${lastGame.dt}")`);
+                            try {
+                                const dtStr = String(lastGame.dt).trim();
+                                let dateObj;
+
+                                if (dtStr.includes('.')) {
+                                    const parts = dtStr.split('.');
+                                    if (parts.length === 3) {
+                                        dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                    }
+                                } else if (dtStr.includes('-')) {
+                                    dateObj = new Date(dtStr);
+                                } else if (dtStr.includes('/')) {
+                                    const parts = dtStr.split('/');
+                                    if (parts.length === 3) {
+                                        dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                    }
+                                }
+
+                                if (dateObj && !isNaN(dateObj.getTime())) {
+                                    lastGameDate = dateObj;
+                                }
+                            } catch (e) {
+                                console.warn(`[파싱 실패] ${player.name}: ${lastGame.dt}`);
                             }
                         }
-                    } else {
-                        console.log(`ℹ️ ${player.name}: 경기 기록 없음`);
                     }
 
-                    // 7일 이상 경기 없으면 미경기자
                     if (lastGameDate === null || lastGameDate < sevenDaysAgo) {
                         nonActiveNoGames.push({
                             player: player,
-                            oldRank: Number(player.groupRank),
-                            lastGameDate: lastGameDate
+                            oldRank: Number(player.groupRank)
                         });
                     } else {
                         activeWithGames.push({
@@ -452,9 +362,6 @@
                     }
                 }
 
-                console.log(`[${groupKey}] 경기 있음: ${activeWithGames.length}명, 경기 없음: ${nonActiveNoGames.length}명`);
-
-                // === 단계 4: 경기 있는 선수들 1, 2, 3... 재정렬 ===
                 activeWithGames.sort((a, b) => a.oldRank - b.oldRank);
                 
                 for (let i = 0; i < activeWithGames.length; i++) {
@@ -466,7 +373,6 @@
                     );
                 }
 
-                // === 단계 5: 경기 없는 선수들을 맨 아래에 배치 ===
                 nonActiveNoGames.sort((a, b) => a.oldRank - b.oldRank);
                 
                 const startRank = activeWithGames.length + 1;
@@ -483,28 +389,21 @@
                         name: player.name,
                         oldRank: demoteInfo.oldRank,
                         newRank: newRank,
-                        group: groupKey,
-                        lastGameDate: demoteInfo.lastGameDate ? demoteInfo.lastGameDate.toLocaleDateString('ko-KR') : '기록 없음'
+                        group: groupKey
                     });
                 }
             }
 
             if (processedPlayers.length === 0) {
                 alert("❌ 7일 이상 경기가 없는 미경기자가 없습니다.");
-                console.log("[autoDemote] 미경기자 없음");
                 return;
             }
 
-            // === 단계 6: 모든 업데이트 동시 실행 ===
             await Promise.all(updatePromises);
-
-            console.log(`[autoDemote 완료] 총 ${processedPlayers.length}명 처리됨`);
-
-            // === 단계 7: 결과 표시 ===
             showDemoteResult(processedPlayers, processedPlayers.length);
 
         } catch(e) {
-            console.error("[autoDemote 오류]", e);
+            console.error("[심각한 오류]", e);
             alert("❌ 강등 처리 중 오류 발생: " + e.message);
         }
     };
@@ -521,7 +420,7 @@
                     <div class="demote-item-detail">
                         <strong>그룹:</strong> ${player.group}<br>
                         <strong>순위 변경:</strong> ${player.oldRank}위 → ${player.newRank}위<br>
-                        <strong>마지막 경기:</strong> ${player.lastGameDate}
+                        <strong>상태:</strong> 경기 기록 없음 (7일 이상)
                     </div>
                 </div>
             `;
@@ -655,274 +554,186 @@
             });
             document.getElementById("guestManageList").innerHTML = html + "</table>";
         });
-
-        loadCommunityPosts();
     }
 
-    window.loadCommunityPosts = async () => {
+    window.toggleGuestEdit = async (id) => {
+        const g = guestPosts.find(x => x.id === id); 
+        const row = document.getElementById(`grow-${id}`);
+        
+        const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
+        let commentHtml = "";
+        cSnap.forEach(cd => {
+            const cdata = cd.data();
+            commentHtml += `<div class="log-row"><span><b>${cdata.userName}:</b> ${cdata.text}</span><button class="mini-del" onclick="removeData('guestComments', '${cd.id}')">✕</button></div>`;
+        });
+
+        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+            <div><span class="edit-label">센터명</span><input id="ge-center-${id}" class="edit-input" style="width:70%;" value="${g.center || ''}"></div>
+            <div style="margin-top:8px;">
+                <span class="edit-label">날짜</span>
+                <input id="ge-date-${id}" type="date" class="edit-input" style="width:150px; display:inline-block; width:40%;" value="${g.date || ''}">
+                <span class="edit-label" style="margin-left:10px;">시간</span>
+                <input id="ge-time-${id}" class="edit-input" style="width:30%; display:inline-block;" value="${g.time || ''}">
+            </div>
+            <div style="margin-top:8px;">
+                <span class="edit-label">모집자</span><input id="ge-name-${id}" class="edit-input" style="width:40%;" value="${g.name || ''}">
+                <span class="edit-label" style="margin-left:10px;">등급</span>
+                <select id="ge-level-${id}" class="edit-input" style="width:20%; display:inline-block;">
+                    <option value="S1" ${g.level==='S1'?'selected':''}>S1</option>
+                    <option value="S2" ${g.level==='S2'?'selected':''}>S2</option>
+                    <option value="S3" ${g.level==='S3'?'selected':''}>S3</option>
+                </select>
+            </div>
+            <div style="margin-top:12px; border-top:1px dashed #ccc; padding-top:10px;">
+                <div style="font-weight:bold; color:#e53e3e; margin-bottom:8px;">💬 댓글 관리</div>
+                ${commentHtml ? commentHtml : '<p style="color:#999; font-size:11px;">댓글이 없습니다.</p>'}
+            </div>
+        </div></td>
+        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveGuestEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
+    };
+
+    window.saveGuestEdit = async (id) => {
         try {
-            const snap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")));
-            const filter = document.getElementById("filterCommunityType").value;
-            let communityPosts = [];
-            
-            snap.forEach(d => {
-                const post = {id: d.id, ...d.data()};
-                communityPosts.push(post);
+            await updateDoc(doc(db, "guestPosts", id), {
+                center: document.getElementById(`ge-center-${id}`).value,
+                date: document.getElementById(`ge-date-${id}`).value,
+                time: document.getElementById(`ge-time-${id}`).value,
+                name: document.getElementById(`ge-name-${id}`).value,
+                level: document.getElementById(`ge-level-${id}`).value
             });
-            
-            let filtered = communityPosts;
-            if (filter) {
-                filtered = communityPosts.filter(p => p.type === filter);
-            }
-            
-            let html = "<table><tr><th>유형/제목</th><th>작성자</th><th>관리</th></tr>";
-            filtered.forEach(d => {
-                const typeEmoji = {
-                    '의견': '💭',
-                    '공지': '📢',
-                    '질문': '❓',
-                    '팁': '💡',
-                    '자유': '🎭'
-                }[d.type] || '📝';
-                
-                const postTime = d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate() : new Date(d.createdAt)) : new Date();
-                const timeStr = postTime.toLocaleDateString('ko-KR');
-                
-                html += `<tr id="prow-${d.id}"><td style="text-align:left;"><span style="display:inline-block; background:#f0f7ff; border:1px solid #bee3f8; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:bold; color:#3182ce; margin-right:5px;">${typeEmoji} ${d.type}</span><b>${d.title}</b><br><small style="color:#718096;">${timeStr}</small></td><td style="font-size:12px;">${d.author}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleCommunityEdit('${d.id}')">수정</button><button class="btn-del" onclick="removeData('communityPosts', '${d.id}')">🗑️ 삭제</button></div></td></tr>`;
-            });
-            
-            document.getElementById("communityManageList").innerHTML = html + "</table>";
-        } catch (e) {
-            console.error("커뮤니티 로드 오류:", e);
+            alert("✅ 모집글 수정 완료");
+            startGlobalListening();
+        } catch(e) { 
+            alert("❌ 수정 오류: " + e.message); 
         }
     };
 
-    window.toggleCommunityEdit = (id) => {
-        const snap = getDocs(collection(db, "communityPosts"));
-        snap.then(result => {
-            let post = null;
-            result.forEach(d => {
-                if (d.id === id) {
-                    post = {id: d.id, ...d.data()};
+    window.removeGuestPost = async (id) => {
+        if(confirm("이 게시글과 관련된 모든 댓글이 삭제됩니다. 계속하시겠습니까?")) {
+            try {
+                const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
+                for(const c of cSnap.docs) { 
+                    await deleteDoc(doc(db, "guestComments", c.id)); 
                 }
-            });
-            
-            if (!post) return;
-            
-            const row = document.getElementById(`prow-${id}`);
-            row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-                <div><span class="edit-label">유형</span>
-                    <select id="ce-type-${id}" class="edit-input" style="width:70%; display:inline-block;">
-                        <option value="의견" ${post.type==='의견'?'selected':''}>💭 의견</option>
-                        <option value="공지" ${post.type==='공지'?'selected':''}>📢 공지</option>
-                        <option value="질문" ${post.type==='질문'?'selected':''}>❓ 질문</option>
-                        <option value="팁" ${post.type==='팁'?'selected':''}>💡 팁/정보</option>
-                        <option value="자유" ${post.type==='자유'?'selected':''}>🎭 자유주제</option>
-                    </select>
-                </div>
-                <div style="margin-top:8px;"><span class="edit-label">제목</span><input id="ce-title-${id}" class="edit-input" style="width:80%;" value="${post.title}"></div>
-                <div style="margin-top:8px;"><span class="edit-label">내용</span><textarea id="ce-content-${id}" class="edit-input" style="width:80%; height:100px;">${post.content}</textarea></div>
-
-```
-        </div></td>
-        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCommunityEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="loadCommunityPosts()">❌ 취소</button></div></td>`;
-    });
-};
-
-window.saveCommunityEdit = async (id) => {
-    try {
-        await updateDoc(doc(db, "communityPosts", id), {
-            type: document.getElementById(`ce-type-${id}`).value,
-            title: document.getElementById(`ce-title-${id}`).value,
-            content: document.getElementById(`ce-content-${id}`).value
-        });
-        alert("✅ 수정 완료");
-        loadCommunityPosts();
-    } catch(e) { 
-        alert("❌ 수정 오류: " + e.message); 
-    }
-};
-
-window.toggleGuestEdit = async (id) => {
-    const g = guestPosts.find(x => x.id === id); 
-    const row = document.getElementById(`grow-${id}`);
-    
-    const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
-    let commentHtml = "";
-    cSnap.forEach(cd => {
-        const cdata = cd.data();
-        commentHtml += `<div class="log-row"><span><b>${cdata.userName}:</b> ${cdata.text}</span><button class="mini-del" onclick="removeData('guestComments', '${cd.id}')">✕</button></div>`;
-    });
-
-    row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-        <div><span class="edit-label">센터명</span><input id="ge-center-${id}" class="edit-input" style="width:70%;" value="${g.center || ''}"></div>
-        <div style="margin-top:8px;">
-            <span class="edit-label">날짜</span>
-            <input id="ge-date-${id}" type="date" class="edit-input" style="width:150px; display:inline-block; width:40%;" value="${g.date || ''}">
-            <span class="edit-label" style="margin-left:10px;">시간</span>
-            <input id="ge-time-${id}" class="edit-input" style="width:30%; display:inline-block;" value="${g.time || ''}">
-        </div>
-        <div style="margin-top:8px;">
-            <span class="edit-label">모집자</span><input id="ge-name-${id}" class="edit-input" style="width:40%;" value="${g.name || ''}">
-            <span class="edit-label" style="margin-left:10px;">등급</span>
-            <select id="ge-level-${id}" class="edit-input" style="width:20%; display:inline-block;">
-                <option value="S1" ${g.level==='S1'?'selected':''}>S1</option>
-                <option value="S2" ${g.level==='S2'?'selected':''}>S2</option>
-                <option value="S3" ${g.level==='S3'?'selected':''}>S3</option>
-            </select>
-        </div>
-        <div style="margin-top:12px; border-top:1px dashed #ccc; padding-top:10px;">
-            <div style="font-weight:bold; color:#e53e3e; margin-bottom:8px;">💬 댓글 관리</div>
-            ${commentHtml ? commentHtml : '<p style="color:#999; font-size:11px;">댓글이 없습니다.</p>'}
-        </div>
-    </div></td>
-    <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveGuestEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
-};
-
-window.saveGuestEdit = async (id) => {
-    try {
-        await updateDoc(doc(db, "guestPosts", id), {
-            center: document.getElementById(`ge-center-${id}`).value,
-            date: document.getElementById(`ge-date-${id}`).value,
-            time: document.getElementById(`ge-time-${id}`).value,
-            name: document.getElementById(`ge-name-${id}`).value,
-            level: document.getElementById(`ge-level-${id}`).value
-        });
-        alert("✅ 모집글 수정 완료");
-        startGlobalListening();
-    } catch(e) { 
-        alert("❌ 수정 오류: " + e.message); 
-    }
-};
-
-window.removeGuestPost = async (id) => {
-    if(confirm("이 게시글과 관련된 모든 댓글이 삭제됩니다. 계속하시겠습니까?")) {
-        try {
-            const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
-            for(const c of cSnap.docs) { 
-                await deleteDoc(doc(db, "guestComments", c.id)); 
+                await deleteDoc(doc(db, "guestPosts", id));
+                alert("✅ 삭제되었습니다.");
+            } catch(e) {
+                alert("❌ 삭제 오류: " + e.message);
             }
-            await deleteDoc(doc(db, "guestPosts", id));
-            alert("✅ 삭제되었습니다.");
-        } catch(e) {
-            alert("❌ 삭제 오류: " + e.message);
         }
-    }
-};
+    };
 
-window.toggleCenterEdit = (id) => {
-    const c = centers.find(x => x.id === id); 
-    const row = document.getElementById(`crow-${id}`);
-    const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
-    
-    row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-            <div><span class="edit-label">지역</span><input id="ce-sido-${id}" class="edit-input" style="width:70px; display:inline-block;" value="${c.sido || ''}">
-            <span class="edit-label" style="margin-left:5px; width:auto;">상호</span><input id="ce-name-${id}" class="edit-input" style="width:60%; display:inline-block;" value="${c.name || ''}"></div>
-            <div style="margin-top:8px;"><span class="edit-label">주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
-            <div style="margin-top:8px;"><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:50%; display:inline-block;" value="${c.contact || ''}"></div>
-            <div style="margin-top:8px;"><span class="edit-label">영업시간</span><input id="ce-time-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.time || ''}"></div>
-            <div style="margin-top:8px;"><span class="edit-label">코트수</span>
-                <div style="display:inline-flex; gap:8px; margin-left:10px;">
-                    <div style="text-align:center;"><label style="font-size:10px;">정식</label><input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[0] || 0}"></div>
-                    <div style="text-align:center;"><label style="font-size:10px;">복식</label><input id="ce-court-dub-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[1] || 0}"></div>
-                    <div style="text-align:center;"><label style="font-size:10px;">세미</label><input id="ce-court-semi-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[2] || 0}"></div>
+    window.toggleCenterEdit = (id) => {
+        const c = centers.find(x => x.id === id); 
+        const row = document.getElementById(`crow-${id}`);
+        const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
+        
+        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+                <div><span class="edit-label">지역</span><input id="ce-sido-${id}" class="edit-input" style="width:70px; display:inline-block;" value="${c.sido || ''}">
+                <span class="edit-label" style="margin-left:5px; width:auto;">상호</span><input id="ce-name-${id}" class="edit-input" style="width:60%; display:inline-block;" value="${c.name || ''}"></div>
+                <div style="margin-top:8px;"><span class="edit-label">주소</span><input id="ce-addr-${id}" class="edit-input" style="width:80%;" value="${c.addr || ''}"></div>
+                <div style="margin-top:8px;"><span class="edit-label">연락처</span><input id="ce-contact-${id}" class="edit-input" style="width:50%; display:inline-block;" value="${c.contact || ''}"></div>
+                <div style="margin-top:8px;"><span class="edit-label">영업시간</span><input id="ce-time-${id}" class="edit-input" style="width:80%;" placeholder="예: 평일 06-23" value="${c.time || ''}"></div>
+                <div style="margin-top:8px;"><span class="edit-label">코트수</span>
+                    <div style="display:inline-flex; gap:8px; margin-left:10px;">
+                        <div style="text-align:center;"><label style="font-size:10px;">정식</label><input id="ce-court-reg-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[0] || 0}"></div>
+                        <div style="text-align:center;"><label style="font-size:10px;">복식</label><input id="ce-court-dub-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[1] || 0}"></div>
+                        <div style="text-align:center;"><label style="font-size:10px;">세미</label><input id="ce-court-semi-${id}" type="number" class="edit-input" style="width:50px;" value="${courtMatch[2] || 0}"></div>
+                    </div>
                 </div>
+                <div style="margin-top:8px;"><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:80%;" value="${c.fee || ''}"></div>
+            </div></td>
+        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCenterEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
+    };
+
+    window.saveCenterEdit = async (id) => {
+        const reg = document.getElementById(`ce-court-reg-${id}`).value || 0;
+        const dub = document.getElementById(`ce-court-dub-${id}`).value || 0;
+        const semi = document.getElementById(`ce-court-semi-${id}`).value || 0;
+        
+        try {
+            await updateDoc(doc(db, "infoRequests", id), {
+                sido: document.getElementById(`ce-sido-${id}`).value,
+                name: document.getElementById(`ce-name-${id}`).value,
+                addr: document.getElementById(`ce-addr-${id}`).value,
+                contact: document.getElementById(`ce-contact-${id}`).value,
+                time: document.getElementById(`ce-time-${id}`).value,
+                court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`,
+                fee: document.getElementById(`ce-fee-${id}`).value
+            });
+            alert("✅ 센터 정보 수정 완료");
+            startGlobalListening();
+        } catch(e) { 
+            alert("❌ 수정 오류: " + e.message); 
+        }
+    };
+
+    window.toggleMatchEdit = (id) => {
+        const m = matches.find(x => x.id === id); 
+        const row = document.getElementById(`mrow-${id}`);
+        row.innerHTML = `<td colspan="2"><div class="global-edit-box">
+            <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
+            <div style="margin-top:8px;">
+                <span class="edit-label">유형</span>
+                <select id="me-type-${id}" class="edit-input" style="width:25%; display:inline-block;">
+                    <option value="전국" ${m.type==='전국'?'selected':''}>전국</option>
+                    <option value="지역" ${m.type==='지역'?'selected':''}>지역</option>
+                </select>
+                <span class="edit-label" style="margin-left:8px;">지역</span><input id="me-sido-${id}" class="edit-input" style="width:40%; display:inline-block;" value="${m.sido || ''}">
             </div>
-            <div style="margin-top:8px;"><span class="edit-label">입장료</span><input id="ce-fee-${id}" class="edit-input" style="width:80%;" value="${c.fee || ''}"></div>
+            <div style="margin-top:8px;">
+                <span class="edit-label">대회일</span><input id="me-date-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.date || ''}">
+                <span class="edit-label" style="margin-left:8px;">마감</span><input id="me-deadline-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.deadline || ''}">
+            </div>
+            <div style="margin-top:8px;"><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
+            <div style="margin-top:8px;"><span class="edit-label">참가비</span><input id="me-fee-${id}" class="edit-input" style="width:80%;" value="${m.fee || ''}"></div>
+            <div style="margin-top:8px;"><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}" placeholder="http://..."></div>
         </div></td>
-    <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCenterEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
-};
+        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveMatchEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
+    };
 
-window.saveCenterEdit = async (id) => {
-    const reg = document.getElementById(`ce-court-reg-${id}`).value || 0;
-    const dub = document.getElementById(`ce-court-dub-${id}`).value || 0;
-    const semi = document.getElementById(`ce-court-semi-${id}`).value || 0;
-    
-    try {
-        await updateDoc(doc(db, "infoRequests", id), {
-            sido: document.getElementById(`ce-sido-${id}`).value,
-            name: document.getElementById(`ce-name-${id}`).value,
-            addr: document.getElementById(`ce-addr-${id}`).value,
-            contact: document.getElementById(`ce-contact-${id}`).value,
-            time: document.getElementById(`ce-time-${id}`).value,
-            court: `정식 ${reg} / 복식 ${dub} / 세미 ${semi}`,
-            fee: document.getElementById(`ce-fee-${id}`).value
-        });
-        alert("✅ 센터 정보 수정 완료");
-        startGlobalListening();
-    } catch(e) { 
-        alert("❌ 수정 오류: " + e.message); 
-    }
-};
-
-window.toggleMatchEdit = (id) => {
-    const m = matches.find(x => x.id === id); 
-    const row = document.getElementById(`mrow-${id}`);
-    row.innerHTML = `<td colspan="2"><div class="global-edit-box">
-        <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
-        <div style="margin-top:8px;">
-            <span class="edit-label">유형</span>
-            <select id="me-type-${id}" class="edit-input" style="width:25%; display:inline-block;">
-                <option value="전국" ${m.type==='전국'?'selected':''}>전국</option>
-                <option value="지역" ${m.type==='지역'?'selected':''}>지역</option>
-            </select>
-            <span class="edit-label" style="margin-left:8px;">지역</span><input id="me-sido-${id}" class="edit-input" style="width:40%; display:inline-block;" value="${m.sido || ''}">
-        </div>
-        <div style="margin-top:8px;">
-            <span class="edit-label">대회일</span><input id="me-date-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.date || ''}">
-            <span class="edit-label" style="margin-left:8px;">마감</span><input id="me-deadline-${id}" type="date" class="edit-input" style="width:35%; display:inline-block;" value="${m.deadline || ''}">
-        </div>
-        <div style="margin-top:8px;"><span class="edit-label">장소</span><input id="me-loc-${id}" class="edit-input" style="width:80%;" value="${m.loc || ''}"></div>
-        <div style="margin-top:8px;"><span class="edit-label">참가비</span><input id="me-fee-${id}" class="edit-input" style="width:80%;" value="${m.fee || ''}"></div>
-        <div style="margin-top:8px;"><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}" placeholder="http://..."></div>
-    </div></td>
-    <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveMatchEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="startGlobalListening()">❌ 취소</button></div></td>`;
-};
-
-window.saveMatchEdit = async (id) => {
-    try {
-        await updateDoc(doc(db, "matchRequests", id), {
-            title: document.getElementById(`me-title-${id}`).value,
-            type: document.getElementById(`me-type-${id}`).value,
-            sido: document.getElementById(`me-sido-${id}`).value,
-            date: document.getElementById(`me-date-${id}`).value,
-            deadline: document.getElementById(`me-deadline-${id}`).value,
-            loc: document.getElementById(`me-loc-${id}`).value,
-            fee: document.getElementById(`me-fee-${id}`).value,
-            link: document.getElementById(`me-link-${id}`).value
-        });
-        alert("✅ 대회 정보 수정 완료");
-        startGlobalListening();
-    } catch(e) { 
-        alert("❌ 수정 오류: " + e.message); 
-    }
-};
-
-window.updateStatus = async (col, id, status) => { 
-    if(confirm("승인하시겠습니까?")) {
+    window.saveMatchEdit = async (id) => {
         try {
-            await updateDoc(doc(db, col, id), { status });
-            alert("✅ 승인되었습니다!");
-        } catch(e) {
-            alert("❌ 오류: " + e.message);
+            await updateDoc(doc(db, "matchRequests", id), {
+                title: document.getElementById(`me-title-${id}`).value,
+                type: document.getElementById(`me-type-${id}`).value,
+                sido: document.getElementById(`me-sido-${id}`).value,
+                date: document.getElementById(`me-date-${id}`).value,
+                deadline: document.getElementById(`me-deadline-${id}`).value,
+                loc: document.getElementById(`me-loc-${id}`).value,
+                fee: document.getElementById(`me-fee-${id}`).value,
+                link: document.getElementById(`me-link-${id}`).value
+            });
+            alert("✅ 대회 정보 수정 완료");
+            startGlobalListening();
+        } catch(e) { 
+            alert("❌ 수정 오류: " + e.message); 
         }
-    }
-};
+    };
 
-window.removeData = async (col, id) => { 
-    if(confirm("삭제하시겠습니까?")) {
-        try {
-            await deleteDoc(doc(db, col, id));
-            alert("✅ 삭제되었습니다!");
-        } catch(e) {
-            alert("❌ 오류: " + e.message);
+    window.updateStatus = async (col, id, status) => { 
+        if(confirm("승인하시겠습니까?")) {
+            try {
+                await updateDoc(doc(db, col, id), { status });
+                alert("✅ 승인되었습니다!");
+            } catch(e) {
+                alert("❌ 오류: " + e.message);
+            }
         }
-    }
-};
+    };
 
-document.body.style.display = "block";
-```
+    window.removeData = async (col, id) => { 
+        if(confirm("삭제하시겠습니까?")) {
+            try {
+                await deleteDoc(doc(db, col, id));
+                alert("✅ 삭제되었습니다!");
+            } catch(e) {
+                alert("❌ 오류: " + e.message);
+            }
+        }
+    };
 
+    document.body.style.display = "block";
 </script>
 
 </body>
