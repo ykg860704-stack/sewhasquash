@@ -170,14 +170,17 @@
     let players = [], centers = [], matches = [], guestPosts = [], currentCenterId = "", tempRecords = [];
 
     /**
-     * ✅ 2중 검토 완료: 날짜 파싱 함수 (모든 형식 지원)
+     * ✅ 3중 검토 완료: 날짜 파싱 함수 (모든 형식 지원, 공백 안전 처리)
      * 
      * 지원하는 형식:
      * - YYYY.MM.DD (예: 2026.03.31)
      * - M.D (예: 3.19, 현재 연도 기준)
+     * - "3. 19." (공백/마지막 점 포함)
      * - YYYY-MM-DD (예: 2026-03-31)
      * - YYYY/MM/DD (예: 2026/03/31)
      * - M/D (예: 3/19)
+     * 
+     * 핵심: 각 부분을 trim()하여 공백 제거
      */
     function parseGameDate(dtStr) {
         if (!dtStr) return null;
@@ -188,14 +191,18 @@
 
             // 형식 1: YYYY.MM.DD 또는 M.D
             if (dtStr.includes('.')) {
-                const parts = dtStr.split('.');
+                let parts = dtStr.split('.');
+                // 각 부분의 공백 제거 및 빈 문자열 제거
+                parts = parts.map(p => p.trim()).filter(p => p.length > 0);
                 
                 if (parts.length === 3) {
                     // YYYY.MM.DD
                     const year = parseInt(parts[0]);
                     const month = parseInt(parts[1]);
                     const day = parseInt(parts[2]);
-                    if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                    
+                    if (!isNaN(year) && !isNaN(month) && !isNaN(day) &&
+                        year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
                         dateObj = new Date(year, month - 1, day);
                     }
                 } else if (parts.length === 2) {
@@ -203,7 +210,9 @@
                     const today = new Date();
                     const month = parseInt(parts[0]);
                     const day = parseInt(parts[1]);
-                    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                    
+                    if (!isNaN(month) && !isNaN(day) &&
+                        month >= 1 && month <= 12 && day >= 1 && day <= 31) {
                         dateObj = new Date(today.getFullYear(), month - 1, day);
                     }
                 }
@@ -214,14 +223,18 @@
             }
             // 형식 3: YYYY/MM/DD 또는 M/D
             else if (dtStr.includes('/')) {
-                const parts = dtStr.split('/');
+                let parts = dtStr.split('/');
+                // 각 부분의 공백 제거
+                parts = parts.map(p => p.trim()).filter(p => p.length > 0);
                 
                 if (parts.length === 3) {
                     // YYYY/MM/DD
                     const year = parseInt(parts[0]);
                     const month = parseInt(parts[1]);
                     const day = parseInt(parts[2]);
-                    if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                    
+                    if (!isNaN(year) && !isNaN(month) && !isNaN(day) &&
+                        year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
                         dateObj = new Date(year, month - 1, day);
                     }
                 } else if (parts.length === 2) {
@@ -229,7 +242,9 @@
                     const today = new Date();
                     const month = parseInt(parts[0]);
                     const day = parseInt(parts[1]);
-                    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                    
+                    if (!isNaN(month) && !isNaN(day) &&
+                        month >= 1 && month <= 12 && day >= 1 && day <= 31) {
                         dateObj = new Date(today.getFullYear(), month - 1, day);
                     }
                 }
@@ -811,4 +826,5 @@
 
 </body>
 </html>
-수정2
+
+수정3
