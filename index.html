@@ -534,13 +534,20 @@
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
     
-    // ✅ 버그 수정: filterOpponents 로직 수정
-    // 도전자(낮은 랭킹)가 방어자(높은 랭킹)을 선택해야 하므로
-    // Number(p.groupRank) > Number(c.groupRank) 로 변경
+    // ✅ 최종 수정: 도전자 선택 로직 완전 정정
+    // 스쿼시 규칙: 낮은 순위(큰 번호)가 높은 순위(작은 번호)를 도전
+    // 따라서 도전자가 14위면, 방어자는 1~13위(더 높은 순위)여야 함
+    // → Number(p.groupRank) < Number(c.groupRank) 가 맞음
     window.filterOpponents = () => {
         const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
         if(!c) return;
-        const targets = players.filter(p => p.centerId === c.centerId && p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
+        // 같은 센터, 같은 시간, 같은 그룹에서 현재 도전자보다 더 높은 순위(낮은 번호) 선수
+        const targets = players.filter(p => 
+            p.centerId === c.centerId && 
+            p.timeGroup === c.timeGroup && 
+            p.league === c.league && 
+            Number(p.groupRank) < Number(c.groupRank)
+        );
         document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     };
     
@@ -609,8 +616,8 @@
         const listDiv = document.getElementById("guest-list");
         if(!listDiv) return;
         let html = "";
-    const today = new Date().toISOString().split('T')[0];
-    const activePosts = guestPostsData.filter(data => data.date >= today);
+        const today = new Date().toISOString().split('T')[0];
+        const activePosts = guestPostsData.filter(data => data.date >= today);
 
         activePosts.forEach(data => { 
             const postId = data.id;
@@ -675,4 +682,4 @@
 </body>
 </html>
 
-26.03.30_5:37
+6.25
