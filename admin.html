@@ -67,10 +67,11 @@
     /* 강등 결과 모달 */
     .demote-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
     .demote-modal.show { display: flex; }
-    .demote-modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 500px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .demote-modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
     .demote-modal-content h2 { color: #2d3748; margin-bottom: 15px; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
-    .demote-item { background: #f8f9fa; padding: 10px; margin-bottom: 8px; border-left: 4px solid #e74c3c; border-radius: 4px; }
-    .demote-item-detail { font-size: 12px; color: #555; margin-top: 3px; }
+    .demote-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-left: 4px solid #e74c3c; border-radius: 4px; }
+    .demote-item-detail { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.5; }
+    .demote-item-name { font-weight: bold; color: #2d3748; font-size: 14px; }
     .demote-modal-btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
     .demote-modal-btn:hover { background: #218838; }
 </style>
@@ -181,7 +182,8 @@
     window.switchGlobalTab = (tabId, btn) => {
         document.querySelectorAll('#globalAdminPanel .tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('#globalAdminPanel .tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active'); 
+        btn.classList.add('active');
     };
 
     window.loginCenterAdmin = () => {
@@ -192,7 +194,9 @@
             document.getElementById("centerAdminPanel").style.display = "block";
             document.getElementById("centerAdminTitle").innerText = `🛠️ ${codeMap[input].name} 관리 시스템`;
             startCenterListening();
-        } else { document.getElementById("centerError").style.display = "block"; }
+        } else { 
+            document.getElementById("centerError").style.display = "block"; 
+        }
     };
 
     window.loginGlobalAdmin = () => {
@@ -200,7 +204,9 @@
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("globalAdminPanel").style.display = "block";
             startGlobalListening();
-        } else { document.getElementById("globalError").style.display = "block"; }
+        } else { 
+            document.getElementById("globalError").style.display = "block"; 
+        }
     };
 
     function startCenterListening() {
@@ -267,17 +273,22 @@
     };
 
     /**
-     * ✅ 완전 개선된 autoDemote 함수
-     * - 게임 결과 기반 최근 경기일 계산
-     * - 2단계 강등 처리
-     * - 하위 선수들의 자동 순위 상향 조정
-     * - 모든 예외 상황 처리
+     * ✅ 최종 완성: autoDemote 함수
+     * 
+     * 로직:
+     * 1. 7일간 경기 없는 선수 찾기 (recentGames[0].dt 기준: "2026.03.25" 형식)
+     * 2. 각 선수를 2단계 강등 (순위 + 2)
+     * 3. 강등된 선수 사이의 모든 선수들 순위 2씩 올리기 (순위 - 2)
+     * 
+     * 예시:
+     * 강등 전: 1위(경기함), 2위(경기함), 3위(미경기), 4위(경기함), 5위(경기함)
+     * 강등 후: 1위, 2위, 3위(올라옴), 4위(올라옴), 5위(내려옴)
      */
     window.autoDemote = async () => {
         if(!confirm("7일 동안 경기가 없는 선수들을 확인하고 2단계 강등 처리하시겠습니까?\n(하위 선수들의 순위도 자동 조정됩니다)")) return;
         
         try {
-            // === 1단계: 데이터 검증 및 준비 ===
+            // === 1단계: 데이터 검증 ===
             const centerPlayers = players.filter(p => 
                 (p.centerId || 'sehwa') === currentCenterId && p.status === 'approved'
             );
@@ -287,149 +298,133 @@
                 return;
             }
 
-            // === 2단계: 그룹별로 데이터 분류 ===
+            // === 2단계: 그룹별 분류 ===
             const groups = {};
             centerPlayers.forEach(p => {
                 const groupKey = `${p.timeGroup}/${p.league}`;
-                if (!groups[groupKey]) {
-                    groups[groupKey] = [];
-                }
+                if (!groups[groupKey]) groups[groupKey] = [];
                 groups[groupKey].push(p);
             });
 
-            // === 3단계: 각 그룹별 강등 대상 찾기 ===
-            let allDemoteList = [];
+            // === 3단계: 7일 미경기자 찾기 ===
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const demoteList = [];
 
             for (const [groupKey, groupPlayers] of Object.entries(groups)) {
-                // 그룹 내에서 순위 정렬
-                groupPlayers.sort((a, b) => Number(a.groupRank) - Number(b.groupRank));
-
                 for (const player of groupPlayers) {
                     let lastGameDate = null;
+                    let lastGameDateStr = "경기 기록 없음";
 
-                    // recentGames 배열이 존재하고 값이 있는지 확인
+                    // recentGames에서 최신 경기 날짜 추출
                     if (player.recentGames && Array.isArray(player.recentGames) && player.recentGames.length > 0) {
                         const lastGame = player.recentGames[0];
                         
-                        // dt 필드가 존재하는지 확인
                         if (lastGame && lastGame.dt) {
                             try {
-                                // 다양한 날짜 형식 지원: "YYYY.MM.DD", "YYYY-MM-DD", "YYYY/MM/DD"
                                 const dtStr = String(lastGame.dt).trim();
+                                lastGameDateStr = dtStr;
                                 let dateObj;
 
+                                // 날짜 형식 파싱: "2026.03.25" 형식 기준
                                 if (dtStr.includes('.')) {
-                                    // "2024.12.15" 형식
                                     const parts = dtStr.split('.');
-                                    dateObj = new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
+                                    if (parts.length === 3) {
+                                        dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                    }
                                 } else if (dtStr.includes('-')) {
-                                    // "2024-12-15" 형식
                                     dateObj = new Date(dtStr);
                                 } else if (dtStr.includes('/')) {
-                                    // "2024/12/15" 형식
                                     const parts = dtStr.split('/');
-                                    dateObj = new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
-                                } else {
-                                    // 기타 형식은 파싱 시도
-                                    dateObj = new Date(dtStr);
+                                    if (parts.length === 3) {
+                                        dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                    }
                                 }
 
-                                // 날짜 유효성 검사
-                                if (!isNaN(dateObj.getTime())) {
+                                // 유효한 날짜인지 확인
+                                if (dateObj && !isNaN(dateObj.getTime())) {
                                     lastGameDate = dateObj;
                                 }
                             } catch (e) {
-                                // 날짜 파싱 실패 - 이 경우 lastGameDate는 null 유지
-                                console.warn(`[경고] ${player.name}의 경기 날짜 파싱 실패: ${lastGame.dt}`);
+                                console.warn(`[파싱 실패] ${player.name}: ${lastGame.dt}`);
                             }
                         }
                     }
 
-                    // lastGameDate가 없거나 7일 이상 지난 경우
+                    // 7일 이상 경기 없는 선수 추가
                     if (lastGameDate === null || lastGameDate < sevenDaysAgo) {
-                        allDemoteList.push({
+                        demoteList.push({
                             id: player.id,
                             name: player.name,
-                            currentRank: player.groupRank,
-                            timeGroup: player.timeGroup,
-                            league: player.league,
-                            lastGameDate: lastGameDate ? lastGameDate.toISOString().split('T')[0] : '경기 기록 없음',
+                            currentRank: Number(player.groupRank),
                             groupKey: groupKey,
+                            lastGameDateStr: lastGameDateStr,
                             groupPlayers: groupPlayers
                         });
                     }
                 }
             }
 
-            // === 4단계: 강등 대상이 없는 경우 처리 ===
-            if (allDemoteList.length === 0) {
+            // === 4단계: 강등 대상이 없으면 종료 ===
+            if (demoteList.length === 0) {
                 alert("❌ 7일 이상 경기가 없는 미경기자가 없습니다.");
                 return;
             }
 
-            // === 5단계: 실제 강등 처리 실행 ===
-            const processedPlayers = [];
+            // === 5단계: 강등 처리 실행 ===
             const updatePromises = [];
+            const processedPlayers = [];
 
-            for (const demoteInfo of allDemoteList) {
+            for (const demoPlayer of demoteList) {
                 try {
-                    const groupPlayers = demoteInfo.groupPlayers;
-                    
-                    // 현재 그룹의 최대 순위 찾기
-                    const maxRank = Math.max(...groupPlayers.map(p => Number(p.groupRank)));
-                    
-                    // 강등 대상의 새로운 순위 계산 (2단계 내려감)
-                    const newRank = maxRank + 2;
-                    
-                    // 강등 대상이 점유하던 순위 이하의 모든 선수 찾기
-                    const affectedPlayers = groupPlayers.filter(p => 
-                        Number(p.groupRank) > Number(demoteInfo.currentRank) && p.id !== demoteInfo.id
-                    );
+                    const oldRank = demoPlayer.currentRank;
+                    const newRank = oldRank + 2; // 2단계 강등
+                    const groupPlayers = demoPlayer.groupPlayers;
 
-                    // 영향받는 선수들의 순위를 한 단계 올림
-                    for (const affectedPlayer of affectedPlayers) {
-                        const newAffectedRank = Number(affectedPlayer.groupRank) - 2;
-                        if (newAffectedRank > 0) {
-                            updatePromises.push(
-                                updateDoc(doc(db, "ranking", affectedPlayer.id), { 
-                                    groupRank: newAffectedRank 
-                                })
-                            );
-                        }
+                    // 영향받는 선수들 찾기
+                    // (강등 선수보다 낮은 순위(숫자가 큼)이면서 새로운 순위보다 작거나 같은 모든 선수)
+                    // 예: 3위 → 5위 강등 시, 4위와 5위가 영향받음 (3 < 4 <= 5)
+                    const affectedPlayers = groupPlayers.filter(p => {
+                        const pRank = Number(p.groupRank);
+                        return pRank > oldRank && pRank <= newRank && p.id !== demoPlayer.id;
+                    });
+
+                    // 영향받는 선수들 순위 올리기 (-2)
+                    for (const affected of affectedPlayers) {
+                        const newAffectedRank = Number(affected.groupRank) - 2;
+                        updatePromises.push(
+                            updateDoc(doc(db, "ranking", affected.id), { groupRank: newAffectedRank })
+                        );
                     }
 
-                    // 강등 대상의 순위 업데이트
+                    // 강등 선수 순위 내리기 (+2)
                     updatePromises.push(
-                        updateDoc(doc(db, "ranking", demoteInfo.id), { 
-                            groupRank: newRank 
-                        })
+                        updateDoc(doc(db, "ranking", demoPlayer.id), { groupRank: newRank })
                     );
 
                     processedPlayers.push({
-                        name: demoteInfo.name,
-                        oldRank: demoteInfo.currentRank,
+                        name: demoPlayer.name,
+                        oldRank: oldRank,
                         newRank: newRank,
-                        lastGame: demoteInfo.lastGameDate,
+                        lastGame: demoPlayer.lastGameDateStr,
                         affectedCount: affectedPlayers.length
                     });
 
                 } catch (e) {
-                    console.error(`[오류] ${demoteInfo.name} 강등 처리 중 오류:`, e);
+                    console.error(`[오류] ${demoPlayer.name} 처리 중:`, e);
                     processedPlayers.push({
-                        name: demoteInfo.name,
+                        name: demoPlayer.name,
                         status: '오류',
                         error: e.message
                     });
                 }
             }
 
-            // === 6단계: 모든 업데이트 한 번에 실행 ===
+            // === 6단계: 모든 순위 업데이트 동시 실행 ===
             await Promise.all(updatePromises);
 
-            // === 7단계: 결과 모달에 표시 ===
-            showDemoteResult(processedPlayers, allDemoteList.length);
+            // === 7단계: 결과 표시 ===
+            showDemoteResult(processedPlayers, demoteList.length);
 
         } catch(e) {
             console.error("[심각한 오류]", e);
@@ -441,26 +436,26 @@
      * 강등 결과를 모달로 표시하는 함수
      */
     function showDemoteResult(processedPlayers, totalCount) {
-        let resultHtml = `<p style="color: #555; margin-bottom: 15px;">
-            <strong>총 ${totalCount}명의 미경기자가 처리되었습니다.</strong>
+        let resultHtml = `<p style="color: #555; margin-bottom: 15px; font-weight: bold;">
+            총 ${totalCount}명의 미경기자가 처리되었습니다.
         </p>`;
 
         processedPlayers.forEach(player => {
             if (player.status === '오류') {
                 resultHtml += `
                     <div class="demote-item">
-                        <div><strong>${player.name}</strong> - ⚠️ 오류</div>
+                        <div class="demote-item-name">${player.name} - ⚠️ 오류</div>
                         <div class="demote-item-detail">${player.error}</div>
                     </div>
                 `;
             } else {
                 resultHtml += `
                     <div class="demote-item">
-                        <div><strong>${player.name}</strong></div>
+                        <div class="demote-item-name">${player.name}</div>
                         <div class="demote-item-detail">
-                            순위: ${player.oldRank}위 → ${player.newRank}위 (2단계 강등) | 
-                            마지막 경기: ${player.lastGame} | 
-                            영향받은 선수: ${player.affectedCount}명
+                            <strong>순위:</strong> ${player.oldRank}위 → ${player.newRank}위 (2단계 강등)<br>
+                            <strong>마지막 경기:</strong> ${player.lastGame}<br>
+                            <strong>영향받은 선수:</strong> ${player.affectedCount}명
                         </div>
                     </div>
                 `;
@@ -480,7 +475,7 @@
      */
     window.closeDemoteModal = () => {
         document.getElementById('demoteModal').classList.remove('show');
-        startCenterListening(); // 데이터 새로고침
+        startCenterListening();
     };
 
     window.toggleEdit = (id) => {
@@ -550,22 +545,29 @@
         }
     };
 
-    window.removeLog = (idx, id) => { tempRecords.splice(idx, 1); alert("✅ 전적이 삭제되었습니다. (저장을 눌러야 반영됩니다)"); };
+    window.removeLog = (idx, id) => { 
+        tempRecords.splice(idx, 1); 
+        alert("✅ 전적이 삭제되었습니다. (저장을 눌러야 반영됩니다)"); 
+    };
 
     function startGlobalListening() {
         onSnapshot(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")), (snap) => {
-            centers = []; let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>관리</th></tr>";
+            centers = []; 
+            let html = "<table><tr><th>지역/상호</th><th>연락처</th><th>관리</th></tr>";
             snap.forEach(d => {
-                const c = {id: d.id, ...d.data()}; centers.push(c);
+                const c = {id: d.id, ...d.data()}; 
+                centers.push(c);
                 html += `<tr id="crow-${c.id}"><td style="text-align:left;"><b>${c.sido}</b><br>${c.name}</td><td style="font-size:12px;">${c.contact || '-'}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleCenterEdit('${c.id}')">수정</button>${c.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('infoRequests', '${c.id}', 'approved')">✅ 승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">✓ 승인됨</span>'}<button class="btn-del" onclick="removeData('infoRequests', '${c.id}')">🗑️ 삭제</button></div></td></tr>`;
             });
             document.getElementById("centerManageList").innerHTML = html + "</table>";
         });
 
         onSnapshot(query(collection(db, "matchRequests"), orderBy("date", "asc")), (snap) => {
-            matches = []; let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
+            matches = []; 
+            let html = "<table><tr><th>대회명</th><th>날짜</th><th>관리</th></tr>";
             snap.forEach(d => {
-                const m = {id: d.id, ...d.data()}; matches.push(m);
+                const m = {id: d.id, ...d.data()}; 
+                matches.push(m);
                 html += `<tr id="mrow-${m.id}"><td style="text-align:left;"><b>${m.title}</b><br><small>${m.sido}</small></td><td style="font-size:12px;">${m.date}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleMatchEdit('${m.id}')">수정</button>${m.status === 'pending' ? `<button class="btn-save" onclick="updateStatus('matchRequests', '${m.id}', 'approved')">✅ 승인</button>` : '<span class="status-tag" style="background:#f0fff4;color:#38a169;">✓ 승인됨</span>'}<button class="btn-del" onclick="removeData('matchRequests', '${m.id}')">🗑️ 삭제</button></div></td></tr>`;
             });
             document.getElementById("matchManageList").innerHTML = html + "</table>";
@@ -581,9 +583,11 @@
         });
 
         onSnapshot(query(collection(db, "guestPosts"), orderBy("date", "desc")), (snap) => {
-            guestPosts = []; let html = "<table><tr><th>날짜/센터</th><th>모집자</th><th>관리</th></tr>";
+            guestPosts = []; 
+            let html = "<table><tr><th>날짜/센터</th><th>모집자</th><th>관리</th></tr>";
             snap.forEach(d => {
-                const g = {id: d.id, ...d.data()}; guestPosts.push(g);
+                const g = {id: d.id, ...d.data()}; 
+                guestPosts.push(g);
                 html += `<tr id="grow-${g.id}"><td style="text-align:left;"><b>${g.date}</b><br><small>${g.center}</small></td><td style="font-size:12px;">${g.name}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleGuestEdit('${g.id}')">수정</button><button class="btn-del" onclick="removeGuestPost('${g.id}')">🗑️ 삭제</button></div></td></tr>`;
             });
             document.getElementById("guestManageList").innerHTML = html + "</table>";
@@ -591,7 +595,8 @@
     }
 
     window.toggleGuestEdit = async (id) => {
-        const g = guestPosts.find(x => x.id === id); const row = document.getElementById(`grow-${id}`);
+        const g = guestPosts.find(x => x.id === id); 
+        const row = document.getElementById(`grow-${id}`);
         
         const cSnap = await getDocs(query(collection(db, "guestComments"), where("postId", "==", id)));
         let commentHtml = "";
@@ -636,7 +641,9 @@
             });
             alert("✅ 모집글 수정 완료");
             startGlobalListening();
-        } catch(e) { alert("❌ 수정 오류: " + e.message); }
+        } catch(e) { 
+            alert("❌ 수정 오류: " + e.message); 
+        }
     };
 
     window.removeGuestPost = async (id) => {
@@ -655,7 +662,8 @@
     };
 
     window.toggleCenterEdit = (id) => {
-        const c = centers.find(x => x.id === id); const row = document.getElementById(`crow-${id}`);
+        const c = centers.find(x => x.id === id); 
+        const row = document.getElementById(`crow-${id}`);
         const courtMatch = (c.court || "").match(/\d+/g) || [0,0,0];
         
         row.innerHTML = `<td colspan="2"><div class="global-edit-box">
@@ -693,11 +701,14 @@
             });
             alert("✅ 센터 정보 수정 완료");
             startGlobalListening();
-        } catch(e) { alert("❌ 수정 오류: " + e.message); }
+        } catch(e) { 
+            alert("❌ 수정 오류: " + e.message); 
+        }
     };
 
     window.toggleMatchEdit = (id) => {
-        const m = matches.find(x => x.id === id); const row = document.getElementById(`mrow-${id}`);
+        const m = matches.find(x => x.id === id); 
+        const row = document.getElementById(`mrow-${id}`);
         row.innerHTML = `<td colspan="2"><div class="global-edit-box">
             <div><span class="edit-label">대회명</span><input id="me-title-${id}" class="edit-input" style="width:80%;" value="${m.title || ''}"></div>
             <div style="margin-top:8px;">
@@ -733,7 +744,9 @@
             });
             alert("✅ 대회 정보 수정 완료");
             startGlobalListening();
-        } catch(e) { alert("❌ 수정 오류: " + e.message); }
+        } catch(e) { 
+            alert("❌ 수정 오류: " + e.message); 
+        }
     };
 
     window.updateStatus = async (col, id, status) => { 
