@@ -79,7 +79,7 @@
         .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
         #chartContainer { 
             position: relative; 
-            height: 400px; 
+            height: 500px; 
             width: 100%; 
             margin-top: 20px;
             padding: 15px;
@@ -590,7 +590,8 @@
             const ctx = document.getElementById('rankChart').getContext('2d');
             if (myChart) myChart.destroy();
             
-            const rankHistory = (p.rankHistory || []).length > 0 ? p.rankHistory : [];
+            // ✅ 최근 10경기만 표시
+            const rankHistory = (p.rankHistory || []).slice(-10);
             
             if (rankHistory.length === 0) {
                 ctx.fillStyle = '#999';
@@ -600,6 +601,13 @@
                 return;
             }
             
+            // ✅ 동적 Y축 설정 (데이터에 맞춰서)
+            const minRank = Math.min(...rankHistory);
+            const maxRank = Math.max(...rankHistory);
+            const yMin = Math.max(1, minRank - 1);  // 최소값에서 -1 (여백)
+            const yMax = maxRank + 2;               // 최대값에서 +2 (여유)
+            const stepSize = Math.ceil((yMax - yMin) / 5);  // 적절한 간격
+            
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -608,15 +616,15 @@
                         label: `${p.name}의 순위 변동`,
                         data: rankHistory,
                         borderColor: '#3182ce',
-                        backgroundColor: 'rgba(49, 130, 206, 0.1)',
-                        borderWidth: 3,
+                        backgroundColor: 'rgba(49, 130, 206, 0.15)',
+                        borderWidth: 2.5,
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 6,
+                        pointRadius: 7,
                         pointBackgroundColor: '#3182ce',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 8,
+                        pointBorderWidth: 2.5,
+                        pointHoverRadius: 9,
                         segment: {
                             borderColor: ctx => ctx.p0DataIndex > 0 && rankHistory[ctx.p0DataIndex] < rankHistory[ctx.p0DataIndex - 1] 
                                 ? '#e53e3e'
@@ -632,7 +640,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `📊 ${p.name} 순위 변동 추이`,
+                            text: `📊 ${p.name} 순위 변동 추이 (최근 ${rankHistory.length}경기)`,
                             font: { size: 16, weight: 'bold' },
                             color: '#2d3748',
                             padding: 15
@@ -653,25 +661,26 @@
                     scales: {
                         y: {
                             reverse: true,
-                            min: 1,
-                            max: 50,
+                            min: yMin,
+                            max: yMax,
                             ticks: {
-                                stepSize: 5,
+                                stepSize: stepSize,
                                 callback: function(value) {
                                     return value + '위';
                                 },
                                 color: '#4a5568',
-                                font: { weight: 'bold' }
+                                font: { weight: 'bold', size: 12 }
                             },
                             title: {
                                 display: true,
                                 text: '순위',
                                 color: '#2d3748',
-                                font: { weight: 'bold' }
+                                font: { weight: 'bold', size: 13 }
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.05)',
-                                drawBorder: true
+                                color: 'rgba(0, 0, 0, 0.08)',
+                                drawBorder: true,
+                                lineWidth: 1.5
                             }
                         },
                         x: {
@@ -679,14 +688,15 @@
                                 display: true,
                                 text: '경기 횟수',
                                 color: '#2d3748',
-                                font: { weight: 'bold' }
+                                font: { weight: 'bold', size: 13 }
                             },
                             ticks: {
                                 color: '#4a5568',
-                                font: { weight: 'bold' }
+                                font: { weight: 'bold', size: 12 }
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                color: 'rgba(0, 0, 0, 0.08)',
+                                lineWidth: 1
                             }
                         }
                     }
@@ -850,4 +860,4 @@
 </body>
 </html>
 
-수정 3.31
+수정 3
