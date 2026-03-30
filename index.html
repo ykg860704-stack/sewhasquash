@@ -77,22 +77,17 @@
         .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
         .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
-
-```
-    /* 그래프 컨테이너 개선 */
-    #chartContainer { 
-        position: relative; 
-        height: 400px; 
-        width: 100%; 
-        margin-top: 20px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-    }
-</style>
-```
-
+        #chartContainer { 
+            position: relative; 
+            height: 400px; 
+            width: 100%; 
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
 </head>
 <body>
 
@@ -154,6 +149,7 @@
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
+```
 <div id="tab-guest" class="tab-content">
     <div class="section">
         <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
@@ -277,6 +273,7 @@
 <div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
 <div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
 <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
+```
 
 </div>
 
@@ -314,9 +311,6 @@
     let guestPostsData = [];
     let guestCommentsData = {};
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🎯 랭킹 시스템 - 실시간 유지 (경기 결과가 즉시 반영)
-    // ═══════════════════════════════════════════════════════════════
     onSnapshot(query(collection(db, "ranking"), orderBy("groupRank", "asc")), (snap) => {
         players = [];
         snap.forEach(d => { 
@@ -324,7 +318,6 @@
                 players.push({id: d.id, ...d.data()});
             }
         });
-        console.log('랭킹 업데이트:', players.length, '명');
         document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
         renderUI(); 
         updateCenterRanking(); 
@@ -332,9 +325,6 @@
         updateIndividualAwards();
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // 📍 센터정보 로드 (1회만)
-    // ═══════════════════════════════════════════════════════════════
     window.loadInfoData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
@@ -344,7 +334,6 @@
                     allCenters.push(d.data()); 
                 }
             });
-            console.log('센터 로드:', allCenters.length, '개');
             renderInfoList();
             updateGuestCenterOptions();
         } catch(e) { console.error("센터정보 로드 오류:", e); }
@@ -394,9 +383,6 @@
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
     };
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🎾 대회정보 로드 (1회만)
-    // ═══════════════════════════════════════════════════════════════
     window.loadMatchData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
@@ -406,7 +392,6 @@
                     allMatches.push(d.data()); 
                 }
             });
-            console.log('대회 로드:', allMatches.length, '개');
             renderMatchList();
         } catch(e) { console.error("대회정보 로드 오류:", e); }
     };
@@ -469,9 +454,6 @@
         } catch(e) { alert("저장 중 오류 발생: " + e.message); }
     };
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🏆 랭킹 렌더링 함수들
-    // ═══════════════════════════════════════════════════════════════
     function renderUI() {
         const centerPlayers = players.filter(p => {
             const pCenter = p.centerId || 'sehwa';
@@ -545,7 +527,7 @@
             groupRank: 999, 
             status: "pending", 
             recentGames: [], 
-            rankHistory: [999] 
+            rankHistory: []
         });
         alert("신청 완료!"); 
         document.getElementById("nameInput").value = "";
@@ -577,17 +559,11 @@
         document.getElementById("resLoss").style.background = r==='패'?'#fff5f5':'white'; 
     };
 
-    /**
-     * ✅ 수정된 battleRecord 함수
-     * - dt 필드를 "2026.03.31" 형식으로 정확하게 저장
-     * - Admin에서 정확하게 파싱 가능
-     */
     window.battleRecord = async () => {
         const cId = document.getElementById("challengerSelect").value, dId = document.getElementById("defenderSelect").value;
         if(!cId || !dId || !challengerResult) return alert("선택 필수!");
         const c = players.find(p => p.id === cId), d = players.find(p => p.id === dId);
         
-        // ✅ 정확한 날짜 형식: "YYYY.MM.DD"
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -604,23 +580,25 @@
         alert("기록 성공!");
     };
 
-    /**
-     * ✅ 개선된 showLog 함수
-     * - 그래프를 완벽하게 렌더링
-     * - 날짜별 순위 변화를 명확하게 표시
-     */
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
         const gamesList = (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;"><strong>${g.dt}</strong> vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
         document.getElementById("modalBody").innerHTML = `<h3 style="margin:0 0 15px 0; color:#2d3748; font-weight:800;">${p.name} - 상세 전적</h3><div style="border-top: 2px solid #e2e8f0; padding-top:15px;">${gamesList || '<p style="color:#999; text-align:center; padding:20px;">경기 기록이 없습니다.</p>'}</div>`;
         document.getElementById("modalOverlay").style.display = "flex";
         
-        // ✅ 개선된 그래프
         setTimeout(() => {
             const ctx = document.getElementById('rankChart').getContext('2d');
             if (myChart) myChart.destroy();
             
-            const rankHistory = p.rankHistory || [];
+            const rankHistory = (p.rankHistory || []).length > 0 ? p.rankHistory : [];
+            
+            if (rankHistory.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('경기 기록이 없어 그래프를 표시할 수 없습니다', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
             
             myChart = new Chart(ctx, {
                 type: 'line',
@@ -641,10 +619,10 @@
                         pointHoverRadius: 8,
                         segment: {
                             borderColor: ctx => ctx.p0DataIndex > 0 && rankHistory[ctx.p0DataIndex] < rankHistory[ctx.p0DataIndex - 1] 
-                                ? '#e53e3e' // 순위 올랐을 때 (숫자 작아짐) - 빨강
+                                ? '#e53e3e'
                                 : ctx.p0DataIndex > 0 && rankHistory[ctx.p0DataIndex] > rankHistory[ctx.p0DataIndex - 1]
-                                ? '#3182ce' // 순위 내려갔을 때 (숫자 커짐) - 파랑
-                                : '#cbd5e0' // 같을 때 - 회색
+                                ? '#3182ce'
+                                : '#cbd5e0'
                         }
                     }]
                 },
@@ -675,8 +653,10 @@
                     scales: {
                         y: {
                             reverse: true,
+                            min: 1,
+                            max: 50,
                             ticks: {
-                                stepSize: 1,
+                                stepSize: 5,
                                 callback: function(value) {
                                     return value + '위';
                                 },
@@ -717,10 +697,6 @@
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🎯 경기 기록 시스템
-    // ═══════════════════════════════════════════════════════════════
-    
     function updateChallengerList() {
         const centerPlayers = players.filter(p => {
             const pCenter = p.centerId || 'sehwa';
@@ -753,9 +729,6 @@
         document.getElementById("defenderSelect").innerHTML = options;
     };
 
-    // ═══════════════════════════════════════════════════════════════
-    // 💬 채팅 시스템
-    // ═══════════════════════════════════════════════════════════════
     window.sendChat = async () => {
         const msg = document.getElementById("chatInput").value.trim();
         if(!msg) return;
@@ -773,9 +746,6 @@
         chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🤝 게스트 모집 시스템
-    // ═══════════════════════════════════════════════════════════════
     window.submitGuest = async () => {
         const center = document.getElementById("guestCenter").value;
         const name = document.getElementById("guestName").value.trim();
@@ -880,4 +850,4 @@
 </body>
 </html>
 
-수정
+수정 3.31
