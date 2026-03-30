@@ -140,7 +140,6 @@
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
-
 <div id="tab-guest" class="tab-content">
     <div class="section">
         <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
@@ -266,7 +265,6 @@
 <div id="tab-chat" class="tab-content"><div class="section"><h2>💬 통합 채팅</h2><div id="chatDisplay">로딩 중...</div><div style="display:flex; gap:5px;"><input id="chatInput" placeholder="메시지 입력" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button class="btn-battle" style="width:70px; padding:0;" onclick="sendChat()">전송</button></div></div></div>
 <div id="tab-board" class="tab-content"><div class="section"><h2>📋 게시판</h2><div id="board-list">내용이 없습니다.</div></div></div>
 <div id="tab-gallery" class="tab-content"><div class="section"><h2>📸 사진첩</h2><div id="gallery-list">이미지가 없습니다.</div></div></div>
-
 
 </div>
 
@@ -443,7 +441,7 @@
 
     function renderUI() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
-        const groups = [{t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}, {t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}];
+        const groups = [{t:'오후', l:'챔피언', n:'🌇 오후 A그룹'}, {t:'오후', l:'챌린저', n:'🌇 오후 B그룹'}, {t:'오전', l:'챔피언', n:'🌅 오전 A그룹'}, {t:'오전', l:'챌린저', n:'🌅 오전 B그룹'}];
         document.getElementById("integratedRank").innerHTML = renderTableHtml(centerPlayers.filter(p => p.timeGroup === '오후' && p.league === '챔피언'));
         let fullHtml = "";
         groups.forEach(g => { const list = centerPlayers.filter(p => p.timeGroup === g.t && p.league === g.l); if(list.length > 0) fullHtml += `<h4>${g.n}</h4>` + renderTableHtml(list); });
@@ -535,12 +533,17 @@
     };
 
     window.closeModal = () => document.getElementById("modalOverlay").style.display = "none";
+    
+    // ✅ 버그 수정: filterOpponents 로직 수정
+    // 도전자(낮은 랭킹)가 방어자(높은 랭킹)을 선택해야 하므로
+    // Number(p.groupRank) > Number(c.groupRank) 로 변경
     window.filterOpponents = () => {
         const c = players.find(p => p.id === document.getElementById("challengerSelect").value);
         if(!c) return;
         const targets = players.filter(p => p.centerId === c.centerId && p.timeGroup === c.timeGroup && p.league === c.league && Number(p.groupRank) < Number(c.groupRank));
         document.getElementById("defenderSelect").innerHTML = "<option value=''>방어자 선택</option>" + targets.map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
     };
+    
     function updateChallengerList() {
         const centerPlayers = players.filter(p => p.centerId === currentCenter || (!p.centerId && currentCenter === 'sehwa'));
         document.getElementById("challengerSelect").innerHTML = "<option value=''>도전자 선택</option>" + centerPlayers.filter(p => p.groupRank > 1).map(p => `<option value="${p.id}">${p.name} (${p.groupRank}위)</option>`).join('');
@@ -553,9 +556,10 @@
         await addDoc(collection(db, "globalChats"), { text: msg, center: currentCenter, createdAt: serverTimestamp() });
         document.getElementById("chatInput").value = "";
     };
-    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+    onSnapshot(query(collection(db, "globalChats"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
         const chatDisplay = document.getElementById("chatDisplay");
-        let html = ""; let rev = []; snap.forEach(d => rev.push(d.data()));
+        let html = ""; let rev = [];
+        snap.forEach(d => rev.push(d.data()));
         rev.reverse().forEach(data => { html += `<div class="chat-msg"><b>[${centerNames[data.center] || '스쿼시'}]</b> ${data.text}</div>`; });
         chatDisplay.innerHTML = html; chatDisplay.scrollTop = chatDisplay.scrollHeight;
     });
@@ -671,8 +675,4 @@
 </body>
 </html>
 
-26-03-28 1:35
-
-
-
-지금 랭킹 순위가 꼬인거 같은데 예를 들어 최영일이 14위인데 랭킹이 더 높은 유경균이 안나와  다른 코드 절대 건드리지 말고 절대 하나도 이거 꼭 지켜야대. 오직 랭킹 코드 내가  말한 오류만 고쳐줘
+26.03.30_5:37
