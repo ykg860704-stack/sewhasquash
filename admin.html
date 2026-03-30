@@ -273,19 +273,21 @@
     };
 
     /**
-     * ✅ 최종 완성: autoDemote 함수
+     * ✅ 최종 완성: autoDemote 함수 - 올바른 알고리즘
      * 
-     * 로직:
-     * 1. 7일간 경기 없는 선수 찾기 (recentGames[0].dt 기준: "2026.03.25" 형식)
-     * 2. 각 선수를 2단계 강등 (순위 + 2)
-     * 3. 강등된 선수 사이의 모든 선수들 순위 2씩 올리기 (순위 - 2)
+     * 핵심 로직:
+     * 1. 7일 미경기자 모두 찾기
+     * 2. 각 그룹별로:
+     *    - 미경기자들을 제거
+     *    - 나머지 선수들을 1, 2, 3... 으로 재정렬
+     *    - 미경기자들을 맨 아래에 추가
      * 
      * 예시:
-     * 강등 전: 1위(경기함), 2위(경기함), 3위(미경기), 4위(경기함), 5위(경기함)
-     * 강등 후: 1위, 2위, 3위(올라옴), 4위(올라옴), 5위(내려옴)
+     * 강등 전: 1위(경기X), 2위(경기O), 3위(경기O), 4위(경기O)
+     * 강등 후: 1위(2번 올라옴), 2위(3번 올라옴), 3위(4번 올라옴), 4위(1번 내려감)
      */
     window.autoDemote = async () => {
-        if(!confirm("7일 동안 경기가 없는 선수들을 확인하고 2단계 강등 처리하시겠습니까?\n(하위 선수들의 순위도 자동 조정됩니다)")) return;
+        if(!confirm("7일 동안 경기가 없는 선수들을 강등 처리하시겠습니까?\n(경기 있는 선수들의 순위가 자동으로 올라옵니다)")) return;
         
         try {
             // === 1단계: 데이터 검증 ===
@@ -298,7 +300,7 @@
                 return;
             }
 
-            // === 2단계: 그룹별 분류 ===
+            // === 2단계: 그룹별로 분류 ===
             const groups = {};
             centerPlayers.forEach(p => {
                 const groupKey = `${p.timeGroup}/${p.league}`;
@@ -309,24 +311,27 @@
             // === 3단계: 7일 미경기자 찾기 ===
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            const demoteList = [];
+            const processedPlayers = [];
+            const updatePromises = [];
 
+            // === 4단계: 각 그룹별로 강등 처리 ===
             for (const [groupKey, groupPlayers] of Object.entries(groups)) {
+                // 미경기자와 경기자를 분리
+                const activeWithGames = [];
+                const nonActiveNoGames = [];
+
                 for (const player of groupPlayers) {
                     let lastGameDate = null;
-                    let lastGameDateStr = "경기 기록 없음";
 
-                    // recentGames에서 최신 경기 날짜 추출
+                    // 최신 경기 날짜 추출
                     if (player.recentGames && Array.isArray(player.recentGames) && player.recentGames.length > 0) {
                         const lastGame = player.recentGames[0];
                         
                         if (lastGame && lastGame.dt) {
                             try {
                                 const dtStr = String(lastGame.dt).trim();
-                                lastGameDateStr = dtStr;
                                 let dateObj;
 
-                                // 날짜 형식 파싱: "2026.03.25" 형식 기준
                                 if (dtStr.includes('.')) {
                                     const parts = dtStr.split('.');
                                     if (parts.length === 3) {
@@ -341,7 +346,6 @@
                                     }
                                 }
 
-                                // 유효한 날짜인지 확인
                                 if (dateObj && !isNaN(dateObj.getTime())) {
                                     lastGameDate = dateObj;
                                 }
@@ -351,80 +355,65 @@
                         }
                     }
 
-                    // 7일 이상 경기 없는 선수 추가
+                    // 7일 이상 경기 없으면 미경기자
                     if (lastGameDate === null || lastGameDate < sevenDaysAgo) {
-                        demoteList.push({
-                            id: player.id,
-                            name: player.name,
-                            currentRank: Number(player.groupRank),
-                            groupKey: groupKey,
-                            lastGameDateStr: lastGameDateStr,
-                            groupPlayers: groupPlayers
+                        nonActiveNoGames.push({
+                            player: player,
+                            oldRank: Number(player.groupRank)
+                        });
+                    } else {
+                        activeWithGames.push({
+                            player: player,
+                            oldRank: Number(player.groupRank)
                         });
                     }
                 }
+
+                // === 5단계: 경기 있는 선수들 1, 2, 3... 재정렬 ===
+                activeWithGames.sort((a, b) => a.oldRank - b.oldRank);
+                
+                for (let i = 0; i < activeWithGames.length; i++) {
+                    const newRank = i + 1;
+                    const player = activeWithGames[i].player;
+                    
+                    updatePromises.push(
+                        updateDoc(doc(db, "ranking", player.id), { groupRank: newRank })
+                    );
+                }
+
+                // === 6단계: 미경기자들을 맨 아래에 배치 ===
+                nonActiveNoGames.sort((a, b) => a.oldRank - b.oldRank);
+                
+                const startRank = activeWithGames.length + 1;
+                for (let i = 0; i < nonActiveNoGames.length; i++) {
+                    const newRank = startRank + i;
+                    const demoteInfo = nonActiveNoGames[i];
+                    const player = demoteInfo.player;
+
+                    updatePromises.push(
+                        updateDoc(doc(db, "ranking", player.id), { groupRank: newRank })
+                    );
+
+                    processedPlayers.push({
+                        name: player.name,
+                        oldRank: demoteInfo.oldRank,
+                        newRank: newRank,
+                        group: groupKey
+                    });
+                }
             }
 
-            // === 4단계: 강등 대상이 없으면 종료 ===
-            if (demoteList.length === 0) {
+            // === 7단계: 미경기자가 없으면 조기 종료 ===
+            if (processedPlayers.length === 0) {
                 alert("❌ 7일 이상 경기가 없는 미경기자가 없습니다.");
                 return;
             }
 
-            // === 5단계: 강등 처리 실행 ===
-            const updatePromises = [];
-            const processedPlayers = [];
-
-            for (const demoPlayer of demoteList) {
-                try {
-                    const oldRank = demoPlayer.currentRank;
-                    const newRank = oldRank + 2; // 2단계 강등
-                    const groupPlayers = demoPlayer.groupPlayers;
-
-                    // 영향받는 선수들 찾기
-                    // (강등 선수보다 낮은 순위(숫자가 큼)이면서 새로운 순위보다 작거나 같은 모든 선수)
-                    // 예: 3위 → 5위 강등 시, 4위와 5위가 영향받음 (3 < 4 <= 5)
-                    const affectedPlayers = groupPlayers.filter(p => {
-                        const pRank = Number(p.groupRank);
-                        return pRank > oldRank && pRank <= newRank && p.id !== demoPlayer.id;
-                    });
-
-                    // 영향받는 선수들 순위 올리기 (-2)
-                    for (const affected of affectedPlayers) {
-                        const newAffectedRank = Number(affected.groupRank) - 2;
-                        updatePromises.push(
-                            updateDoc(doc(db, "ranking", affected.id), { groupRank: newAffectedRank })
-                        );
-                    }
-
-                    // 강등 선수 순위 내리기 (+2)
-                    updatePromises.push(
-                        updateDoc(doc(db, "ranking", demoPlayer.id), { groupRank: newRank })
-                    );
-
-                    processedPlayers.push({
-                        name: demoPlayer.name,
-                        oldRank: oldRank,
-                        newRank: newRank,
-                        lastGame: demoPlayer.lastGameDateStr,
-                        affectedCount: affectedPlayers.length
-                    });
-
-                } catch (e) {
-                    console.error(`[오류] ${demoPlayer.name} 처리 중:`, e);
-                    processedPlayers.push({
-                        name: demoPlayer.name,
-                        status: '오류',
-                        error: e.message
-                    });
-                }
-            }
-
-            // === 6단계: 모든 순위 업데이트 동시 실행 ===
+            // === 8단계: 모든 순위 업데이트 동시 실행 ===
             await Promise.all(updatePromises);
 
-            // === 7단계: 결과 표시 ===
-            showDemoteResult(processedPlayers, demoteList.length);
+            // === 9단계: 결과 표시 ===
+            showDemoteResult(processedPlayers, processedPlayers.length);
 
         } catch(e) {
             console.error("[심각한 오류]", e);
@@ -441,29 +430,21 @@
         </p>`;
 
         processedPlayers.forEach(player => {
-            if (player.status === '오류') {
-                resultHtml += `
-                    <div class="demote-item">
-                        <div class="demote-item-name">${player.name} - ⚠️ 오류</div>
-                        <div class="demote-item-detail">${player.error}</div>
+            resultHtml += `
+                <div class="demote-item">
+                    <div class="demote-item-name">${player.name}</div>
+                    <div class="demote-item-detail">
+                        <strong>그룹:</strong> ${player.group}<br>
+                        <strong>순위 변경:</strong> ${player.oldRank}위 → ${player.newRank}위<br>
+                        <strong>상태:</strong> 경기 기록 없음 (7일 이상)
                     </div>
-                `;
-            } else {
-                resultHtml += `
-                    <div class="demote-item">
-                        <div class="demote-item-name">${player.name}</div>
-                        <div class="demote-item-detail">
-                            <strong>순위:</strong> ${player.oldRank}위 → ${player.newRank}위 (2단계 강등)<br>
-                            <strong>마지막 경기:</strong> ${player.lastGame}<br>
-                            <strong>영향받은 선수:</strong> ${player.affectedCount}명
-                        </div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
         });
 
-        resultHtml += `<p style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+        resultHtml += `<p style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; color: #28a745; font-size: 12px; font-weight: bold;">
             ✅ 모든 선수의 순위 재조정이 완료되었습니다.
+            <br>경기 있는 선수들의 순위가 자동으로 올라갔습니다.
         </p>`;
 
         document.getElementById('demoteResultContent').innerHTML = resultHtml;
