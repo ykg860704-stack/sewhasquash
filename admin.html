@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-
-<html lang="ko">
+<!DOCTYPE html><html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +8,6 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 20px; background: #f8f9fa; display: none; max-width: 900px; margin: auto; }
 
-```
     .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
     .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
     @media (max-width: 600px) { .login-grid { flex-direction: column; } }
@@ -67,12 +64,10 @@
     .game-win { background: #c6f6d5; color: #22543d; }
     .game-loss { background: #bee3f8; color: #2c5aa0; }
 </style>
-```
+
 
 </head>
-<body>
-
-<div id="loginSection" class="login-section">
+<body><div id="loginSection" class="login-section">
     <h1>🔐 시스템 관리자 접속</h1>
     <div class="login-grid">
         <div class="login-box" style="border-top: 5px solid #3182ce;">
@@ -83,7 +78,6 @@
             <p id="centerError" class="err-msg">코드가 일치하지 않습니다.</p>
         </div>
 
-```
     <div class="login-box" style="border-top: 5px solid #e53e3e;">
         <h2>🌐 총괄 통합 관리</h2>
         <p style="font-size:13px; color:#666; margin-bottom:20px;">센터/대회/게시판 등 전체 시스템 관리</p>
@@ -92,11 +86,9 @@
         <p id="globalError" class="err-msg">비밀번호가 틀렸습니다.</p>
     </div>
 </div>
-```
 
-</div>
 
-<div id="centerAdminPanel" style="display:none;">
+</div><div id="centerAdminPanel" style="display:none;">
     <h1 id="centerAdminTitle">🛠️ 센터 관리 시스템</h1>
     <div id="tab-players" class="tab-content active">
         <div class="card" style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -112,9 +104,7 @@
             <div id="activeList">데이터 로딩 중...</div>
         </div>
     </div>
-</div>
-
-<div id="globalAdminPanel" style="display:none;">
+</div><div id="globalAdminPanel" style="display:none;">
     <h1>🌐 총괄 통합 관리 시스템</h1>
     <div class="admin-tabs">
         <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
@@ -147,17 +137,13 @@
             <div id="communityManageList">데이터 로딩 중...</div>
         </div>
     </div>
-</div>
-
-<div id="demoteModal" class="demote-modal">
+</div><div id="demoteModal" class="demote-modal">
     <div class="demote-modal-content">
         <h2>⚠️ 강등 처리 결과</h2>
         <div id="demoteResultContent">처리 중...</div>
         <button class="demote-modal-btn" onclick="closeDemoteModal()">✅ 확인</button>
     </div>
-</div>
-
-<script type="module">
+</div><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getFirestore, collection, query, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -723,7 +709,6 @@
                 <div style="margin-top:8px;"><span class="edit-label">제목</span><input id="ce-title-${id}" class="edit-input" style="width:80%;" value="${post.title}"></div>
                 <div style="margin-top:8px;"><span class="edit-label">내용</span><textarea id="ce-content-${id}" class="edit-input" style="width:80%; height:100px;">${post.content}</textarea></div>
 
-```
         </div></td>
         <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveCommunityEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="loadCommunityPosts()">❌ 취소</button></div></td>`;
     });
@@ -921,11 +906,7 @@ window.removeData = async (col, id) => {
 };
 
 document.body.style.display = "block";
-```
 
-</script>
 
-</body>
-</html>
-
-수정 4:41
+</script></body>
+</html>수정
