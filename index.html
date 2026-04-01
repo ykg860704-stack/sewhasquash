@@ -343,7 +343,7 @@
 
 <div id="modalOverlay" onclick="if(event.target===this) closeModal()"><div class="modal-content"><div id="modalBody"></div><div id="chartContainer"><canvas id="rankChart"></canvas></div><button onclick="closeModal()" class="btn-battle" style="background:#eee; color:#333; margin-top:20px;">닫기</button></div></div>
 
-<div class="visitor-footer">📱<span id="todayVisitors">-</span>명 | 📊<span id="totalVisits">-</span>회 | ⏰<span id="onlineUsers">-</span>명</div>
+<div class="visitor-footer">📱<span id="todayVisitors">-</span>명 | 📊<span id="totalVisits">-</span>회</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
@@ -412,7 +412,6 @@
                     const data = snap.data();
                     document.getElementById('todayVisitors').innerText = data.today || 0;
                     document.getElementById('totalVisits').innerText = data.total || 0;
-                    document.getElementById('onlineUsers').innerText = Math.floor(Math.random() * 5) + 1;
                 }
             });
         }
@@ -1447,4 +1446,5 @@
 
 </body>
 </html>
-123
+
+업데이트 : 방문자 트랙킹 기능
