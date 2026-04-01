@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { padding: 0; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.5; }
+        body { padding: 0; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.5; padding-bottom: 45px; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .top-nav-bar { display: flex; overflow-x: auto; gap: 10px; padding: 15px 10px; background: #fff; border-bottom: 1px solid #eee; white-space: nowrap; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .top-nav-bar::-webkit-scrollbar { display: none; }
@@ -76,7 +76,7 @@
         .comment-input-box input { padding: 8px; border-radius: 8px; font-size: 12px; }
         .btn-comment { background: #4a5568; color: white; border: none; border-radius: 8px; padding: 0 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-del { font-size: 11px; color: #a0aec0; cursor: pointer; border: none; background: none; }
-        .refresh-btn { font-size: 12px; color: #3182ce; background: none; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 10px; cursor: pointer; float: right; margin-top: -5px; }
+        .refresh-btn { font-size: 12px; color: white; background: #3182ce; border: none; border-radius: 8px; padding: 10px 15px; cursor: pointer; font-weight: bold; }
         #chartContainer { 
             position: relative; 
             height: 500px; 
@@ -113,6 +113,23 @@
             font-size: 14px;
             margin-right: 6px;
         }
+
+        /* ✅ 방문자 통계 (하단 고정, 소형) */
+        .visitor-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 15px;
+            font-size: 10px;
+            text-align: center;
+            z-index: 999;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            line-height: 1.4;
+        }
+        .visitor-footer span { margin: 0 6px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -137,7 +154,7 @@
                 <option value="squash4">용인 HIPP 스쿼시</option>
                 <option value="squash5">스쿼시 5</option>
             </select>
-            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="loadRankingData()">🔄 새로고침</button>
+            <button class="refresh-btn" onclick="loadRankingData()">🔄 새로고침</button>
         </div>
         <h1 id="mainTitle">로딩 중...</h1>
         <div class="award-section" id="awardDisplay">
@@ -177,7 +194,7 @@
     <div id="tab-guest" class="tab-content">
         <div class="section">
             <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
-            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadGuestData()">🔄 새로고침</button>
+            <button class="refresh-btn" onclick="loadGuestData()">🔄 새로고침</button>
             <div class="input-group">
                 <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
                 <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
@@ -317,7 +334,7 @@
         </div>
         <div class="section">
             <h2 class="blue-h2">📋 커뮤니티 글</h2>
-            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadCommunityData()">🔄 새로고침</button>
+            <button class="refresh-btn" onclick="loadCommunityData()">🔄 새로고침</button>
             <div style="margin-bottom:15px; clear:both;">
                 <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
                     <option value="">🌏 전체 글</option>
@@ -336,6 +353,11 @@
 
 <div id="modalOverlay" onclick="if(event.target===this) closeModal()"><div class="modal-content"><div id="modalBody"></div><div id="chartContainer"><canvas id="rankChart"></canvas></div><button onclick="closeModal()" class="btn-battle" style="background:#eee; color:#333; margin-top:20px;">닫기</button></div></div>
 
+<!-- ✅ 방문자 통계 (하단 고정, 소형 바) -->
+<div class="visitor-footer">
+    📱<span id="todayVisitors">-</span>명 | 📊<span id="totalVisits">-</span>회 | ⏰<span id="onlineUsers">-</span>명
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -351,6 +373,71 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // ✅ 캐싱 시스템 (5분)
+    const CACHE_DURATION = 5 * 60 * 1000;
+    const cache = {
+        ranking: { data: null, timestamp: 0 },
+        info: { data: null, timestamp: 0 },
+        match: { data: null, timestamp: 0 },
+        guest: { data: null, timestamp: 0 },
+        community: { data: null, timestamp: 0 }
+    };
+
+    const isCacheValid = (key) => {
+        const now = Date.now();
+        return cache[key].data && (now - cache[key].timestamp) < CACHE_DURATION;
+    };
+
+    // ✅ 방문자 추적 (localStorage, DB 비용 0)
+    class VisitorTracker {
+        constructor() {
+            this.visitorId = this.getOrCreateVisitorId();
+            this.recordVisit();
+            this.updateVisitorStats();
+            setInterval(() => this.updateVisitorStats(), 30000);
+        }
+
+        getOrCreateVisitorId() {
+            let id = localStorage.getItem('visitor_id');
+            if (!id) {
+                id = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('visitor_id', id);
+            }
+            return id;
+        }
+
+        recordVisit() {
+            const today = new Date().toISOString().split('T')[0];
+            const lastVisit = localStorage.getItem('last_visit_date');
+            if (lastVisit === today) return;
+            localStorage.setItem('last_visit_date', today);
+            let visitors = JSON.parse(localStorage.getItem(`daily_visitors_${today}`) || '[]');
+            if (!visitors.includes(this.visitorId)) {
+                visitors.push(this.visitorId);
+                localStorage.setItem(`daily_visitors_${today}`, JSON.stringify(visitors));
+            }
+            const visits = parseInt(localStorage.getItem('total_visits') || '0') + 1;
+            localStorage.setItem('total_visits', visits.toString());
+        }
+
+        updateVisitorStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const dailyVisitors = JSON.parse(localStorage.getItem(`daily_visitors_${today}`) || '[]').length;
+            const totalVisits = parseInt(localStorage.getItem('total_visits') || '0');
+            document.getElementById('todayVisitors').innerText = dailyVisitors;
+            document.getElementById('totalVisits').innerText = totalVisits;
+            const onlineKey = 'online_users_' + today;
+            let onlineUsers = JSON.parse(sessionStorage.getItem(onlineKey) || '[]');
+            if (!onlineUsers.includes(this.visitorId)) {
+                onlineUsers.push(this.visitorId);
+                sessionStorage.setItem(onlineKey, JSON.stringify(onlineUsers));
+            }
+            document.getElementById('onlineUsers').innerText = onlineUsers.length;
+        }
+    }
+
+    const tracker = new VisitorTracker();
 
     window.showTab = (tabId, btn) => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -372,14 +459,22 @@
 
     // ✅ 순위 데이터 로드 함수
     window.loadRankingData = async () => {
+        if (isCacheValid('ranking')) {
+            players = cache.ranking.data;
+            renderUI();
+            return;
+        }
+
         try {
-            const snap = await getDocs(query(collection(db, "ranking"), orderBy("groupRank", "asc")));
+            const snap = await getDocs(query(collection(db, "ranking"), where("status", "==", "approved"), orderBy("groupRank", "asc"), limit(100)));
             players = [];
             snap.forEach(d => { 
-                if(d.data().status === "approved") {
-                    players.push({id: d.id, ...d.data()});
-                }
+                players.push({id: d.id, ...d.data()});
             });
+
+            cache.ranking.data = players;
+            cache.ranking.timestamp = Date.now();
+
             document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
             renderUI(); 
             updateCenterRanking(); 
@@ -392,14 +487,22 @@
     loadRankingData();
 
     window.loadInfoData = async () => {
+        if (isCacheValid('info')) {
+            allCenters = cache.info.data;
+            renderInfoList();
+            return;
+        }
+
         try {
-            const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
+            const snap = await getDocs(query(collection(db, "infoRequests"), where("status", "==", "approved"), orderBy("createdAt", "desc"), limit(50)));
             allCenters = [];
             snap.forEach(d => { 
-                if(d.data().status === "approved") {
-                    allCenters.push(d.data()); 
-                }
+                allCenters.push(d.data()); 
             });
+
+            cache.info.data = allCenters;
+            cache.info.timestamp = Date.now();
+
             renderInfoList();
             updateGuestCenterOptions();
         } catch(e) { console.error("센터정보 로드 오류:", e); }
@@ -447,17 +550,27 @@
         });
         alert("신청 완료! 관리자 승인 후 표시됩니다.");
         ["infoName", "infoContact", "infoAddr", "infoTime", "infoFee", "courtFull", "courtDouble", "courtSemi"].forEach(id => document.getElementById(id).value = "");
+        cache.info.data = null;
+        await loadInfoData();
     };
 
     window.loadMatchData = async () => {
+        if (isCacheValid('match')) {
+            allMatches = cache.match.data;
+            renderMatchList();
+            return;
+        }
+
         try {
-            const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
+            const snap = await getDocs(query(collection(db, "matchRequests"), where("status", "==", "approved"), orderBy("date", "asc"), limit(30)));
             allMatches = [];
             snap.forEach(d => { 
-                if(d.data().status === "approved") {
-                    allMatches.push(d.data()); 
-                }
+                allMatches.push(d.data()); 
             });
+
+            cache.match.data = allMatches;
+            cache.match.timestamp = Date.now();
+
             renderMatchList();
         } catch(e) { console.error("대회정보 로드 오류:", e); }
     };
@@ -517,6 +630,8 @@
             });
             alert("대회 정보 신청 완료! 승인 후 목록에 표시됩니다.");
             ["matchTitle", "matchDate", "matchDeadline", "matchLoc", "matchFee", "matchLink"].forEach(id => document.getElementById(id).value = "");
+            cache.match.data = null;
+            await loadMatchData();
         } catch(e) { alert("저장 중 오류 발생: " + e.message); }
     };
 
@@ -606,6 +721,7 @@
             });
             alert("신청 완료!"); 
             document.getElementById("nameInput").value = "";
+            cache.ranking.data = null;
             await loadRankingData();
         } catch(e) {
             alert("오류: " + e.message);
@@ -662,6 +778,7 @@
             await updateDoc(doc(db, "ranking", c.id), uC); 
             await updateDoc(doc(db, "ranking", d.id), uD);
             alert("기록 성공!");
+            cache.ranking.data = null;
             await loadRankingData();
         } catch(e) {
             alert("오류: " + e.message);
@@ -1112,6 +1229,7 @@
             document.getElementById("postUrl").value = "";
             document.getElementById("postAuthor").value = "";
             document.getElementById("postPassword").value = "";
+            cache.community.data = null;
             await loadCommunityData();
         } catch (e) {
             alert("❌ 저장 오류: " + e.message);
@@ -1206,6 +1324,7 @@
             document.getElementById(`cmtContent-${postId}`).value = "";
             document.getElementById(`cmtAuthor-${postId}`).value = "";
             document.getElementById(`cmtPw-${postId}`).value = "";
+            cache.community.data = null;
             await loadCommunityData();
         } catch (e) {
             alert("❌ 댓글 등록 실패: " + e.message);
@@ -1223,6 +1342,7 @@
         try {
             await deleteDoc(doc(db, "communityComments", commentId));
             alert("✅ 댓글이 삭제되었습니다.");
+            cache.community.data = null;
             await loadCommunityData();
         } catch (e) {
             alert("❌ 삭제 오류: " + e.message);
@@ -1240,6 +1360,7 @@
         try {
             await deleteDoc(doc(db, "communityPosts", id));
             alert("✅ 게시물이 삭제되었습니다.");
+            cache.community.data = null;
             await loadCommunityData();
         } catch (e) {
             alert("❌ 삭제 오류: " + e.message);
@@ -1247,8 +1368,15 @@
     };
 
     window.loadCommunityData = async () => {
+        if (isCacheValid('community')) {
+            communityPostsData = cache.community.data.posts;
+            communityCommentsData = cache.community.data.comments;
+            renderCommunityPosts();
+            return;
+        }
+
         try {
-            const postsSnap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")));
+            const postsSnap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc"), limit(50)));
             communityPostsData = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
             const commentsSnap = await getDocs(query(collection(db, "communityComments"), orderBy("createdAt", "asc")));
@@ -1260,6 +1388,10 @@
                 }
                 communityCommentsData[data.postId].push({ id: d.id, ...data });
             });
+
+            cache.community.data = { posts: communityPostsData, comments: communityCommentsData };
+            cache.community.timestamp = Date.now();
+
             renderCommunityPosts();
         } catch(e) { console.error("커뮤니티 데이터 로드 오류:", e); }
     };
@@ -1283,13 +1415,21 @@
             });
             alert("모집글이 등록되었습니다.");
             ["guestTime", "guestDuration", "guestName", "guestPw", "guestDate"].forEach(id => document.getElementById(id).value = "");
+            cache.guest.data = null;
             await loadGuestData();
         } catch(e) { alert("오류 발생: " + e.message); }
     };
 
     window.loadGuestData = async () => {
+        if (isCacheValid('guest')) {
+            guestPostsData = cache.guest.data.posts;
+            guestCommentsData = cache.guest.data.comments;
+            renderGuestList();
+            return;
+        }
+
         try {
-            const postsSnap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc")));
+            const postsSnap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc"), limit(50)));
             guestPostsData = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
             const commentsSnap = await getDocs(query(collection(db, "guestComments"), orderBy("createdAt", "asc")));
@@ -1299,6 +1439,10 @@
                 if(!guestCommentsData[data.postId]) guestCommentsData[data.postId] = [];
                 guestCommentsData[data.postId].push(data);
             });
+
+            cache.guest.data = { posts: guestPostsData, comments: guestCommentsData };
+            cache.guest.timestamp = Date.now();
+
             renderGuestList();
         } catch(e) { console.error("게스트 데이터 로드 오류:", e); }
     };
@@ -1352,6 +1496,7 @@
                 postId, userName: user, text, createdAt: serverTimestamp()
             });
             document.getElementById(`cmtText-${postId}`).value = "";
+            cache.guest.data = null;
             await loadGuestData();
         } catch(e) { alert("댓글 등록 실패: " + e.message); }
     };
@@ -1362,6 +1507,7 @@
             try { 
                 await deleteDoc(doc(db, "guestPosts", id)); 
                 alert("삭제되었습니다.");
+                cache.guest.data = null;
                 await loadGuestData();
             }
             catch(e) { alert("삭제 실패: " + e.message); }
@@ -1376,28 +1522,6 @@
         select.innerHTML = options;
     }
 </script>
-
-<div class="visitor-footer">
-    📱 오늘 방문: <span id="todayVisitors">-</span>명 | 📊 전체 방문: <span id="totalVisits">-</span>회 | ⏰ 현재 접속: <span id="onlineUsers">-</span>명
-</div>
-
-<style>
-    /* 방문자 통계 스타일 (하단 고정) */
-    .visitor-footer {
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        background: rgba(45, 55, 72, 0.9);
-        color: white;
-        padding: 8px 15px;
-        font-size: 11px;
-        text-align: center;
-        z-index: 2000;
-        backdrop-filter: blur(5px);
-    }
-    .visitor-footer span { font-weight: bold; color: #f6ad55; margin: 0 2px; }
-    /* 바닥이 가려지지 않도록 컨테이너에 여백 추가 */
-    body { padding-bottom: 50px !important; }
-</style>
 
 </body>
 </html>
