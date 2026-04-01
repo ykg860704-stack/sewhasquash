@@ -359,64 +359,6 @@
         if (btn) btn.classList.add('active');
     };
 
-    // ✅ 방문자 추적 (localStorage만 사용)
-    class VisitorTracker {
-        constructor() {
-            this.visitorId = this.getOrCreateVisitorId();
-            this.recordVisit();
-            this.updateVisitorStats();
-            setInterval(() => this.updateVisitorStats(), 30000);
-        }
-        getOrCreateVisitorId() {
-            let id = localStorage.getItem('visitor_id');
-            if (!id) {
-                id = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('visitor_id', id);
-            }
-            return id;
-        }
-        recordVisit() {
-            const today = new Date().toISOString().split('T')[0];
-            const lastVisit = localStorage.getItem('last_visit_date');
-            if (lastVisit === today) return;
-            localStorage.setItem('last_visit_date', today);
-            let visitors = JSON.parse(localStorage.getItem(`daily_visitors_${today}`) || '[]');
-            if (!visitors.includes(this.visitorId)) {
-                visitors.push(this.visitorId);
-                localStorage.setItem(`daily_visitors_${today}`, JSON.stringify(visitors));
-            }
-            const visits = parseInt(localStorage.getItem('total_visits') || '0') + 1;
-            localStorage.setItem('total_visits', visits.toString());
-        }
-        updateVisitorStats() {
-            const today = new Date().toISOString().split('T')[0];
-            const dailyVisitors = JSON.parse(localStorage.getItem(`daily_visitors_${today}`) || '[]').length;
-            const totalVisits = parseInt(localStorage.getItem('total_visits') || '0');
-            document.getElementById('todayVisitors').innerText = dailyVisitors;
-            document.getElementById('totalVisits').innerText = totalVisits;
-            const onlineKey = 'online_users_' + today;
-            let onlineUsers = JSON.parse(sessionStorage.getItem(onlineKey) || '[]');
-            if (!onlineUsers.includes(this.visitorId)) {
-                onlineUsers.push(this.visitorId);
-                sessionStorage.setItem(onlineKey, JSON.stringify(onlineUsers));
-            }
-            document.getElementById('onlineUsers').innerText = onlineUsers.length;
-        }
-    }
-    const tracker = new VisitorTracker();
-
-    // ✅ 캐싱 (5분)
-    const CACHE_DURATION = 5 * 60 * 1000;
-    const cache = { ranking: { data: null, timestamp: 0 }, info: { data: null, timestamp: 0 }, match: { data: null, timestamp: 0 }, guest: { data: null, timestamp: 0 }, community: { data: null, timestamp: 0 } };
-    const isCacheValid = (key) => { const now = Date.now(); return cache[key].data && (now - cache[key].timestamp) < CACHE_DURATION; };
-
-    window.showTab = (tabId, btn) => {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('tab-' + tabId).classList.add('active');
-        if (btn) btn.classList.add('active');
-    };
-
     const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP 스쿼시', 'squash5': '스쿼시 5' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
@@ -1437,5 +1379,3 @@
 
 </body>
 </html>
-
-수정1
