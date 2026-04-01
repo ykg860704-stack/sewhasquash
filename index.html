@@ -94,28 +94,31 @@
         .post-title { font-size: 16px; font-weight: 800; color: #2d3748; margin-bottom: 8px; }
         .post-content { font-size: 14px; color: #4a5568; margin-bottom: 10px; white-space: pre-wrap; line-height: 1.6; }
         .post-url-btn { display: inline-block; background: #3182ce; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; margin-bottom: 10px; }
-        
-        /* ✅ 추천 멘트 박스 스타일 */
-        .mention-box { 
-            background: linear-gradient(135deg, #fff5e6 0%, #fffbf0 100%);
-            border-left: 3px solid #f6ad55;
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            color: #c05621;
-            font-weight: 600;
-            line-height: 1.4;
-            text-align: left;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .mention-emoji { 
-            font-size: 14px;
-            margin-right: 6px;
-        }
-    </style>
+
+```
+    /* ✅ 추천 멘트 박스 스타일 */
+    .mention-box { 
+        background: linear-gradient(135deg, #fff5e6 0%, #fffbf0 100%);
+        border-left: 3px solid #f6ad55;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        color: #c05621;
+        font-weight: 600;
+        line-height: 1.4;
+        text-align: left;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .mention-emoji { 
+        font-size: 14px;
+        margin-right: 6px;
+    }
+</style>
+```
+
 </head>
 <body>
 
@@ -176,65 +179,42 @@
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
-    <div id="tab-guest" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
-            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadGuestData()">🔄 새로고침</button>
-            <div class="input-group">
-                <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
-                <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
-                <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
-                <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
-                <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
-                <div style="display:flex; gap:8px;">
-                    <select id="guestLevel">
-                        <option value="S3">초보 (S3)</option>
-                        <option value="S2">중수 (S2)</option>
-                        <option value="S1">고수 (S1 이상)</option>
-                    </select>
-                    <select id="guestType">
-                        <option value="게임">게임 위주</option>
-                        <option value="훈련">연습/훈련</option>
-                        <option value="상관없음">상관없음</option>
-                    </select>
-                </div>
-                <input id="guestName" placeholder="본인 이름/닉네임">
-                <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
-                <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
-            </div>
-        </div>
-        <div id="guest-list"></div>
-    </div>
-
-    <div id="tab-info" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
-            <div class="input-group">
-                <select id="infoSido">
-                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
-                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
-                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
-                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
-                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+```
+<div id="tab-guest" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
+        <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadGuestData()">🔄 새로고침</button>
+        <div class="input-group">
+            <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
+            <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
+            <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
+            <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
+            <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
+            <div style="display:flex; gap:8px;">
+                <select id="guestLevel">
+                    <option value="S3">초보 (S3)</option>
+                    <option value="S2">중수 (S2)</option>
+                    <option value="S1">고수 (S1 이상)</option>
                 </select>
-                <input id="infoName" placeholder="상호명">
-                <input id="infoContact" placeholder="전화번호 (예: 02-123-4567)">
-                <input id="infoAddr" placeholder="상세 주소">
-                <input id="infoTime" placeholder="영업시간 (예: 평일 06:00~23:00 / 주말 휴무)">
-                <input id="infoFee" placeholder="일일입장료 (예: 15,000원)">
-                <div style="display:flex; gap:5px;">
-                    <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
-                    <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
-                    <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
-                </div>
-                <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
+                <select id="guestType">
+                    <option value="게임">게임 위주</option>
+                    <option value="훈련">연습/훈련</option>
+                    <option value="상관없음">상관없음</option>
+                </select>
             </div>
+            <input id="guestName" placeholder="본인 이름/닉네임">
+            <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
+            <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
         </div>
-        <div class="section" style="background: #f1f3f5; padding: 15px;">
-            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
-            <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
-                <option value="전체">🌏 전체 지역</option>
+    </div>
+    <div id="guest-list"></div>
+</div>
+
+<div id="tab-info" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
+        <div class="input-group">
+            <select id="infoSido">
                 <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
                 <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                 <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
@@ -242,48 +222,45 @@
                 <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
                 <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
             </select>
-            <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
-        </div>
-        <div id="info-list"></div>
-    </div>
-
-    <div id="tab-match" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
-            <div class="input-group">
-                <select id="matchType">
-                    <option value="전국">🌍 전국 대회</option>
-                    <option value="지역">📍 지역 대회</option>
-                </select>
-                <select id="matchSido">
-                    <option value="전체">개최 지역 선택</option>
-                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
-                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
-                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
-                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
-                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
-                </select>
-                <input id="matchTitle" placeholder="대회명">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
-                    <input id="matchDate" type="date">
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
-                    <input id="matchDeadline" type="date">
-                </div>
-                <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
-                <input id="matchFee" placeholder="참가비 (예: 30,000원)">
-                <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
-                <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
+            <input id="infoName" placeholder="상호명">
+            <input id="infoContact" placeholder="전화번호 (예: 02-123-4567)">
+            <input id="infoAddr" placeholder="상세 주소">
+            <input id="infoTime" placeholder="영업시간 (예: 평일 06:00~23:00 / 주말 휴무)">
+            <input id="infoFee" placeholder="일일입장료 (예: 15,000원)">
+            <div style="display:flex; gap:5px;">
+                <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
+                <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
+                <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
             </div>
+            <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
         </div>
-        <div class="section" style="background: #f1f3f5; padding: 15px;">
-            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
-            <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
-                <option value="전체">🌏 전체 지역</option>
-                <option value="전국">🌍 전국 대회만 보기</option>
+    </div>
+    <div class="section" style="background: #f1f3f5; padding: 15px;">
+        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
+        <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
+            <option value="전체">🌏 전체 지역</option>
+            <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+            <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+            <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+            <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+            <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+            <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+        </select>
+        <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
+    </div>
+    <div id="info-list"></div>
+</div>
+
+<div id="tab-match" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
+        <div class="input-group">
+            <select id="matchType">
+                <option value="전국">🌍 전국 대회</option>
+                <option value="지역">📍 지역 대회</option>
+            </select>
+            <select id="matchSido">
+                <option value="전체">개최 지역 선택</option>
                 <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
                 <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                 <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
@@ -291,48 +268,76 @@
                 <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
                 <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
             </select>
-            <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
-        </div>
-        <div id="match-list"></div>
-    </div>
-
-    <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
-
-    <div id="tab-community" class="tab-content">
-        <div class="section">
-            <h2 class="blue-h2">💬 커뮤니티 - 새 글 작성</h2>
-            <div class="input-group">
-                <select id="postType">
-                    <option value="의견">💭 의견</option>
-                    <option value="공지">📢 공지</option>
-                    <option value="질문">❓ 질문</option>
-                    <option value="팁">💡 팁/정보</option>
-                    <option value="자유">🎭 자유주제</option>
-                </select>
-                <input id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
-                <textarea id="postContent" placeholder="내용을 입력하세요" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:'Pretendard', sans-serif; min-height:120px; resize:vertical;"></textarea>
-                <input id="postUrl" placeholder="참고 링크 (선택사항, http://... 형식)" type="url">
-                <input id="postAuthor" placeholder="작성자명 (닉네임)">
-                <input id="postPassword" type="password" placeholder="비밀번호 (수정/삭제 시 필요)">
-                <button class="btn-battle" onclick="submitPost()">✍️ 글 올리기</button>
+            <input id="matchTitle" placeholder="대회명">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
+                <input id="matchDate" type="date">
             </div>
-        </div>
-        <div class="section">
-            <h2 class="blue-h2">📋 커뮤니티 글</h2>
-            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadCommunityData()">🔄 새로고침</button>
-            <div style="margin-bottom:15px; clear:both;">
-                <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
-                    <option value="">🌏 전체 글</option>
-                    <option value="의견">💭 의견</option>
-                    <option value="공지">📢 공지</option>
-                    <option value="질문">❓ 질문</option>
-                    <option value="팁">💡 팁/정보</option>
-                    <option value="자유">🎭 자유주제</option>
-                </select>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
+                <input id="matchDeadline" type="date">
             </div>
-            <div id="community-list"></div>
+            <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
+            <input id="matchFee" placeholder="참가비 (예: 30,000원)">
+            <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
+            <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
         </div>
     </div>
+    <div class="section" style="background: #f1f3f5; padding: 15px;">
+        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
+        <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
+            <option value="전체">🌏 전체 지역</option>
+            <option value="전국">🌍 전국 대회만 보기</option>
+            <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+            <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+            <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+            <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+            <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+            <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+        </select>
+        <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
+    </div>
+    <div id="match-list"></div>
+</div>
+
+<div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
+
+<div id="tab-community" class="tab-content">
+    <div class="section">
+        <h2 class="blue-h2">💬 커뮤니티 - 새 글 작성</h2>
+        <div class="input-group">
+            <select id="postType">
+                <option value="의견">💭 의견</option>
+                <option value="공지">📢 공지</option>
+                <option value="질문">❓ 질문</option>
+                <option value="팁">💡 팁/정보</option>
+                <option value="자유">🎭 자유주제</option>
+            </select>
+            <input id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
+            <textarea id="postContent" placeholder="내용을 입력하세요" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:'Pretendard', sans-serif; min-height:120px; resize:vertical;"></textarea>
+            <input id="postUrl" placeholder="참고 링크 (선택사항, http://... 형식)" type="url">
+            <input id="postAuthor" placeholder="작성자명 (닉네임)">
+            <input id="postPassword" type="password" placeholder="비밀번호 (수정/삭제 시 필요)">
+            <button class="btn-battle" onclick="submitPost()">✍️ 글 올리기</button>
+        </div>
+    </div>
+    <div class="section">
+        <h2 class="blue-h2">📋 커뮤니티 글</h2>
+        <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadCommunityData()">🔄 새로고침</button>
+        <div style="margin-bottom:15px; clear:both;">
+            <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
+                <option value="">🌏 전체 글</option>
+                <option value="의견">💭 의견</option>
+                <option value="공지">📢 공지</option>
+                <option value="질문">❓ 질문</option>
+                <option value="팁">💡 팁/정보</option>
+                <option value="자유">🎭 자유주제</option>
+            </select>
+        </div>
+        <div id="community-list"></div>
+    </div>
+</div>
+```
 
 </div>
 
@@ -391,10 +396,11 @@
             const total = parseInt(localStorage.getItem('total_v') || '0');
             document.getElementById('todayVisitors').innerText = daily;
             document.getElementById('totalVisits').innerText = total;
-            // 온라인 = 새로고침할 때마다 세션에서 count (sessionStorage는 페이지 닫으면 초기화)
-            let sessionCount = parseInt(sessionStorage.getItem('page_views') || '0') + 1;
-            sessionStorage.setItem('page_views', sessionCount.toString());
-            document.getElementById('onlineUsers').innerText = sessionCount;
+            // 온라인 = 매일 새로고침 횟수 (localStorage에 저장해서 탭 닫아도 유지)
+            let onlineKey = `online_views_${today}`;
+            let onlineCount = parseInt(localStorage.getItem(onlineKey) || '0') + 1;
+            localStorage.setItem(onlineKey, onlineCount.toString());
+            document.getElementById('onlineUsers').innerText = onlineCount;
         }
     }
     const tracker = new VisitorTracker();
