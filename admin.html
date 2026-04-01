@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,70 +8,58 @@
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         body { padding: 20px; background: #f8f9fa; display: none; max-width: 900px; margin: auto; }
-
-    .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
-    .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
-    @media (max-width: 600px) { .login-grid { flex-direction: column; } }
-    .login-box { background: white; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; border: 1px solid #eee; text-align: center; }
-    
-    h1, h2 { color: #2d3748; text-align: center; }
-    h1 { margin-bottom: 30px; }
-    
-    .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; }
-    .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #4a5568; font-weight: bold; cursor: pointer; border-radius: 8px; white-space: nowrap; }
-    .tab-btn.active { background: #2d3748; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-    th { background: #f1f3f5; color: #4a5568; }
-    
-    .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
-    .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
-    .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-    .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-    .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-    .btn-refresh { background: #17a2b8; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    
-    .action-btns { display: flex; gap: 4px; justify-content: center; align-items: center; flex-wrap: wrap; }
-    .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
-    .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
-    .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
-    .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
-    .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; }
-    
-    .login-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center; font-size:15px; }
-    .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
-    .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
-
-    .global-edit-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; font-size: 12px; }
-    .edit-label { display: inline-block; width: 70px; font-weight: bold; color: #2b6cb0; margin-bottom: 5px; }
-
-    .btn-group { display: flex; gap: 4px; }
-    .btn-group button { flex: 1; }
-
-    .demote-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .demote-modal.show { display: flex; }
-    .demote-modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-    .demote-modal-content h2 { color: #2d3748; margin-bottom: 15px; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
-    .demote-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-left: 4px solid #e74c3c; border-radius: 4px; }
-    .demote-item-detail { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.5; }
-    .demote-item-name { font-weight: bold; color: #2d3748; font-size: 14px; }
-    .demote-modal-btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
-    .demote-modal-btn:hover { background: #218838; }
-
-    .game-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 3px; }
-    .game-win { background: #c6f6d5; color: #22543d; }
-    .game-loss { background: #bee3f8; color: #2c5aa0; }
-    
-    .refresh-buttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-</style>
-
-
+        .login-section { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 80px; }
+        .login-grid { display: flex; gap: 20px; width: 100%; max-width: 700px; justify-content: center; }
+        @media (max-width: 600px) { .login-grid { flex-direction: column; } }
+        .login-box { background: white; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; border: 1px solid #eee; text-align: center; }
+        h1, h2 { color: #2d3748; text-align: center; }
+        h1 { margin-bottom: 30px; }
+        .admin-tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #4a5568; font-weight: bold; cursor: pointer; border-radius: 8px; white-space: nowrap; }
+        .tab-btn.active { background: #2d3748; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
+        th { background: #f1f3f5; color: #4a5568; }
+        .btn-sync { background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-down { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 49%; font-weight: bold; }
+        .btn-edit { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-del { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-refresh { background: #17a2b8; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .action-btns { display: flex; gap: 4px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .edit-input { width: 95%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 12px; margin: 2px 0; }
+        .record-edit-box { background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; border: 1px solid #feb2b2; }
+        .log-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-bottom: 1px solid #eee; padding: 5px 0; gap: 5px; }
+        .mini-del { background: #ff4d4f; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+        .status-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; }
+        .login-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; text-align:center; font-size:15px; }
+        .login-btn { padding:12px; width:100%; font-size:15px; border-radius:8px; font-weight:bold; }
+        .err-msg { color:red; display:none; margin-top:10px; font-size:13px; font-weight:bold; }
+        .global-edit-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #bee3f8; margin-top: 5px; text-align: left; font-size: 12px; }
+        .edit-label { display: inline-block; width: 70px; font-weight: bold; color: #2b6cb0; margin-bottom: 5px; }
+        .btn-group { display: flex; gap: 4px; }
+        .btn-group button { flex: 1; }
+        .demote-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .demote-modal.show { display: flex; }
+        .demote-modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .demote-modal-content h2 { color: #2d3748; margin-bottom: 15px; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
+        .demote-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-left: 4px solid #e74c3c; border-radius: 4px; }
+        .demote-item-detail { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.5; }
+        .demote-item-name { font-weight: bold; color: #2d3748; font-size: 14px; }
+        .demote-modal-btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        .demote-modal-btn:hover { background: #218838; }
+        .game-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 3px; }
+        .game-win { background: #c6f6d5; color: #22543d; }
+        .game-loss { background: #bee3f8; color: #2c5aa0; }
+        .refresh-buttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    </style>
 </head>
-<body><div id="loginSection" class="login-section">
+<body>
+
+<div id="loginSection" class="login-section">
     <h1>🔐 시스템 관리자 접속</h1>
     <div class="login-grid">
         <div class="login-box" style="border-top: 5px solid #3182ce;">
@@ -80,18 +69,17 @@
             <button class="btn-save login-btn" onclick="loginCenterAdmin()">센터 관리 접속</button>
             <p id="centerError" class="err-msg">코드가 일치하지 않습니다.</p>
         </div>
-
-    <div class="login-box" style="border-top: 5px solid #e53e3e;">
-        <h2>🌐 총괄 통합 관리</h2>
-        <p style="font-size:13px; color:#666; margin-bottom:20px;">센터/대회/게시판 등 전체 시스템 관리</p>
-        <input type="password" id="globalCodeInput" class="login-input" placeholder="총괄 비밀번호">
-        <button class="btn-del login-btn" onclick="loginGlobalAdmin()">통합 관리 접속</button>
-        <p id="globalError" class="err-msg">비밀번호가 틀렸습니다.</p>
+        <div class="login-box" style="border-top: 5px solid #e53e3e;">
+            <h2>🌐 총괄 통합 관리</h2>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">센터/대회/게시판 등 전체 시스템 관리</p>
+            <input type="password" id="globalCodeInput" class="login-input" placeholder="총괄 비밀번호">
+            <button class="btn-del login-btn" onclick="loginGlobalAdmin()">통합 관리 접속</button>
+            <p id="globalError" class="err-msg">비밀번호가 틀렸습니다.</p>
+        </div>
     </div>
 </div>
 
-
-</div><div id="centerAdminPanel" style="display:none;">
+<div id="centerAdminPanel" style="display:none;">
     <h1 id="centerAdminTitle">🛠️ 센터 관리 시스템</h1>
     <div id="tab-players" class="tab-content active">
         <div class="refresh-buttons">
@@ -108,7 +96,9 @@
             <div id="activeList">데이터 로딩 중...</div>
         </div>
     </div>
-</div><div id="globalAdminPanel" style="display:none;">
+</div>
+
+<div id="globalAdminPanel" style="display:none;">
     <h1>🌐 총괄 통합 관리 시스템</h1>
     <div class="admin-tabs">
         <button class="tab-btn active" onclick="switchGlobalTab('gtab-centers', this)">🏢 센터 정보</button>
@@ -119,19 +109,22 @@
     <div id="gtab-centers" class="tab-content active">
         <div class="card">
             <button class="btn-refresh" onclick="loadGlobalData()">🔄 센터 정보 새로고침</button>
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터 등록 요청 및 관리</h2><div id="centerManageList">데이터 로딩 중...</div>
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #38a169; padding-left:10px;">🏢 센터 등록 요청 및 관리</h2>
+            <div id="centerManageList">데이터 로딩 중...</div>
         </div>
     </div>
     <div id="gtab-matches" class="tab-content">
         <div class="card">
             <button class="btn-refresh" onclick="loadMatchData()">🔄 대회 정보 새로고침</button>
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 등록 요청 및 관리</h2><div id="matchManageList">데이터 로딩 중...</div>
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #e53e3e; padding-left:10px;">🎾 대회 등록 요청 및 관리</h2>
+            <div id="matchManageList">데이터 로딩 중...</div>
         </div>
     </div>
     <div id="gtab-guests" class="tab-content">
         <div class="card">
             <button class="btn-refresh" onclick="loadGuestData()">🔄 게스트 모집글 새로고침</button>
-            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">🤝 게스트 모집글 및 댓글 관리</h2><div id="guestManageList">데이터 로딩 중...</div>
+            <h2 style="text-align:left; font-size:1.1em; border-left:4px solid #3182ce; padding-left:10px;">🤝 게스트 모집글 및 댓글 관리</h2>
+            <div id="guestManageList">데이터 로딩 중...</div>
         </div>
     </div>
     <div id="gtab-community" class="tab-content">
@@ -145,19 +138,23 @@
                     <option value="공지">📢 공지</option>
                     <option value="질문">❓ 질문</option>
                     <option value="팁">💡 팁/정보</option>
-                    <option value="자유">🎭 자유주제</option>
+                                        <option value="자유">🎭 자유주제</option>
                 </select>
             </div>
             <div id="communityManageList">데이터 로딩 중...</div>
         </div>
     </div>
-</div><div id="demoteModal" class="demote-modal">
+</div>
+
+<div id="demoteModal" class="demote-modal">
     <div class="demote-modal-content">
         <h2>⚠️ 강등 처리 결과</h2>
         <div id="demoteResultContent">처리 중...</div>
         <button class="demote-modal-btn" onclick="closeDemoteModal()">✅ 확인</button>
     </div>
-</div><script type="module">
+</div>
+
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getFirestore, collection, query, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -276,12 +273,14 @@
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("globalAdminPanel").style.display = "block";
             loadGlobalData();
+            loadMatchData();
+            loadGuestData();
+            loadCommunityPosts();
         } else { 
             document.getElementById("globalError").style.display = "block"; 
         }
     };
 
-    // ✅ 센터 데이터 로드 함수
     window.loadCenterData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "ranking"), orderBy("groupRank", "asc")));
@@ -293,14 +292,17 @@
                 if ((p.centerId || 'sehwa') === currentCenterId) {
                     players.push(p);
                     if(p.status === "pending") {
-                        pList += `<tr><td><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td><div class="btn-group"><button class="btn-save" onclick="approve('${p.id}')">✅ 승인</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">❌ 거절</button></div></td></tr>`;
+                        pList += `<tr><td><strong>${p.name}</strong>
+<small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td><div class="btn-group"><button class="btn-save" onclick="approve('${p.id}')">✅ 승인</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">❌ 거절</button></div></td></tr>`;
                     } else {
                         const gameCount = (p.recentGames || []).length;
                         const gamesBadges = (p.recentGames || []).slice(0, 5).map(g => 
                             `<span class="game-badge game-${g.res === '승' ? 'win' : 'loss'}">${g.res}</span>`
                         ).join('');
                         
-                        aList += `<tr id="row-${p.id}"><td><strong>${p.groupRank}위</strong></td><td style="text-align:left;"><strong>${p.name}</strong><br><small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td style="text-align:center; font-size:12px;"><strong>${gameCount}경기</strong><br>${gamesBadges || '기록없음'}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></div></td></tr>`;
+                        aList += `<tr id="row-${p.id}"><td><strong>${p.groupRank}위</strong></td><td style="text-align:left;"><strong>${p.name}</strong>
+<small>${p.timeGroup}/${p.league}/${p.gender}</small></td><td style="text-align:center; font-size:12px;"><strong>${gameCount}경기</strong>
+${gamesBadges || '기록없음'}</td><td><div class="btn-group"><button class="btn-edit" onclick="toggleEdit('${p.id}')">수정</button><button class="btn-del" onclick="removeData('ranking', '${p.id}')">제명</button></div></td></tr>`;
                     }
                 }
             });
@@ -311,10 +313,6 @@
             alert("❌ 데이터 로드 실패: " + e.message);
         }
     };
-
-    function startCenterListening() {
-        loadCenterData();
-    }
 
     window.approve = async (id) => {
         try {
@@ -563,10 +561,9 @@
 
     window.removeLog = (idx, id) => { 
         tempRecords.splice(idx, 1); 
-        alert("✅ 전적이 삭제되었습니다. (저장을 눌러야 반영됩니다)"); 
+        toggleEdit(id);
     };
 
-    // ✅ 통합 관리 데이터 로드 함수들
     window.loadGlobalData = async () => {
         try {
             const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
@@ -653,7 +650,7 @@
             document.getElementById("communityManageList").innerHTML = html + "</table>";
         } catch (e) {
             console.error("커뮤니티 로드 오류:", e);
-            alert("❌ 커뮤니티 데이터 로드 실패");
+                        alert("❌ 커뮤니티 데이터 로드 실패");
         }
     };
 
@@ -841,7 +838,7 @@
             <div style="margin-top:8px;"><span class="edit-label">참가비</span><input id="me-fee-${id}" class="edit-input" style="width:80%;" value="${m.fee || ''}"></div>
             <div style="margin-top:8px;"><span class="edit-label">공고링크</span><input id="me-link-${id}" class="edit-input" style="width:80%;" value="${m.link || ''}" placeholder="http://..."></div>
         </div></td>
-        <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveMatchEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="loadMatchData()">❌ 취소</button></div></td>`;
+                <td><div class="action-btns" style="flex-direction:column;"><button class="btn-save" onclick="saveMatchEdit('${id}')">💾 저장</button><button class="btn-sync" style="width:auto; padding:6px 10px;" onclick="loadMatchData()">❌ 취소</button></div></td>`;
     };
 
     window.saveMatchEdit = async (id) => {
@@ -868,8 +865,8 @@
             try {
                 await updateDoc(doc(db, col, id), { status });
                 alert("✅ 승인되었습니다!");
-                loadGlobalData();
-                loadMatchData();
+                if(col === 'infoRequests') loadGlobalData();
+                if(col === 'matchRequests') loadMatchData();
             } catch(e) {
                 alert("❌ 오류: " + e.message);
             }
@@ -893,5 +890,7 @@
     };
 
     document.body.style.display = "block";
-</script></body>
+</script>
+
+</body>
 </html>
