@@ -1377,5 +1377,27 @@
     }
 </script>
 
+<div class="visitor-footer">
+    📱 오늘 방문: <span id="todayVisitors">-</span>명 | 📊 전체 방문: <span id="totalVisits">-</span>회 | ⏰ 현재 접속: <span id="onlineUsers">-</span>명
+</div>
+
+<style>
+    /* 방문자 통계 스타일 (하단 고정) */
+    .visitor-footer {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: rgba(45, 55, 72, 0.9);
+        color: white;
+        padding: 8px 15px;
+        font-size: 11px;
+        text-align: center;
+        z-index: 2000;
+        backdrop-filter: blur(5px);
+    }
+    .visitor-footer span { font-weight: bold; color: #f6ad55; margin: 0 2px; }
+    /* 바닥이 가려지지 않도록 컨테이너에 여백 추가 */
+    body { padding-bottom: 50px !important; }
+</style>
+
 </body>
 </html>
