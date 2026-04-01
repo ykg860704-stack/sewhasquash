@@ -391,12 +391,10 @@
             const total = parseInt(localStorage.getItem('total_v') || '0');
             document.getElementById('todayVisitors').innerText = daily;
             document.getElementById('totalVisits').innerText = total;
-            let online = JSON.parse(sessionStorage.getItem(`online_${today}`) || '[]');
-            if (!online.includes(this.visitorId)) {
-                online.push(this.visitorId);
-                sessionStorage.setItem(`online_${today}`, JSON.stringify(online));
-            }
-            document.getElementById('onlineUsers').innerText = online.length;
+            // 온라인 = 새로고침할 때마다 세션에서 count (sessionStorage는 페이지 닫으면 초기화)
+            let sessionCount = parseInt(sessionStorage.getItem('page_views') || '0') + 1;
+            sessionStorage.setItem('page_views', sessionCount.toString());
+            document.getElementById('onlineUsers').innerText = sessionCount;
         }
     }
     const tracker = new VisitorTracker();
