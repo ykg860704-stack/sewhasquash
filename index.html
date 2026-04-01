@@ -379,14 +379,13 @@
         }
         recordVisit() {
             const today = new Date().toISOString().split('T')[0];
-            const lastVisit = localStorage.getItem('last_visit');
-            if (lastVisit === today) return;
-            localStorage.setItem('last_visit', today);
+            // 일일 방문자 (중복 없음)
             let visitors = JSON.parse(localStorage.getItem(`v_${today}`) || '[]');
             if (!visitors.includes(this.visitorId)) {
                 visitors.push(this.visitorId);
                 localStorage.setItem(`v_${today}`, JSON.stringify(visitors));
             }
+            // 누적 방문 (매번 +1)
             const visits = parseInt(localStorage.getItem('total_v') || '0') + 1;
             localStorage.setItem('total_v', visits.toString());
         }
@@ -1432,3 +1431,5 @@
 
 </body>
 </html>
+
+123
