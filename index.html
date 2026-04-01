@@ -440,7 +440,7 @@
     // ✅ 순위 데이터 로드 함수
     window.loadRankingData = async () => {
         try {
-            const snap = await getDocs(query(collection(db, "ranking"), orderBy("groupRank", "asc")));
+            const snap = await getDocs(query(collection(db, "ranking"), orderBy("groupRank", "asc"), limit(100)));
             players = [];
             snap.forEach(d => { 
                 if(d.data().status === "approved") {
@@ -460,7 +460,7 @@
 
     window.loadInfoData = async () => {
         try {
-            const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc")));
+            const snap = await getDocs(query(collection(db, "infoRequests"), orderBy("createdAt", "desc"), limit(50)));
             allCenters = [];
             snap.forEach(d => { 
                 if(d.data().status === "approved") {
@@ -518,7 +518,7 @@
 
     window.loadMatchData = async () => {
         try {
-            const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc")));
+            const snap = await getDocs(query(collection(db, "matchRequests"), orderBy("date", "asc"), limit(30)));
             allMatches = [];
             snap.forEach(d => { 
                 if(d.data().status === "approved") {
@@ -1315,7 +1315,7 @@
 
     window.loadCommunityData = async () => {
         try {
-            const postsSnap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")));
+            const postsSnap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc"), limit(50)));
             communityPostsData = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
             const commentsSnap = await getDocs(query(collection(db, "communityComments"), orderBy("createdAt", "asc")));
@@ -1356,7 +1356,7 @@
 
     window.loadGuestData = async () => {
         try {
-            const postsSnap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc")));
+            const postsSnap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc"), limit(50)));
             guestPostsData = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
             const commentsSnap = await getDocs(query(collection(db, "guestComments"), orderBy("createdAt", "asc")));
@@ -1447,4 +1447,4 @@
 </body>
 </html>
 
-getDocs
+cost
