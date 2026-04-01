@@ -92,6 +92,27 @@
         .post-title { font-size: 16px; font-weight: 800; color: #2d3748; margin-bottom: 8px; }
         .post-content { font-size: 14px; color: #4a5568; margin-bottom: 10px; white-space: pre-wrap; line-height: 1.6; }
         .post-url-btn { display: inline-block; background: #3182ce; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; margin-bottom: 10px; }
+        .mention-badge { 
+            display: inline-block;
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+            border: 1px solid #f6ad55;
+            border-radius: 8px;
+            padding: 4px 8px;
+            margin: 2px 0;
+            font-size: 10px;
+            font-weight: 700;
+            color: #c05621;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .mention-container {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -112,7 +133,7 @@
             <select id="centerSelectMain" onchange="location.search='?center='+this.value">
                 <option value="sehwa">세화 스쿼시</option>
                 <option value="chan">찬 스쿼시</option>
-                <option value="squash3">와이드짐</option>
+                                <option value="squash3">와이드짐</option>
                 <option value="squash4">용인 HIPP 스쿼시</option>
                 <option value="squash5">스쿼시 5</option>
             </select>
@@ -153,42 +174,65 @@
         <div class="inter-center-rank"><div>🏆 센터 대항전 실시간 순위</div><div id="centerRankList"></div></div>
     </div>
 
-```
-<div id="tab-guest" class="tab-content">
-    <div class="section">
-        <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
-        <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadGuestData()">🔄 새로고침</button>
-        <div class="input-group">
-            <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
-            <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
-            <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
-            <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
-            <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
-            <div style="display:flex; gap:8px;">
-                <select id="guestLevel">
-                    <option value="S3">초보 (S3)</option>
-                    <option value="S2">중수 (S2)</option>
-                    <option value="S1">고수 (S1 이상)</option>
-                </select>
-                <select id="guestType">
-                    <option value="게임">게임 위주</option>
-                    <option value="훈련">연습/훈련</option>
-                    <option value="상관없음">상관없음</option>
-                </select>
+    <div id="tab-guest" class="tab-content">
+        <div class="section">
+            <h2 class="blue-h2">🤝 같이 운동해요 (일일입장)</h2>
+            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadGuestData()">🔄 새로고침</button>
+            <div class="input-group">
+                <select id="guestCenter"><option value="">방문 예정 센터 선택</option></select>
+                <div style="font-size:11px; color:#e74c3c; margin-top:-8px;">* 센터가 안 보이면 '센터정보'에서 먼저 등록하세요.</div>
+                <input id="guestDate" type="date" title="방문 날짜를 선택하세요">
+                <input id="guestTime" placeholder="입장 시간 (예: 오후 2시 / 14:00)">
+                <input id="guestDuration" placeholder="운동 예정 시간 (예: 2시간)">
+                <div style="display:flex; gap:8px;">
+                    <select id="guestLevel">
+                        <option value="S3">초보 (S3)</option>
+                        <option value="S2">중수 (S2)</option>
+                        <option value="S1">고수 (S1 이상)</option>
+                    </select>
+                    <select id="guestType">
+                        <option value="게임">게임 위주</option>
+                        <option value="훈련">연습/훈련</option>
+                        <option value="상관없음">상관없음</option>
+                    </select>
+                </div>
+                <input id="guestName" placeholder="본인 이름/닉네임">
+                <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
+                <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
             </div>
-            <input id="guestName" placeholder="본인 이름/닉네임">
-            <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
-            <button class="btn-battle" onclick="submitGuest()">모집글 올리기</button>
         </div>
+        <div id="guest-list"></div>
     </div>
-    <div id="guest-list"></div>
-</div>
 
-<div id="tab-info" class="tab-content">
-    <div class="section">
-        <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
-        <div class="input-group">
-            <select id="infoSido">
+    <div id="tab-info" class="tab-content">
+        <div class="section">
+            <h2 class="blue-h2">🏢 센터 정보 등록 신청</h2>
+            <div class="input-group">
+                <select id="infoSido">
+                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+                </select>
+                <input id="infoName" placeholder="상호명">
+                <input id="infoContact" placeholder="전화번호 (예: 02-123-4567)">
+                <input id="infoAddr" placeholder="상세 주소">
+                <input id="infoTime" placeholder="영업시간 (예: 평일 06:00~23:00 / 주말 휴무)">
+                <input id="infoFee" placeholder="일일입장료 (예: 15,000원)">
+                <div style="display:flex; gap:5px;">
+                    <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
+                    <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
+                    <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
+                </div>
+                <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
+            </div>
+        </div>
+        <div class="section" style="background: #f1f3f5; padding: 15px;">
+            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
+            <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
+                <option value="전체">🌏 전체 지역</option>
                 <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
                 <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                 <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
@@ -196,122 +240,97 @@
                 <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
                 <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
             </select>
-            <input id="infoName" placeholder="상호명">
-            <input id="infoContact" placeholder="전화번호 (예: 02-123-4567)">
-            <input id="infoAddr" placeholder="상세 주소">
-            <input id="infoTime" placeholder="영업시간 (예: 평일 06:00~23:00 / 주말 휴무)">
-            <input id="infoFee" placeholder="일일입장료 (예: 15,000원)">
-            <div style="display:flex; gap:5px;">
-                <input id="courtFull" type="number" placeholder="정식" style="flex:1;">
-                <input id="courtDouble" type="number" placeholder="복식" style="flex:1;">
-                <input id="courtSemi" type="number" placeholder="세미" style="flex:1;">
-            </div>
-            <button class="btn-battle" onclick="submitInfo()">정보 등록 신청</button>
+            <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
         </div>
+        <div id="info-list"></div>
     </div>
-    <div class="section" style="background: #f1f3f5; padding: 15px;">
-        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 지역별로 보기</label>
-        <select id="filterSido" onchange="renderInfoList()" style="background: white; border: 2px solid #2d3748;">
-            <option value="전체">🌏 전체 지역</option>
-            <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
-            <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
-            <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
-            <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-            <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
-            <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
-        </select>
-        <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
-    </div>
-    <div id="info-list"></div>
-</div>
 
-<div id="tab-match" class="tab-content">
-    <div class="section">
-        <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
-        <div class="input-group">
-            <select id="matchType">
-                <option value="전국">🌍 전국 대회</option>
-                <option value="지역">📍 지역 대회</option>
-            </select>
-            <select id="matchSido">
-                <option value="전체">개최 지역 선택</option>
+    <div id="tab-match" class="tab-content">
+        <div class="section">
+            <h2 class="blue-h2">🎾 대회 정보 등록 신청</h2>
+            <div class="input-group">
+                <select id="matchType">
+                    <option value="전국">🌍 전국 대회</option>
+                    <option value="지역">📍 지역 대회</option>
+                </select>
+                <select id="matchSido">
+                    <option value="전체">개최 지역 선택</option>
+                    <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
+                    <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
+                    <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
+                    <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
+                    <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
+                    <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+                </select>
+                <input id="matchTitle" placeholder="대회명">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
+                    <input id="matchDate" type="date">
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
+                    <input id="matchDeadline" type="date">
+                </div>
+                <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
+                <input id="matchFee" placeholder="참가비 (예: 30,000원)">
+                <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
+                <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
+            </div>
+        </div>
+        <div class="section" style="background: #f1f3f5; padding: 15px;">
+            <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
+            <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
+                <option value="전체">🌏 전체 지역</option>
+                <option value="전국">🌍 전국 대회만 보기</option>
                 <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
                 <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
                 <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
                 <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
                 <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
-                <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
+                                <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
             </select>
-            <input id="matchTitle" placeholder="대회명">
-            <div style="display:flex; gap:8px; align-items:center;">
-                <label style="font-size:12px; font-weight:700; width:70px;">대회일</label>
-                <input id="matchDate" type="date">
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <label style="font-size:12px; font-weight:700; width:70px;">접수마감</label>
-                <input id="matchDeadline" type="date">
-            </div>
-            <input id="matchLoc" placeholder="대회 장소 (상세 주소)">
-            <input id="matchFee" placeholder="참가비 (예: 30,000원)">
-            <input id="matchLink" placeholder="공고 링크 (http://...)" type="url">
-            <button class="btn-battle" onclick="submitMatch()">대회 등록 신청</button>
+            <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
         </div>
+        <div id="match-list"></div>
     </div>
-    <div class="section" style="background: #f1f3f5; padding: 15px;">
-        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔍 대회 필터</label>
-        <select id="filterMatchSido" onchange="renderMatchList()" style="background: white; border: 2px solid #e74c3c;">
-            <option value="전체">🌏 전체 지역</option>
-            <option value="전국">🌍 전국 대회만 보기</option>
-            <option value="경기도">경기도</option><option value="서울특별시">서울특별시</option><option value="인천광역시">인천광역시</option>
-            <option value="강원도">강원도</option><option value="충청북도">충청북도</option><option value="충청남도">충청남도</option>
-            <option value="대전광역시">대전광역시</option><option value="세종특별자치시">세종특별자치시</option><option value="전라북도">전라북도</option>
-            <option value="전라남도">전라남도</option><option value="광주광역시">광주광역시</option><option value="경상북도">경상북도</option>
-            <option value="경상남도">경상남도</option><option value="대구광역시">대구광역시</option><option value="울산광역시">울산광역시</option>
-            <option value="부산광역시">부산광역시</option><option value="제주특별자치도">제주특별자치도</option>
-        </select>
-        <button class="refresh-btn" onclick="loadMatchData()">🔄 새로고침</button>
-    </div>
-    <div id="match-list"></div>
-</div>
 
-<div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
+    <div id="tab-market" class="tab-content"><div class="section"><h2>💰 용품정보</h2><div id="market-list">내용이 없습니다.</div></div></div>
 
-<div id="tab-community" class="tab-content">
-    <div class="section">
-        <h2 class="blue-h2">💬 커뮤니티 - 새 글 작성</h2>
-        <div class="input-group">
-            <select id="postType">
-                <option value="의견">💭 의견</option>
-                <option value="공지">📢 공지</option>
-                <option value="질문">❓ 질문</option>
-                <option value="팁">💡 팁/정보</option>
-                <option value="자유">🎭 자유주제</option>
-            </select>
-            <input id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
-            <textarea id="postContent" placeholder="내용을 입력하세요" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:'Pretendard', sans-serif; min-height:120px; resize:vertical;"></textarea>
-            <input id="postUrl" placeholder="참고 링크 (선택사항, http://... 형식)" type="url">
-            <input id="postAuthor" placeholder="작성자명 (닉네임)">
-            <input id="postPassword" type="password" placeholder="비밀번호 (수정/삭제 시 필요)">
-            <button class="btn-battle" onclick="submitPost()">✍️ 글 올리기</button>
+    <div id="tab-community" class="tab-content">
+        <div class="section">
+            <h2 class="blue-h2">💬 커뮤니티 - 새 글 작성</h2>
+            <div class="input-group">
+                <select id="postType">
+                    <option value="의견">💭 의견</option>
+                    <option value="공지">📢 공지</option>
+                    <option value="질문">❓ 질문</option>
+                    <option value="팁">💡 팁/정보</option>
+                    <option value="자유">🎭 자유주제</option>
+                </select>
+                <input id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
+                <textarea id="postContent" placeholder="내용을 입력하세요" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:'Pretendard', sans-serif; min-height:120px; resize:vertical;"></textarea>
+                <input id="postUrl" placeholder="참고 링크 (선택사항, http://... 형식)" type="url">
+                <input id="postAuthor" placeholder="작성자명 (닉네임)">
+                <input id="postPassword" type="password" placeholder="비밀번호 (수정/삭제 시 필요)">
+                <button class="btn-battle" onclick="submitPost()">✍️ 글 올리기</button>
+            </div>
+        </div>
+        <div class="section">
+            <h2 class="blue-h2">📋 커뮤니티 글</h2>
+            <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadCommunityData()">🔄 새로고침</button>
+            <div style="margin-bottom:15px; clear:both;">
+                <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
+                    <option value="">🌏 전체 글</option>
+                    <option value="의견">💭 의견</option>
+                    <option value="공지">📢 공지</option>
+                    <option value="질문">❓ 질문</option>
+                    <option value="팁">💡 팁/정보</option>
+                    <option value="자유">🎭 자유주제</option>
+                </select>
+            </div>
+            <div id="community-list"></div>
         </div>
     </div>
-    <div class="section">
-        <h2 class="blue-h2">📋 커뮤니티 글</h2>
-        <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px; float:right;" onclick="loadCommunityData()">🔄 새로고침</button>
-        <div style="margin-bottom:15px; clear:both;">
-            <select id="filterPostType" onchange="renderCommunityPosts()" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
-                <option value="">🌏 전체 글</option>
-                <option value="의견">💭 의견</option>
-                <option value="공지">📢 공지</option>
-                <option value="질문">❓ 질문</option>
-                <option value="팁">💡 팁/정보</option>
-                <option value="자유">🎭 자유주제</option>
-            </select>
-        </div>
-        <div id="community-list"></div>
-    </div>
-</div>
-```
 
 </div>
 
@@ -395,7 +414,8 @@
             const searchKeyword = encodeURIComponent(data.name + " " + data.addr);
             const callNumber = data.contact ? data.contact.replace(/[^0-9]/g, "") : "";
             html += `<div class="info-card">
-                <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#4a5568;">${data.sido || '지역미지정'}</span><br>
+                <span style="font-size:10px; background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#4a5568;">${data.sido || '지역미지정'}</span>
+
                 <b style="font-size:17px;">${data.name}</b>
                 <p style="color:#2d3748; margin-top:6px; font-weight:600;">📞 연락처: <span style="font-weight:400; color:#718096;">${data.contact || '정보 없음'}</span></p>
                 <p style="color:#2d3748; margin-top:2px; font-weight:600;">⏰ 영업시간: <span style="font-weight:400; color:#718096;">${data.time || '정보 없음'}</span></p>
@@ -480,7 +500,7 @@
         document.getElementById("match-list").innerHTML = html || "<p style='text-align:center; padding:20px; color:#999;'>등록된 대회 정보가 없습니다.</p>";
     };
 
-    window.submitMatch = async () => {
+        window.submitMatch = async () => {
         const title = document.getElementById("matchTitle").value.trim();
         if(!title) return alert("대회명을 입력해주세요.");
         try {
@@ -500,6 +520,149 @@
             ["matchTitle", "matchDate", "matchDeadline", "matchLoc", "matchFee", "matchLink"].forEach(id => document.getElementById(id).value = "");
         } catch(e) { alert("저장 중 오류 발생: " + e.message); }
     };
+
+    function generateMentions(player) {
+        const mentions = [];
+        
+        if (!player) return mentions;
+        
+        const recentGames = player.recentGames || [];
+        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
+        const wins = recentGames.filter(g => g.res === '승').length;
+        const totalGames = recentGames.length;
+        
+        if (recentGames.length > 0) {
+            const lastGame = recentGames[0];
+            if (lastGame.res === '패') {
+                mentions.push({
+                    emoji: '💪',
+                    text: `${lastGame.opp}에게 복수전!`,
+                    priority: 10
+                });
+            } else if (lastGame.res === '승') {
+                mentions.push({
+                    emoji: '🔥',
+                    text: '연승 달려보세요!',
+                    priority: 5
+                });
+            }
+        }
+        
+        if (recentGames.length >= 3) {
+            let winStreak = 0, lossStreak = 0;
+            for (let i = 0; i < 3; i++) {
+                if (recentGames[i] && recentGames[i].res === '승') {
+                    winStreak++;
+                } else {
+                    break;
+                }
+            }
+            for (let i = 0; i < 3; i++) {
+                if (recentGames[i] && recentGames[i].res === '패') {
+                    lossStreak++;
+                } else {
+                    break;
+                }
+            }
+            
+            if (winStreak >= 3) {
+                mentions.push({
+                    emoji: '🏆',
+                    text: '상승세! 계속 가세요!',
+                    priority: 9
+                });
+            }
+            
+            if (lossStreak >= 3) {
+                mentions.push({
+                    emoji: '💪',
+                    text: '분발하세요! 할 수 있어요!',
+                    priority: 8
+                });
+            }
+        }
+        
+        const matchups = analyzeMatchups(player);
+        const sortedMatchups = Object.entries(matchups)
+            .sort((a, b) => b[1].winRate - a[1].winRate);
+        
+        if (sortedMatchups.length > 0) {
+            const bestMatchup = sortedMatchups[0];
+            if (bestMatchup[1].winRate >= 50) {
+                mentions.push({
+                    emoji: '🎯',
+                    text: `${bestMatchup[0]} 도전 추천!`,
+                    priority: 7
+                });
+            }
+        }
+        
+        if (sortedMatchups.length > 0) {
+            const worstMatchup = sortedMatchups[sortedMatchups.length - 1];
+            if (worstMatchup[1].winRate < 50 && worstMatchup[1].wins === 0) {
+                mentions.push({
+                    emoji: '💥',
+                    text: `${worstMatchup[0]} 설욕전!`,
+                    priority: 8
+                });
+            }
+        }
+        
+        if (rankHistory.length >= 2) {
+            const firstRank = rankHistory[0];
+            const lastRank = rankHistory[rankHistory.length - 1];
+            const rankChange = firstRank - lastRank;
+            
+            if (rankChange >= 5) {
+                mentions.push({
+                    emoji: '📈',
+                    text: `+${rankChange}위 상승 중!`,
+                    priority: 7
+                });
+            } else if (rankChange <= -5) {
+                mentions.push({
+                    emoji: '💪',
+                    text: '다시 올라갈 수 있어요!',
+                    priority: 6
+                });
+            }
+        }
+        
+        if (totalGames >= 10) {
+            mentions.push({
+                emoji: '🔥',
+                text: `${totalGames}경기 열정!`,
+                priority: 5
+            });
+        }
+        
+        if (totalGames === 0) {
+            mentions.push({
+                emoji: '⏰',
+                text: '첫 경기 시작하세요!',
+                priority: 4
+            });
+        }
+        
+        if (player.groupRank === 1) {
+            mentions.push({
+                emoji: '👑',
+                text: '1위 유지하세요!',
+                priority: 6
+            });
+        } else if (player.groupRank <= 3) {
+            const gap = player.groupRank - 1;
+            mentions.push({
+                emoji: '📈',
+                text: `1위까지 ${gap}위 남음!`,
+                priority: 5
+            });
+        }
+        
+        mentions.sort((a, b) => b.priority - a.priority);
+        
+        return mentions.slice(0, 2);
+    }
 
     function renderUI() {
         const centerPlayers = players.filter(p => {
@@ -535,7 +698,13 @@
                 if (cur < pre) arrow = '<span class="up">▲</span>'; else if (cur > pre) arrow = '<span class="down">▼</span>';
             }
             const recentBadges = (p.recentGames || []).slice(0, 5).map(v => `<div class="res-badge ${v.res === '승' ? 'win-bg' : 'loss-bg'}">${v.res}</div>`).join('');
-            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${p.gender==='여'?'<span class="female-tag">여성 '+(femaleOnly.findIndex(f=>f.id===p.id)+1)+'위</span>':""}<div class="recent-box">${recentBadges}</div></td></tr>`;
+            
+            const mentions = generateMentions(p);
+            const mentionHtml = mentions.length > 0 
+                ? `<div class="mention-container">${mentions.map(m => `<span class="mention-badge">${m.emoji} ${m.text}</span>`).join('')}</div>`
+                : '';
+            
+            html += `<tr><td><strong>${p.groupRank}위</strong>${arrow}</td><td style="text-align:left; padding-left:15px;"><a class="name-link" onclick="showLog('${p.id}')">${p.name}</a>${p.gender==='여'?'<span class="female-tag">여성 '+(femaleOnly.findIndex(f=>f.id===p.id)+1)+'위</span>':""}<div class="recent-box">${recentBadges}</div>${mentionHtml}</td></tr>`;
         });
         return html + "</table>";
     }
@@ -580,7 +749,7 @@
             });
             alert("신청 완료!"); 
             document.getElementById("nameInput").value = "";
-            await loadRankingData(); // 자동 새로고침
+            await loadRankingData();
         } catch(e) {
             alert("오류: " + e.message);
         }
@@ -623,17 +792,17 @@
         const day = String(today.getDate()).padStart(2, '0');
         const dt = `${year}.${month}.${day}`;
         
-        let uC = { recentGames: [{res: challengerResult, opp: d.name, oppRank: d.groupRank, dt: dt, sc: document.getElementById("scoreInput").value}, ...(c.recentGames || [])].slice(0, 10) };
-        let uD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: c.name, oppRank: c.groupRank, dt: dt, sc: document.getElementById("scoreInput").value}, ...(d.recentGames || [])].slice(0, 10) };
+        let uC = { recentGames: [{res: challengerResult, opp: d.name, oppRank: d.groupRank, dt: dt, sc: document.getElementById("scoreInput").value}, ...(c.recentGames || [])].slice(0, 100) };
+        let uD = { recentGames: [{res: challengerResult==='승'?'패':'승', opp: c.name, oppRank: c.groupRank, dt: dt, sc: document.getElementById("scoreInput").value}, ...(d.recentGames || [])].slice(0, 100) };
         if (challengerResult === '승') { uC.groupRank = Number(d.groupRank); uD.groupRank = Number(c.groupRank); }
-        uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-10);
-        uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-10);
+        uC.rankHistory = [...(c.rankHistory || []), uC.groupRank || c.groupRank].slice(-100);
+                uD.rankHistory = [...(d.rankHistory || []), uD.groupRank || d.groupRank].slice(-100);
         
         try {
             await updateDoc(doc(db, "ranking", c.id), uC); 
             await updateDoc(doc(db, "ranking", d.id), uD);
             alert("기록 성공!");
-            await loadRankingData(); // ✅ 자동 새로고침
+            await loadRankingData();
         } catch(e) {
             alert("오류: " + e.message);
         }
@@ -651,6 +820,7 @@
         if (wins >= 5) achievements.push({ icon: '🥇', name: '5승 달성' });
         if (wins >= 10) achievements.push({ icon: '🥈', name: '10승 달성' });
         if (wins >= 20) achievements.push({ icon: '🥉', name: '20승 달성' });
+        if (wins >= 50) achievements.push({ icon: '🏆', name: '50승 달성' });
         
         if (player.recentGames && player.recentGames.length >= 5) {
             let streak = 0;
@@ -665,6 +835,7 @@
         }
         
         if (totalGames >= 100) achievements.push({ icon: '💪', name: '100경기 참여' });
+        if (totalGames >= 50) achievements.push({ icon: '💯', name: '50경기 참여' });
         if (player.groupRank === 1) achievements.push({ icon: '👑', name: '1위 달성' });
         
         if (rankHistory.length >= 2) {
@@ -704,149 +875,6 @@
         return matchups;
     }
 
-    function generateMentions(player) {
-        const mentions = [];
-        
-        if (!player) return mentions;
-        
-        const recentGames = player.recentGames || [];
-        const rankHistory = (player.rankHistory || []).filter(r => !isNaN(r) && r >= 1 && r <= 50);
-        const wins = recentGames.filter(g => g.res === '승').length;
-        const totalGames = recentGames.length;
-        
-        if (recentGames.length > 0) {
-            const lastGame = recentGames[0];
-            if (lastGame.res === '패') {
-                mentions.push({
-                    emoji: '💪',
-                    text: `${lastGame.opp} 상대로 복수전 하세요!`,
-                    priority: 10
-                });
-            } else if (lastGame.res === '승') {
-                mentions.push({
-                    emoji: '🔥',
-                    text: '계속 이기세요! 흐름을 유지하세요!',
-                    priority: 5
-                });
-            }
-        }
-        
-        if (recentGames.length >= 3) {
-            let winStreak = 0, lossStreak = 0;
-            for (let i = 0; i < 3; i++) {
-                if (recentGames[i] && recentGames[i].res === '승') {
-                    winStreak++;
-                } else {
-                    break;
-                }
-            }
-            for (let i = 0; i < 3; i++) {
-                if (recentGames[i] && recentGames[i].res === '패') {
-                    lossStreak++;
-                } else {
-                    break;
-                }
-            }
-            
-            if (winStreak >= 3) {
-                mentions.push({
-                    emoji: '🏆',
-                    text: '지금이 기회! 계속 우승하세요!',
-                    priority: 9
-                });
-            }
-            
-            if (lossStreak >= 3) {
-                mentions.push({
-                    emoji: '💪',
-                    text: '분발하세요! 넌 할 수 있어!',
-                    priority: 8
-                });
-            }
-        }
-        
-        const matchups = analyzeMatchups(player);
-        const sortedMatchups = Object.entries(matchups)
-            .sort((a, b) => b[1].winRate - a[1].winRate);
-        
-        if (sortedMatchups.length > 0) {
-            const bestMatchup = sortedMatchups[0];
-            if (bestMatchup[1].winRate >= 50) {
-                mentions.push({
-                    emoji: '🎯',
-                    text: `${bestMatchup[0]}과 경기해보세요! (${bestMatchup[1].winRate}% 승률)`,
-                    priority: 7
-                });
-            }
-        }
-        
-        if (sortedMatchups.length > 0) {
-            const worstMatchup = sortedMatchups[sortedMatchups.length - 1];
-            if (worstMatchup[1].winRate < 50 && worstMatchup[1].wins === 0) {
-                mentions.push({
-                    emoji: '💥',
-                    text: `${worstMatchup[0]} 상대로 설욕전! (${worstMatchup[1].losses}연패)`,
-                    priority: 8
-                });
-            }
-        }
-        
-        if (rankHistory.length >= 2) {
-            const firstRank = rankHistory[0];
-            const lastRank = rankHistory[rankHistory.length - 1];
-            const rankChange = firstRank - lastRank;
-            
-            if (rankChange >= 5) {
-                mentions.push({
-                    emoji: '📈',
-                    text: `대단한 상승! 계속 올라가세요! (+${rankChange}위)`,
-                    priority: 7
-                });
-            } else if (rankChange <= -5) {
-                mentions.push({
-                    emoji: '💪',
-                    text: `다시 올라올 수 있어! 파이팅! (${rankChange}위)`,
-                    priority: 6
-                });
-            }
-        }
-        
-        if (totalGames >= 10) {
-            mentions.push({
-                emoji: '🔥',
-                text: `열정이 대단해요! 총 ${totalGames}경기 플레이!`,
-                priority: 5
-            });
-        }
-        
-        if (totalGames === 0) {
-            mentions.push({
-                emoji: '⏰',
-                text: '경기를 신청해보세요! 순위를 올릴 기회예요!',
-                priority: 4
-            });
-        }
-        
-        if (player.groupRank === 1) {
-            mentions.push({
-                emoji: '👑',
-                text: '1위를 유지하세요! 계속 우승!',
-                priority: 6
-            });
-        } else if (player.groupRank <= 3) {
-            const gap = player.groupRank - 1;
-            mentions.push({
-                emoji: '📈',
-                text: `1위까지 ${gap}위 남았어요! 파이팅!`,
-                priority: 5
-            });
-        }
-        
-        mentions.sort((a, b) => b.priority - a.priority);
-        
-        return mentions.slice(0, 3);
-    }
-
     window.showLog = (id) => {
         const p = players.find(x => x.id === id);
         
@@ -869,30 +897,35 @@
         
         const matchups = analyzeMatchups(p);
         const sortedMatchups = Object.entries(matchups)
-            .sort((a, b) => b[1].wins - a[1].wins)
-            .slice(0, 10);
+            .sort((a, b) => (b[1].wins + b[1].losses) - (a[1].wins + a[1].losses))
+            .slice(0, 15);
         
         const matchupHtml = sortedMatchups.length > 0
             ? `<div style="margin-top:15px; background:#f8f9fa; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
-                <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">🎯 상대별 전적 분석 (최근)</h4>
+                <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">🎯 상대별 전적 분석 (전체 누적)</h4>
                 ${sortedMatchups.map(([opp, stats]) => {
                     const color = stats.winRate >= 50 ? '#38a169' : '#e53e3e';
+                    const total = stats.wins + stats.losses;
                     return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-                        <span><strong>${opp}</strong></span>
+                        <span><strong>${opp}</strong> <span style="color:#999; font-size:10px;">(${total}경기)</span></span>
                         <span style="color:${color}; font-weight:bold;">${stats.wins}승 ${stats.losses}패 (${stats.winRate}%)</span>
                     </div>`;
                 }).join('')}
                </div>`
             : '';
         
-        const gamesList = (p.recentGames || []).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;"><strong>${g.dt}</strong> vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
+        const totalGames = (p.recentGames || []).length;
+        const gamesList = (p.recentGames || []).slice(0, 20).map(g => `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px 0;"><strong>${g.dt}</strong> vs ${g.opp} (${g.res}) ${g.sc||''}</div>`).join('');
         
         document.getElementById("modalBody").innerHTML = `
             <h3 style="margin:0 0 15px 0; color:#2d3748; font-weight:800;">${p.name} - 상세 전적</h3>
+            <div style="background:#f0f4ff; padding:10px; border-radius:8px; margin-bottom:15px; font-size:13px; color:#2d3748;">
+                <strong>📊 총 경기 수:</strong> ${totalGames}경기 | <strong>🏆 총 승수:</strong> ${(p.recentGames || []).filter(g => g.res === '승').length}승
+            </div>
             ${achievementHtml}
             ${mentionsHtml}
             <div style="border-top: 2px solid #e2e8f0; padding-top:15px;">
-                <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">📊 경기 기록</h4>
+                <h4 style="margin:0 0 10px 0; color:#2d3748; font-size:13px;">📊 최근 경기 기록 (최근 20경기)</h4>
                 ${gamesList || '<p style="color:#999; text-align:center; padding:20px;">경기 기록이 없습니다.</p>'}
             </div>
             ${matchupHtml}
@@ -906,7 +939,7 @@
             
             const rankHistory = (p.rankHistory || [])
                 .filter(r => !isNaN(r) && r >= 1 && r <= 50)
-                .slice(-10);
+                .slice(-30);
             
             if (rankHistory.length === 0) {
                 ctx.fillStyle = '#999';
@@ -924,11 +957,11 @@
             
             myChart = new Chart(ctx, {
                 type: 'line',
-                data: {
+                {
                     labels: rankHistory.map((_, i) => `${i + 1}경기`),
                     datasets: [{
                         label: `${p.name}의 순위 변동`,
-                        data: rankHistory,
+                        rankHistory,
                         borderColor: '#3182ce',
                         backgroundColor: 'rgba(49, 130, 206, 0.15)',
                         borderWidth: 2.5,
@@ -1056,7 +1089,7 @@
     // ═══════════════════════════════════════════════════════════════
     // 💬 커뮤니티 시스템 (게시판 + 댓글)
     // ═══════════════════════════════════════════════════════════════
-    window.submitPost = async () => {
+        window.submitPost = async () => {
         const type = document.getElementById("postType").value;
         const title = document.getElementById("postTitle").value.trim();
         const content = document.getElementById("postContent").value.trim();
@@ -1085,7 +1118,7 @@
             document.getElementById("postUrl").value = "";
             document.getElementById("postAuthor").value = "";
             document.getElementById("postPassword").value = "";
-            await loadCommunityData(); // ✅ 자동 새로고침
+            await loadCommunityData();
         } catch (e) {
             alert("❌ 저장 오류: " + e.message);
         }
@@ -1123,7 +1156,6 @@
                 
                 const comments = communityCommentsData[post.id] || [];
                 
-                // 댓글 HTML 생성
                 let commentHtml = '';
                 if (comments.length > 0) {
                     commentHtml = comments.map(c => `
@@ -1180,7 +1212,7 @@
             document.getElementById(`cmtContent-${postId}`).value = "";
             document.getElementById(`cmtAuthor-${postId}`).value = "";
             document.getElementById(`cmtPw-${postId}`).value = "";
-            await loadCommunityData(); // ✅ 자동 새로고침
+            await loadCommunityData();
         } catch (e) {
             alert("❌ 댓글 등록 실패: " + e.message);
         }
@@ -1197,7 +1229,7 @@
         try {
             await deleteDoc(doc(db, "communityComments", commentId));
             alert("✅ 댓글이 삭제되었습니다.");
-            await loadCommunityData(); // ✅ 자동 새로고침
+            await loadCommunityData();
         } catch (e) {
             alert("❌ 삭제 오류: " + e.message);
         }
@@ -1214,13 +1246,12 @@
         try {
             await deleteDoc(doc(db, "communityPosts", id));
             alert("✅ 게시물이 삭제되었습니다.");
-            await loadCommunityData(); // ✅ 자동 새로고침
+            await loadCommunityData();
         } catch (e) {
             alert("❌ 삭제 오류: " + e.message);
         }
     };
 
-    // ✅ 커뮤니티 데이터 로드 함수
     window.loadCommunityData = async () => {
         try {
             const postsSnap = await getDocs(query(collection(db, "communityPosts"), orderBy("createdAt", "desc")));
@@ -1239,10 +1270,11 @@
         } catch(e) { console.error("커뮤니티 데이터 로드 오류:", e); }
     };
     
-    // 초기 로드
     loadCommunityData();
 
-    // 게스트 관련 함수들
+    // ═══════════════════════════════════════════════════════════════
+    // 🤝 게스트 모집 시스템
+    // ═══════════════════════════════════════════════════════════════
     window.submitGuest = async () => {
         const center = document.getElementById("guestCenter").value;
         const name = document.getElementById("guestName").value.trim();
@@ -1259,11 +1291,10 @@
             });
             alert("모집글이 등록되었습니다.");
             ["guestTime", "guestDuration", "guestName", "guestPw", "guestDate"].forEach(id => document.getElementById(id).value = "");
-            await loadGuestData(); // ✅ 자동 새로고침
+            await loadGuestData();
         } catch(e) { alert("오류 발생: " + e.message); }
     };
 
-    // ✅ 게스트 데이터 로드 함수
     window.loadGuestData = async () => {
         try {
             const postsSnap = await getDocs(query(collection(db, "guestPosts"), orderBy("date", "asc")));
@@ -1280,7 +1311,6 @@
         } catch(e) { console.error("게스트 데이터 로드 오류:", e); }
     };
     
-    // 초기 로드
     loadGuestData();
 
     function renderGuestList() {
@@ -1305,7 +1335,8 @@
                     <button class="btn-del" onclick="deleteGuest('${postId}', '${data.pw}')">삭제</button>
                 </div>
                 <div class="guest-info">
-                    📅 <b>날짜:</b> ${data.date} | ⏰ <b>시간:</b> ${data.time} (${data.duration})<br>
+                    📅 <b>날짜:</b> ${data.date} | ⏰ <b>시간:</b> ${data.time} (${data.duration})
+
                     👤 <b>모집자:</b> ${data.name} | 🎯 <b>목적:</b> ${data.type}
                 </div>
                 <div class="comment-sec">
@@ -1330,7 +1361,7 @@
                 postId, userName: user, text, createdAt: serverTimestamp()
             });
             document.getElementById(`cmtText-${postId}`).value = "";
-            await loadGuestData(); // ✅ 자동 새로고침
+            await loadGuestData();
         } catch(e) { alert("댓글 등록 실패: " + e.message); }
     };
 
@@ -1340,7 +1371,7 @@
             try { 
                 await deleteDoc(doc(db, "guestPosts", id)); 
                 alert("삭제되었습니다.");
-                await loadGuestData(); // ✅ 자동 새로고침
+                await loadGuestData();
             }
             catch(e) { alert("삭제 실패: " + e.message); }
         } else if(inputPw !== null) { alert("비밀번호가 일치하지 않습니다."); }
@@ -1358,4 +1389,4 @@
 </body>
 </html>
 
-수정33
+수정3
