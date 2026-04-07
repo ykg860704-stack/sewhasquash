@@ -1124,13 +1124,12 @@
 
         userPredictions[missionId] = option;
         
-        // ✅ 1단계: 로컬스토리지에 **무조건** 저장 (이게 메인)
+        // ✅ 로컬스토리지에 저장 (이것만 작동)
         try {
             localStorage.setItem(`prediction_${missionId}`, option);
             console.log(`✅ 로컬스토리지 저장 완료`);
         } catch (e) {
             console.error("로컬스토리지 저장 실패:", e);
-            alert("⚠️ 저장 실패");
             return;
         }
 
@@ -1140,20 +1139,8 @@
             mission.votes[option] = (mission.votes[option] || 0) + 1;
         }
 
-        // ✅ 2단계: Firebase에도 저장 시도 (백그라운드, 실패해도 괜찮음)
-        // 모바일 환경에서 실패할 수 있으니 에러 무시
-        addDoc(collection(db, "predictionVotes"), {
-            missionId: missionId,
-            option: option,
-            centerId: currentCenter,
-            timestamp: new Date().toISOString(),
-            createdAt: serverTimestamp()
-        }).then(docRef => {
-            console.log("✅ Firebase 저장 성공");
-        }).catch(e => {
-            // Firebase 실패해도 무시 (로컬스토리지에는 저장됨)
-            console.log("ℹ️ Firebase 저장 실패 (로컬스토리지에는 저장됨):", e.code);
-        });
+        // Firebase 저장은 현재 비활성화 (나중에 처리)
+        console.log("ℹ️ Firebase 저장은 나중에 처리합니다");
 
         // 화면 즉시 업데이트
         renderPredictionMissions();
