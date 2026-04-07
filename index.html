@@ -489,6 +489,32 @@
         font-size: 10px;
         font-weight: 700;
     }
+
+    .prediction-toggle-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 10px;
+        color: #3182ce;
+        transition: transform 0.3s ease;
+    }
+
+    .prediction-toggle-btn.collapsed {
+        transform: rotate(-90deg);
+    }
+
+    .prediction-content {
+        max-height: 1000px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .prediction-content.collapsed {
+        max-height: 0;
+        margin-top: 0;
+    }
 </style>
 ```
 
@@ -777,7 +803,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, updateDoc, doc, getDocs, serverTimestamp, limit, deleteDoc, getDoc, setDoc, onSnapshot, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCliruITgfBt6mIaxlM4r0McQi5T1fu-pY",
@@ -1007,10 +1033,12 @@
 
         let html = `
             <div class="prediction-section">
-                <div class="prediction-header">
-                    🔮 이번 주 예측 미션 - 투표하고 맞춰보세요!
+                <div class="prediction-header" onclick="togglePredictionPanel()">
+                    🔮 이번 주 예측 미션
+                    <button class="prediction-toggle-btn" id="predictionToggleBtn">▼</button>
                 </div>
-                <div class="prediction-cards">
+                <div class="prediction-content" id="predictionContent">
+                    <div class="prediction-cards">
         `;
 
         predictionMissions.forEach((mission, idx) => {
@@ -1064,12 +1092,26 @@
         });
 
         html += `
+                    </div>
                 </div>
             </div>
         `;
 
         section.innerHTML = html;
     }
+
+    window.togglePredictionPanel = () => {
+        const content = document.getElementById("predictionContent");
+        const btn = document.getElementById("predictionToggleBtn");
+        
+        if (content.classList.contains("collapsed")) {
+            content.classList.remove("collapsed");
+            btn.classList.remove("collapsed");
+        } else {
+            content.classList.add("collapsed");
+            btn.classList.add("collapsed");
+        }
+    };
 
     window.votePrediction = async (missionId, option) => {
         userPredictions[missionId] = option;
@@ -1078,18 +1120,24 @@
         if (mission) {
             mission.votes[option] = (mission.votes[option] || 0) + 1;
 
+            // ✅ 로컬스토리지에 사용자 투표 저장
+            localStorage.setItem(`prediction_${missionId}`, option);
+            
+            // ✅ Firebase에 투표 기록 (실시간 통계)
             try {
                 await addDoc(collection(db, "predictionVotes"), {
-                    missionId,
-                    option,
+                    missionId: missionId,
+                    option: option,
                     centerId: currentCenter,
                     createdAt: serverTimestamp()
                 });
-                renderPredictionMissions();
+                console.log("✅ 투표 저장 완료");
             } catch (e) {
                 console.error("투표 저장 오류:", e);
-                alert("투표 중 오류가 발생했습니다.");
             }
+
+            // 화면 업데이트
+            renderPredictionMissions();
         }
     };
 
@@ -1156,6 +1204,32 @@
             });
             document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
             renderUI();
+            
+            // ✅ 예측 미션 로드 및 이전 투표 복구
+            predictionMissions = generatePredictionMissions();
+            
+            // 로컬스토리지에서 사용자 투표 복구
+            predictionMissions.forEach(mission => {
+                const savedVote = localStorage.getItem(`prediction_${mission.id}`);
+                if (savedVote) {
+                    userPredictions[mission.id] = savedVote;
+                }
+            });
+            
+            // Firebase에서 모든 투표 통계 로드
+            try {
+                const votesSnap = await getDocs(query(collection(db, "predictionVotes"), where("centerId", "==", currentCenter)));
+                votesSnap.forEach(doc => {
+                    const voteData = doc.data();
+                    const mission = predictionMissions.find(m => m.id === voteData.missionId);
+                    if (mission) {
+                        mission.votes[voteData.option] = (mission.votes[voteData.option] || 0) + 1;
+                    }
+                });
+            } catch (e) {
+                console.log("투표 통계 로드 (Firebase):", e.message);
+            }
+            
             renderPredictionMissions();
             renderMissionProgress();
             updateCenterRanking(); 
