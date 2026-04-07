@@ -1126,17 +1126,20 @@
         localStorage.setItem(`prediction_${missionId}`, option);
         
         // ✅ Firebase 저장
-        addDoc(collection(db, "predictionVotes"), {
-            missionId: missionId,
-            option: option,
-            centerId: currentCenter,
-            timestamp: new Date().toISOString(),
-            createdAt: serverTimestamp()
-        }).then(docRef => {
+        try {
+            const docRef = await addDoc(collection(db, "predictionVotes"), {
+                missionId: missionId,
+                option: option,
+                centerId: currentCenter,
+                timestamp: new Date().toISOString(),
+                createdAt: serverTimestamp()
+            });
+            alert("✅ 투표가 저장되었습니다!");
             console.log("✅ Firebase 저장 성공");
-        }).catch(e => {
-            console.log("ℹ️ Firebase 저장 실패:", e.code);
-        });
+        } catch (e) {
+            alert("❌ Firebase 저장 실패\n에러: " + e.code + "\n메시지: " + e.message);
+            console.log("❌ Firebase 저장 실패:", e.code, e.message);
+        }
         
         const mission = predictionMissions.find(m => m.id === missionId);
         if (mission) {
