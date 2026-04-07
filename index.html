@@ -203,8 +203,12 @@
             </div>
             <input id="guestName" placeholder="본인 이름/닉네임">
             <input id="guestPw" type="password" placeholder="비밀번호 (삭제 시 필요)">
-        <button class="refresh-btn" onclick="loadInfoData()">🔄 새로고침</button>
+            <button class="btn-battle" onclick="submitGuest()">📝 모집글 등록</button>
         </div>
+    </div>
+    <div class="section" style="background: #f1f3f5; padding: 15px;">
+        <label style="font-size:13px; font-weight:700; color:#4a5568; display:block; margin-bottom:8px;">🔄 모집 현황</label>
+        <button class="refresh-btn" onclick="loadGuestData()">🔄 새로고침</button>
     </div>
     <div id="guest-list"></div>
 </div>
@@ -1445,5 +1449,3 @@
 
 </body>
 </html>
-
-cost
