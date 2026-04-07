@@ -1036,13 +1036,15 @@
             return;
         }
 
+        let isCollapsed = section.dataset.collapsed === 'true';
+
         let html = `
             <div class="prediction-section">
-                <div class="prediction-header" onclick="togglePredictionPanel()">
+                <div class="prediction-header" onclick="togglePredictionPanel(event)">
                     🔮 이번 주 예측 미션
-                    <button class="prediction-toggle-btn collapsed" id="predictionToggleBtn">▼</button>
+                    <button class="prediction-toggle-btn ${isCollapsed ? 'collapsed' : ''}" id="predictionToggleBtn">▼</button>
                 </div>
-                <div class="prediction-content collapsed" id="predictionContent">
+                <div class="prediction-content ${isCollapsed ? 'collapsed' : ''}" id="predictionContent">
                     <div class="prediction-cards">
         `;
 
@@ -1053,18 +1055,15 @@
 
             html += `
                 <div class="${cardClass}">
-                    <div class="prediction-vote-count">${totalVotes}표</div>
                     <div class="prediction-title">${mission.title}</div>
                     <div class="prediction-options">
             `;
 
             mission.options.forEach(option => {
-                const votes = mission.votes[option] || 0;
-                const votePercentage = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(0) : 0;
                 const isSelected = userVote === option ? 'selected' : '';
 
                 html += `
-                    <button class="prediction-btn ${isSelected}" onclick="selectPredictionOption('${mission.id}', '${option}')">
+                    <button class="prediction-btn ${isSelected}" onclick="selectAndSavePrediction(event, '${mission.id}', '${option}')">
                         ${option}
                     </button>
                 `;
@@ -1081,18 +1080,17 @@
 
                 html += `
                     <div class="prediction-stat-item">
-                        <span>${option}</span>
+                        <span style="min-width: 60px;">${option}</span>
                         <div class="stat-bar">
                             <div class="stat-fill" style="width: ${votePercentage}%"></div>
                         </div>
-                        <span>${votes}표</span>
+                        <span style="min-width: 40px; text-align: right;">${votes}표</span>
                     </div>
                 `;
             });
 
             html += `
                     </div>
-                    ${userVote ? `<button class="btn-battle" style="margin-top: 10px; padding: 10px;" onclick="votePrediction('${mission.id}', '${userVote}')">✅ 투표 저장</button>` : `<button class="btn-battle" style="margin-top: 10px; padding: 10px; background: #cbd5e0; cursor: not-allowed;" disabled>먼저 선택해주세요</button>`}
                 </div>
             `;
         });
@@ -1104,48 +1102,21 @@
         `;
 
         section.innerHTML = html;
+        section.dataset.collapsed = isCollapsed;
     }
 
-    window.selectPredictionOption = (missionId, option) => {
+    window.selectAndSavePrediction = async (event, missionId, option) => {
+        event.stopPropagation();
+        
+        console.log(`🗳️ 투표: ${missionId} → ${option}`);
+
         userPredictions[missionId] = option;
-        renderPredictionMissions();
-    };
-
-    window.togglePredictionPanel = () => {
-        const content = document.getElementById("predictionContent");
-        const btn = document.getElementById("predictionToggleBtn");
         
-        if (content.classList.contains("collapsed")) {
-            content.classList.remove("collapsed");
-            btn.classList.remove("collapsed");
-        } else {
-            content.classList.add("collapsed");
-            btn.classList.add("collapsed");
-        }
-    };
-
-    window.votePrediction = async (missionId, option) => {
-        if (!missionId || !option) {
-            alert("투표 정보가 없습니다.");
-            return;
-        }
-
-        console.log(`🗳️ 투표 시작: ${missionId} → ${option}`);
-
-        const mission = predictionMissions.find(m => m.id === missionId);
-        if (!mission) {
-            console.error("미션을 찾을 수 없습니다:", missionId);
-            return;
-        }
-
-        // 투표수 증가
-        mission.votes[option] = (mission.votes[option] || 0) + 1;
-
-        // ✅ 로컬스토리지에 사용자 투표 저장
+        // ✅ 로컬스토리지에 저장
         localStorage.setItem(`prediction_${missionId}`, option);
-        console.log(`✅ 로컬스토리지 저장: prediction_${missionId} = ${option}`);
+        console.log(`✅ 로컬스토리지 저장됨`);
         
-        // ✅ Firebase에 투표 기록 (실시간 통계)
+        // ✅ Firebase에 저장
         try {
             await addDoc(collection(db, "predictionVotes"), {
                 missionId: missionId,
@@ -1155,16 +1126,37 @@
                 createdAt: serverTimestamp()
             });
             console.log("✅ Firebase 저장 완료");
-            alert("✅ 투표가 저장되었습니다!");
         } catch (e) {
             console.error("❌ Firebase 저장 오류:", e);
-            alert("❌ 투표 저장 중 오류가 발생했습니다: " + e.message);
-            return;
         }
 
-        // 화면 업데이트
+        // 페이지 접힘 상태 유지하면서 화면만 업데이트
         renderPredictionMissions();
     };
+
+    window.togglePredictionPanel = (event) => {
+        event.stopPropagation();
+        
+        const section = document.getElementById("predictionSection");
+        const content = document.getElementById("predictionContent");
+        const btn = document.getElementById("predictionToggleBtn");
+        
+        const isCollapsed = section.dataset.collapsed === 'true';
+        
+        if (isCollapsed) {
+            // 펼치기
+            content.classList.remove("collapsed");
+            btn.classList.remove("collapsed");
+            section.dataset.collapsed = 'false';
+        } else {
+            // 접기
+            content.classList.add("collapsed");
+            btn.classList.add("collapsed");
+            section.dataset.collapsed = 'true';
+        }
+    };
+
+
 
     // ═══════════════════════════════════════════════════════════════
     // ✅ Phase 2: 미션 진행도 렌더링
@@ -1243,16 +1235,23 @@
             
             // Firebase에서 모든 투표 통계 로드
             try {
-                const votesSnap = await getDocs(query(collection(db, "predictionVotes"), where("centerId", "==", currentCenter)));
+                const votesSnap = await getDocs(collection(db, "predictionVotes"));
                 votesSnap.forEach(doc => {
                     const voteData = doc.data();
-                    const mission = predictionMissions.find(m => m.id === voteData.missionId);
-                    if (mission) {
-                        mission.votes[voteData.option] = (mission.votes[voteData.option] || 0) + 1;
+                    if (voteData.centerId === currentCenter) {
+                        const mission = predictionMissions.find(m => m.id === voteData.missionId);
+                        if (mission && mission.votes[voteData.option] !== undefined) {
+                            mission.votes[voteData.option] += 1;
+                        }
                     }
                 });
             } catch (e) {
-                console.log("투표 통계 로드 (Firebase):", e.message);
+                console.log("투표 통계 로드 실패:", e.message);
+            }
+            
+            // 초기 상태: 접힌 상태
+            if (document.getElementById("predictionSection")) {
+                document.getElementById("predictionSection").dataset.collapsed = 'true';
             }
             
             renderPredictionMissions();
