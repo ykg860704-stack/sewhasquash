@@ -1120,44 +1120,42 @@
     window.selectAndSavePrediction = async (event, missionId, option) => {
         event.stopPropagation();
         
-        console.log(`🗳️ 투표 시작: ${missionId} → ${option}`);
+        console.log(`🗳️ 투표: ${missionId} → ${option}`);
 
         userPredictions[missionId] = option;
         
-        // ✅ 로컬스토리지에 저장
+        // ✅ 1단계: 로컬스토리지에 **무조건** 저장 (이게 메인)
         try {
             localStorage.setItem(`prediction_${missionId}`, option);
-            console.log(`✅ 로컬스토리지 저장: ${missionId} = ${option}`);
+            console.log(`✅ 로컬스토리지 저장 완료`);
         } catch (e) {
             console.error("로컬스토리지 저장 실패:", e);
-        }
-        
-        // ✅ Firebase에 저장 (에러 처리 개선)
-        try {
-            const docRef = await addDoc(collection(db, "predictionVotes"), {
-                missionId: missionId,
-                option: option,
-                centerId: currentCenter,
-                timestamp: new Date().toISOString(),
-                createdAt: serverTimestamp()
-            });
-            console.log("✅ Firebase 저장 성공! ID:", docRef.id);
-            
-            // 로컬 투표 수 즉시 증가
-            const mission = predictionMissions.find(m => m.id === missionId);
-            if (mission) {
-                mission.votes[option] = (mission.votes[option] || 0) + 1;
-                console.log("✅ 투표 수 업데이트:", mission.votes);
-            }
-        } catch (e) {
-            console.error("❌ Firebase 저장 실패:", e);
-            console.error("에러 메시지:", e.message);
-            console.error("에러 코드:", e.code);
-            alert("⚠️ 저장 중 오류: " + e.message);
+            alert("⚠️ 저장 실패");
             return;
         }
 
-        // 화면 업데이트
+        // 로컬 투표 수 즉시 증가
+        const mission = predictionMissions.find(m => m.id === missionId);
+        if (mission) {
+            mission.votes[option] = (mission.votes[option] || 0) + 1;
+        }
+
+        // ✅ 2단계: Firebase에도 저장 시도 (백그라운드, 실패해도 괜찮음)
+        // 모바일 환경에서 실패할 수 있으니 에러 무시
+        addDoc(collection(db, "predictionVotes"), {
+            missionId: missionId,
+            option: option,
+            centerId: currentCenter,
+            timestamp: new Date().toISOString(),
+            createdAt: serverTimestamp()
+        }).then(docRef => {
+            console.log("✅ Firebase 저장 성공");
+        }).catch(e => {
+            // Firebase 실패해도 무시 (로컬스토리지에는 저장됨)
+            console.log("ℹ️ Firebase 저장 실패 (로컬스토리지에는 저장됨):", e.code);
+        });
+
+        // 화면 즉시 업데이트
         renderPredictionMissions();
     };
 
@@ -1249,31 +1247,37 @@
             document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
             renderUI();
             
-            // ✅ 예측 미션 로드 및 이전 투표 복구
+            // ✅ 예측 미션 초기화
             predictionMissions = generatePredictionMissions();
             
-            // 로컬스토리지에서 사용자 투표 복구
+            // ✅ 1단계: 로컬스토리지에서 사용자 투표 **먼저** 복구
+            console.log("📱 로컬스토리지에서 투표 복구 중...");
             predictionMissions.forEach(mission => {
                 const savedVote = localStorage.getItem(`prediction_${mission.id}`);
                 if (savedVote) {
                     userPredictions[mission.id] = savedVote;
+                    console.log(`✅ 복구: ${mission.id} = ${savedVote}`);
                 }
             });
             
-            // Firebase에서 모든 투표 통계 로드
+            // ✅ 2단계: Firebase에서 **추가로** 투표 통계 로드 (실패해도 괜찮음)
+            console.log("🔥 Firebase에서 투표 통계 로드 중...");
             try {
                 const votesSnap = await getDocs(collection(db, "predictionVotes"));
+                let firebaseCount = 0;
                 votesSnap.forEach(doc => {
                     const voteData = doc.data();
                     if (voteData.centerId === currentCenter) {
                         const mission = predictionMissions.find(m => m.id === voteData.missionId);
                         if (mission && mission.votes[voteData.option] !== undefined) {
                             mission.votes[voteData.option] += 1;
+                            firebaseCount++;
                         }
                     }
                 });
+                console.log(`✅ Firebase에서 ${firebaseCount}개 투표 로드`);
             } catch (e) {
-                console.log("투표 통계 로드 실패:", e.message);
+                console.log("ℹ️ Firebase 로드 실패 (로컬스토리지만 사용):", e.code);
             }
             
             // 초기 상태: 접힌 상태
