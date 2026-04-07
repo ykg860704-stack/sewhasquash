@@ -370,6 +370,125 @@
         font-size: 16px;
         font-weight: 800;
     }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* ✅ 예측 미션 시스템 */
+    /* ═══════════════════════════════════════════════════════════════ */
+    .prediction-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #3182ce;
+    }
+
+    .prediction-header {
+        font-size: 16px;
+        font-weight: 800;
+        color: #2d3748;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .prediction-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .prediction-card {
+        background: linear-gradient(135deg, #e6f2ff 0%, #f0f7ff 100%);
+        border: 2px solid #bee3f8;
+        border-radius: 12px;
+        padding: 15px;
+        position: relative;
+    }
+
+    .prediction-card.voted {
+        background: linear-gradient(135deg, #c3dafe 0%, #e6f2ff 100%);
+        border-color: #3182ce;
+    }
+
+    .prediction-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .prediction-options {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .prediction-btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #4a5568;
+    }
+
+    .prediction-btn:hover {
+        border-color: #3182ce;
+        background: #ebf8ff;
+    }
+
+    .prediction-btn.selected {
+        background: #3182ce;
+        border-color: #3182ce;
+        color: white;
+    }
+
+    .prediction-stats {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #718096;
+        display: flex;
+        gap: 15px;
+    }
+
+    .prediction-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .stat-bar {
+        width: 60px;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .stat-fill {
+        height: 100%;
+        background: #3182ce;
+        transition: width 0.3s ease;
+    }
+
+    .prediction-vote-count {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #3182ce;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+    }
 </style>
 ```
 
@@ -402,9 +521,9 @@
 
 ```
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- ✅ Phase 1: 이주의 베스트 매치 섹션 -->
+    <!-- ✅ 이주의 예측 미션 섹션 -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <div id="bestMatchSection"></div>
+    <div id="predictionSection"></div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- ✅ Phase 2: 미션 진행도 섹션 -->
@@ -748,10 +867,12 @@
     let communityCommentsData = {};
 
     // ═══════════════════════════════════════════════════════════════
-    // ✅ Phase 1+2: 미션 & 베스트 매치 전역 변수
+    // ✅ Phase 1+2: 미션 & 예측 미션 전역 변수
     // ═══════════════════════════════════════════════════════════════
     let selectedMission = null;
     let pendingMatchRecord = null;
+    let predictionMissions = [];
+    let userPredictions = {};
 
     window.closeMissionModal = () => {
         document.getElementById("missionModal").classList.remove("active");
@@ -796,119 +917,181 @@
     };
 
     // ═══════════════════════════════════════════════════════════════
-    // ✅ Phase 1: 베스트 매치 선정 알고리즘
+    // ✅ 예측 미션 생성 알고리즘
     // ═══════════════════════════════════════════════════════════════
-    function findBestMatch() {
+    function generatePredictionMissions() {
         const centerPlayers = players.filter(p => {
             const pCenter = p.centerId || 'sehwa';
-            return pCenter === currentCenter;
+            return pCenter === currentCenter && p.groupRank && p.groupRank !== 999;
         });
 
-        if (centerPlayers.length < 2) return null;
+        if (centerPlayers.length < 2) return [];
 
-        let bestMatch = null;
-        let bestScore = -1;
+        const missions = [];
+        centerPlayers.sort((a, b) => Number(a.groupRank) - Number(b.groupRank));
 
-        for (let i = 0; i < centerPlayers.length; i++) {
-            for (let j = i + 1; j < centerPlayers.length; j++) {
-                const p1 = centerPlayers[i];
-                const p2 = centerPlayers[j];
-
-                // 같은 타임그룹, 같은 리그만
-                if (p1.timeGroup !== p2.timeGroup || p1.league !== p2.league) continue;
-
-                const rank1 = Number(p1.groupRank);
-                const rank2 = Number(p2.groupRank);
-                const rankDiff = Math.abs(rank1 - rank2);
-
-                // 스토리성 점수 계산
-                let storyScore = 0;
-
-                // 1. 순위 차이가 적절함 (3~10위 차이)
-                if (rankDiff >= 3 && rankDiff <= 10) {
-                    storyScore += 50;
-                }
-
-                // 2. 상위권 선수 포함
-                if (rank1 <= 5 || rank2 <= 5) {
-                    storyScore += 30;
-                }
-
-                // 3. 최근 전적이 극단적 (한 명은 승, 한 명은 패)
-                const wins1 = (p1.recentGames || []).slice(0, 5).filter(g => g.res === '승').length;
-                const wins2 = (p2.recentGames || []).slice(0, 5).filter(g => g.res === '승').length;
-                if ((wins1 >= 3 && wins2 <= 1) || (wins2 >= 3 && wins1 <= 1)) {
-                    storyScore += 40;
-                }
-
-                // 4. 최근에 경기한 기록이 없음 (신선한 매치업)
-                const hasRecent = (p1.recentGames || []).some(g => g.opp === p2.name) || 
-                                  (p2.recentGames || []).some(g => g.opp === p1.name);
-                if (!hasRecent) {
-                    storyScore += 20;
-                }
-
-                if (storyScore > bestScore) {
-                    bestScore = storyScore;
-                    bestMatch = { player1: p1, player2: p2, score: storyScore };
+        // Mission 1: "A가 B를 몇 점 차이로 이길까?"
+        for (let i = 2; i < centerPlayers.length && missions.length < 1; i++) {
+            const higher = centerPlayers[i - 2];
+            const lower = centerPlayers[i];
+            
+            if (Number(higher.groupRank) <= 5 || Number(lower.groupRank) <= 10) {
+                const rankDiff = Number(lower.groupRank) - Number(higher.groupRank);
+                if (rankDiff >= 3 && rankDiff <= 15) {
+                    missions.push({
+                        id: `mission_point_${higher.id}_${lower.id}`,
+                        type: 'point_diff',
+                        title: `🎯 ${lower.name}가 ${higher.name}을 몇 점 차이로 이길까요?`,
+                        players: { higher: higher.name, lower: lower.name },
+                        options: ['2점 이하', '3~5점', '6점 이상'],
+                        votes: { '2점 이하': 0, '3~5점': 0, '6점 이상': 0 }
+                    });
                 }
             }
         }
 
-        return bestMatch;
+        // Mission 2: "A가 B를 드라이브로만 이길까?"
+        for (let i = 1; i < centerPlayers.length && missions.length < 2; i++) {
+            const player1 = centerPlayers[i - 1];
+            const player2 = centerPlayers[i];
+            
+            const sameGroup = player1.timeGroup === player2.timeGroup && player1.league === player2.league;
+            if (sameGroup && Math.abs(Number(player1.groupRank) - Number(player2.groupRank)) <= 8) {
+                missions.push({
+                    id: `mission_drive_${player1.id}_${player2.id}`,
+                    type: 'skill_only',
+                    title: `⚡ ${player1.name}이 ${player2.name}을 드라이브로만 이길 수 있을까요?`,
+                    players: { player1: player1.name, player2: player2.name },
+                    skill: '드라이브',
+                    options: ['가능할 것 같음', '불가능할 것 같음'],
+                    votes: { '가능할 것 같음': 0, '불가능할 것 같음': 0 }
+                });
+            }
+        }
+
+        // Mission 3: "A가 B를 복수전 성공할까?"
+        for (let i = 0; i < centerPlayers.length && missions.length < 3; i++) {
+            const player = centerPlayers[i];
+            const lostTo = (player.recentGames || []).find(g => g.res === '패');
+            
+            if (lostTo) {
+                const opponent = centerPlayers.find(p => p.name === lostTo.opp);
+                if (opponent && Number(opponent.groupRank) && Number(player.groupRank)) {
+                    const sameGroup = player.timeGroup === opponent.timeGroup && player.league === opponent.league;
+                    if (sameGroup) {
+                        missions.push({
+                            id: `mission_revenge_${player.id}_${opponent.id}`,
+                            type: 'revenge',
+                            title: `💪 ${player.name}이 ${opponent.name}에게 복수전 성공할까요?`,
+                            players: { player: player.name, opponent: opponent.name },
+                            options: ['성공할 것 같음', '실패할 것 같음'],
+                            votes: { '성공할 것 같음': 0, '실패할 것 같음': 0 }
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+
+        return missions.slice(0, 3);
     }
 
-    function renderBestMatch() {
-        const match = findBestMatch();
-        const section = document.getElementById("bestMatchSection");
-        
-        if (!match) {
+    function renderPredictionMissions() {
+        const section = document.getElementById("predictionSection");
+        predictionMissions = generatePredictionMissions();
+
+        if (predictionMissions.length === 0) {
             section.innerHTML = '';
             return;
         }
 
-        const p1 = match.player1;
-        const p2 = match.player2;
+        let html = `
+            <div class="prediction-section">
+                <div class="prediction-header">
+                    🔮 이번 주 예측 미션 - 투표하고 맞춰보세요!
+                </div>
+                <div class="prediction-cards">
+        `;
 
-        // 스토리 라인 생성
-        let story = '';
-        const rank1 = Number(p1.groupRank);
-        const rank2 = Number(p2.groupRank);
+        predictionMissions.forEach((mission, idx) => {
+            const totalVotes = Object.values(mission.votes).reduce((a, b) => a + b, 0);
+            const userVote = userPredictions[mission.id] || null;
+            const cardClass = userVote ? 'prediction-card voted' : 'prediction-card';
 
-        if (rank1 < rank2) {
-            const wins1 = (p1.recentGames || []).filter(g => g.res === '승').length;
-            const wins2 = (p2.recentGames || []).filter(g => g.res === '승').length;
-            
-            if (wins1 > wins2) {
-                story = `${p1.name}의 연승 행진을 막을 수 있을까? ${p2.name}의 추격전!`;
-            } else {
-                story = `${p2.name}이 상위 랭커 ${p1.name}을 무너뜨릴 수 있을까?`;
-            }
-        } else {
-            story = `${p1.name}과 ${p2.name}의 접전! 누가 점프할 것인가?`;
-        }
+            html += `
+                <div class="${cardClass}">
+                    <div class="prediction-vote-count">${totalVotes}표</div>
+                    <div class="prediction-title">${mission.title}</div>
+                    <div class="prediction-options">
+            `;
 
-        section.innerHTML = `
-            <div class="best-match-card">
-                <div class="best-match-content">
-                    <div class="best-match-header">🔥 이주의 주목 경기</div>
-                    <div class="best-match-vs">
-                        <div class="player-info">
-                            <div class="player-name">${p1.name}</div>
-                            <div class="player-rank">${p1.groupRank}위</div>
-                        </div>
-                        <div class="vs-text">VS</div>
-                        <div class="player-info">
-                            <div class="player-name">${p2.name}</div>
-                            <div class="player-rank">${p2.groupRank}위</div>
-                        </div>
+            mission.options.forEach(option => {
+                const votes = mission.votes[option] || 0;
+                const votePercentage = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(0) : 0;
+                const isSelected = userVote === option ? 'selected' : '';
+
+                html += `
+                    <button class="prediction-btn ${isSelected}" onclick="votePrediction('${mission.id}', '${option}')">
+                        ${option}
+                    </button>
+                `;
+            });
+
+            html += `
                     </div>
-                    <div class="story-box">${story}</div>
-                    <div class="match-info">⏰ 이번 주 어디선가 경기 예정 | 결과를 기다립니다!</div>
+                    <div class="prediction-stats">
+            `;
+
+            mission.options.forEach(option => {
+                const votes = mission.votes[option] || 0;
+                const votePercentage = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(0) : 0;
+
+                html += `
+                    <div class="prediction-stat-item">
+                        <span>${option}</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: ${votePercentage}%"></div>
+                        </div>
+                        <span>${votes}표</span>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
                 </div>
             </div>
         `;
+
+        section.innerHTML = html;
     }
+
+    window.votePrediction = async (missionId, option) => {
+        userPredictions[missionId] = option;
+
+        const mission = predictionMissions.find(m => m.id === missionId);
+        if (mission) {
+            mission.votes[option] = (mission.votes[option] || 0) + 1;
+
+            try {
+                await addDoc(collection(db, "predictionVotes"), {
+                    missionId,
+                    option,
+                    centerId: currentCenter,
+                    createdAt: serverTimestamp()
+                });
+                renderPredictionMissions();
+            } catch (e) {
+                console.error("투표 저장 오류:", e);
+                alert("투표 중 오류가 발생했습니다.");
+            }
+        }
+    };
 
     // ═══════════════════════════════════════════════════════════════
     // ✅ Phase 2: 미션 진행도 렌더링
@@ -973,7 +1156,7 @@
             });
             document.getElementById("mainTitle").innerText = `🏆 ${centerNames[currentCenter]}`;
             renderUI();
-            renderBestMatch();
+            renderPredictionMissions();
             renderMissionProgress();
             updateCenterRanking(); 
             updateChallengerList(); 
