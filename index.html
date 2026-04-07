@@ -1120,29 +1120,29 @@
     window.selectAndSavePrediction = async (event, missionId, option) => {
         event.stopPropagation();
         
-        console.log(`🗳️ 투표: ${missionId} → ${option}`);
-
         userPredictions[missionId] = option;
         
-        // ✅ 로컬스토리지에 저장 (이것만 작동)
-        try {
-            localStorage.setItem(`prediction_${missionId}`, option);
-            console.log(`✅ 로컬스토리지 저장 완료`);
-        } catch (e) {
-            console.error("로컬스토리지 저장 실패:", e);
-            return;
-        }
-
-        // 로컬 투표 수 즉시 증가
+        // ✅ 로컬스토리지 저장
+        localStorage.setItem(`prediction_${missionId}`, option);
+        
+        // ✅ Firebase 저장
+        addDoc(collection(db, "predictionVotes"), {
+            missionId: missionId,
+            option: option,
+            centerId: currentCenter,
+            timestamp: new Date().toISOString(),
+            createdAt: serverTimestamp()
+        }).then(docRef => {
+            console.log("✅ Firebase 저장 성공");
+        }).catch(e => {
+            console.log("ℹ️ Firebase 저장 실패:", e.code);
+        });
+        
         const mission = predictionMissions.find(m => m.id === missionId);
         if (mission) {
             mission.votes[option] = (mission.votes[option] || 0) + 1;
         }
-
-        // Firebase 저장은 현재 비활성화 (나중에 처리)
-        console.log("ℹ️ Firebase 저장은 나중에 처리합니다");
-
-        // 화면 즉시 업데이트
+        
         renderPredictionMissions();
     };
 
