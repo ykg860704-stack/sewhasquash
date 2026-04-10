@@ -539,7 +539,7 @@
                 <option value="chan">찬 스쿼시</option>
                 <option value="squash3">와이드짐</option>
                 <option value="squash4">용인 HIPP 스쿼시</option>
-                <option value="squash5">스쿼시 5</option>
+                <option value="squash5">BM 스쿼시</option>
             </select>
             <button style="padding:10px 15px; background:#3182ce; color:white; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="loadRankingData()">🔄 새로고침</button>
         </div>
@@ -893,7 +893,7 @@
         if (btn) btn.classList.add('active');
     };
 
-    const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP 스쿼시', 'squash5': '스쿼시 5' };
+    const centerNames = { 'sehwa': '세화 스쿼시', 'chan': '찬 스쿼시', 'squash3': '와이드짐', 'squash4': '용인 HIPP 스쿼시', 'squash5': 'BM 스쿼시' };
     let currentCenter = new URLSearchParams(window.location.search).get('center') || 'sehwa';
     document.getElementById("centerSelectMain").value = currentCenter;
     let players = [], challengerResult = null, myChart = null;
